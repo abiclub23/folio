@@ -41,7 +41,7 @@ yarn dev
 
 ### Personal Information
 
-- Edit your name, profession, and location in the layout component (`components/layout.js`)
+- Edit your name, profession, and location in the layout component (`components/Layout.js`)
 - Update your social media links in the footer
 - Customize your about page (`pages/about.js`)
 
