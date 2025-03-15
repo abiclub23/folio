@@ -7,7 +7,7 @@ function MyApp({ Component, pageProps }) {
     <>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="Abhi Tondepu - Personal Website and Blog" />
+        <meta name="description" content="Abhi Tondepu - Personal Website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
