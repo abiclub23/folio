@@ -23,26 +23,4 @@ a:hover {
 
 * {
   box-sizing: border-box;
-}
-
-.prose img {
-  margin-left: auto;
-  margin-right: auto;
-  border-radius: 5px;
-}
-
-.home-name {
-  font-size: 3rem;
-}
-
-
-
-
-@media (max-width: 640px) {
-  .home-name {
-    font-size: 2rem;
-  }
-}
-
-
-
+} 
