@@ -9,7 +9,7 @@ export default function Home() {
       </Head>
 
       <div className="flex flex-col items-center justify-center py-12 md:min-h-[70vh]">
-        <h1 className="text-3xl md:text-5xl font-bold text-center mb-8">
+        <h1 className="text-3xl font-bold text-center mb-8">
           Abhi Tondepu
         </h1>
         
