@@ -1,18 +1,32 @@
 // Layout component for the website
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function Layout({ children }) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  // Handle scroll effect for header
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setScrolled(true)
+      } else {
+        setScrolled(false)
+      }
+    }
+    
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-gray-950">
+      <header className={`sticky top-0 z-50 transition-all duration-200 border-b border-gray-200 ${scrolled ? 'bg-[#f5ecd9] shadow-sm' : 'bg-[#f5ecd9]/90 backdrop-blur-sm'}`}>
         <nav className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <Link href="/" className="text-xl font-semibold">
-                Abhi Tondepu
-              </Link>
-            </div>
-            <div className="flex space-x-6">
+          <div className="flex justify-start items-center">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex space-x-8">
               <Link href="/" className="hover:text-gray-600 transition-colors">
                 Home
               </Link>
@@ -29,7 +43,69 @@ export default function Layout({ children }) {
                 More
               </Link>
             </div>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:text-gray-600 focus:outline-none"
+                aria-label="Toggle menu"
+              >
+                {!isMenuOpen ? (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
+          
+          {/* Mobile Navigation */}
+          {isMenuOpen && (
+            <div className="md:hidden mt-4 py-2 border-t border-gray-200 animate-fadeIn">
+              <div className="flex flex-col space-y-4">
+                <Link 
+                  href="/" 
+                  className="hover:text-gray-600 transition-colors px-2 py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                <Link 
+                  href="/about" 
+                  className="hover:text-gray-600 transition-colors px-2 py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  About
+                </Link>
+                <Link 
+                  href="#" 
+                  className="hover:text-gray-600 transition-colors opacity-50 px-2 py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Labs
+                </Link>
+                <Link 
+                  href="#" 
+                  className="hover:text-gray-600 transition-colors opacity-50 px-2 py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Blog
+                </Link>
+                <Link 
+                  href="#" 
+                  className="hover:text-gray-600 transition-colors opacity-50 px-2 py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  More
+                </Link>
+              </div>
+            </div>
+          )}
         </nav>
       </header>
       
@@ -39,7 +115,7 @@ export default function Layout({ children }) {
         </div>
       </main>
       
-      <footer className="border-t border-gray-950">
+      <footer className="border-t border-gray-200">
         <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center">
             <div className="text-sm">
