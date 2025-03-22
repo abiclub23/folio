@@ -1,8 +1,8 @@
 # 2025
 
-All of us sleeping in 1 bed
-Morning hug with Sneha
-My hoka shoes
-Kids lying on/next to me
-When all of us are cuddled up in 1 room
-5 green signals in a row during my morning commute 
+1. All of us sleeping in one bed
+2. Morning hug with my wife
+3. My hoka shoes
+4. Kids lying on/next to me
+5. When all of us are cuddled up in the living room
+6. Five green signals in a row during my morning commute 

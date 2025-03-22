@@ -53,7 +53,7 @@ export async function getStaticProps() {
     .map(section => {
       const [year, ...lines] = section.split('\n');
       return {
-        year: year.trim(),
+        year: year.trim().replace('#', '').trim(),
         items: lines
           .map(line => line.trim())
           .filter(line => line && !line.startsWith('#'))
