@@ -6,3 +6,4 @@
 4. Kids lying on/next to me
 5. When all of us are cuddled up in the living room
 6. Five green signals in a row during my morning commute 
+7. Beautiful green valleys during spring time 
