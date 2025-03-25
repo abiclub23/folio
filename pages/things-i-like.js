@@ -9,7 +9,7 @@ export default function ThingsILike({ sections }) {
         <title>Things I Like | Abhi Tondepu</title>
       </Head>
       
-      <div className="px-4 sm:px-6 lg:px-8">
+      <div className="">
         {/* Hero Section */}
         <div className="mb-8 border-b border-gray-950 pb-4">
           <h1 className="text-4xl font-bold mb-4">Things I Like</h1>

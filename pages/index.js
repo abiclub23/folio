@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import Link from 'next/link'
 
 export default function Home() {
   return (
@@ -8,18 +9,39 @@ export default function Home() {
         <meta name="description" content="Personal website of Abhi Tondepu" />
       </Head>
 
-      <div className="flex flex-col items-center justify-center py-12 md:min-h-[70vh]">
-        <h1 className="text-3xl font-bold text-center mb-8">
-          Abhi Tondepu
-        </h1>
-        
-        <div className="w-full max-w-md md:max-w-lg mx-auto overflow-hidden rounded-lg">
-          <img 
-            src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmx3ZDNlejl2OTRycGliMm00dHZvMGFkanM2NGY2amdleWg0aTMxZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/0jzKx0JIwHHZ404zrq/giphy.gif" 
-            alt="Abhi Tondepu" 
-            className="w-full h-auto object-cover" 
-            loading="lazy"
-          />
+      <div className="max-w-2xl mx-auto px-4 pt-20">
+        <div className="space-y-12">
+          <p className="text-sm text-gray-500">
+            Hi, I'm Abhi Tondepu
+          </p>
+          
+          <nav className="space-y-4">
+            <Link href="/about" className="block">
+              <span className="text-7xl font-light inline-block hover:text-gray-600 transition-all duration-300 hover:translate-x-2">
+                About
+              </span>
+            </Link>
+            <Link href="/things-i-like" className="block">
+              <span className="text-7xl font-light inline-block hover:text-gray-600 transition-all duration-300 hover:translate-x-2">
+                Things I Like
+              </span>
+            </Link>
+            <span className="block cursor-not-allowed">
+              <span className="text-7xl font-light inline-block opacity-50">
+                Labs
+              </span>
+            </span>
+            <span className="block cursor-not-allowed">
+              <span className="text-7xl font-light inline-block opacity-50">
+                Blog
+              </span>
+            </span>
+            <span className="block cursor-not-allowed">
+              <span className="text-7xl font-light inline-block opacity-50">
+                More
+              </span>
+            </span>
+          </nav>
         </div>
       </div>
     </>

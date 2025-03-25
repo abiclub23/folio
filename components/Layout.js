@@ -1,10 +1,14 @@
 // Layout component for the website
 import Navigation from './Navigation'
+import { useRouter } from 'next/router'
 
 export default function Layout({ children }) {
+  const router = useRouter()
+  const isHomePage = router.pathname === '/'
+
   return (
     <div className="min-h-screen flex flex-col">
-      <Navigation />
+      {!isHomePage && <Navigation />}
       
       <main className="flex-grow">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
