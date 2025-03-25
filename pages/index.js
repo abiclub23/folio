@@ -9,7 +9,7 @@ export default function Home() {
         <meta name="description" content="Personal website of Abhi Tondepu" />
       </Head>
 
-      <div className="max-w-2xl mx-auto px-4 pt-20">
+      <div className="py-8">
         <div className="space-y-12">
           <p className="text-lg text-gray-950">
             Hi, I'm Abhi Tondepu
