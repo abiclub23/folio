@@ -11,7 +11,7 @@ export default function Home() {
 
       <div className="max-w-2xl mx-auto px-4 pt-20">
         <div className="space-y-12">
-          <p className="text-sm text-gray-500">
+          <p className="text-lg text-gray-950">
             Hi, I'm Abhi Tondepu
           </p>
           
