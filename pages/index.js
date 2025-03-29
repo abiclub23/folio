@@ -15,7 +15,7 @@ export default function Home() {
             Hi, I'm Abhi Tondepu
           </p>
           
-          <nav className="space-y-4">
+          <nav className="space-y-8">
             <Link href="/about" className="block">
               <span className="text-7xl font-light inline-block hover:italic ">
                 About

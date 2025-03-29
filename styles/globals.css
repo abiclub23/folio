@@ -5,8 +5,8 @@
 
 @font-face {
   font-family: 'Switzer';
-  src: url('/fonts/Switzer-Light.woff') format('woff');
-  font-weight: 300;
+  src: url('/fonts/Switzer-Regular.woff') format('woff');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
