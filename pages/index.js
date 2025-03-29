@@ -17,12 +17,12 @@ export default function Home() {
           
           <nav className="space-y-4">
             <Link href="/about" className="block">
-              <span className="text-7xl font-light inline-block hover:text-gray-600 transition-all duration-300 hover:translate-x-2">
+              <span className="text-7xl font-light inline-block hover:italic ">
                 About
               </span>
             </Link>
             <Link href="/things-i-like" className="block">
-              <span className="text-7xl font-light inline-block hover:text-gray-600 transition-all duration-300 hover:translate-x-2">
+              <span className="text-7xl font-light inline-block hover:italic ">
                 Things I Like
               </span>
             </Link>
