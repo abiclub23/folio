@@ -1,5 +1,5 @@
 // Layout component for the website
-import Navigation from './Navigation'
+import Navigation from '../Navigation'
 import { useRouter } from 'next/router'
 
 export default function Layout({ children }) {
