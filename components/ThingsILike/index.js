@@ -1,6 +1,6 @@
 import Head from 'next/head';
 
-export default function ThingsILike({ sections }) {
+export default function ThingsILike({ sections, lastUpdated }) {
   return (
     <>
       <Head>
@@ -21,6 +21,7 @@ export default function ThingsILike({ sections }) {
         <div className="space-y-12">
           {sections.map(({ year, items }) => (
             <div key={year}>
+              <p className="text-sm text-gray-500 mb-4">Last updated: {lastUpdated}</p>
               <h2 className="text-2xl font-medium text-gray-800 mb-6 inline-block border-b-2 border-gray-950">{year}</h2>
               <ul className="space-y-4">
                 {items.map((item, index) => (
