@@ -6,4 +6,7 @@
 4. Kids lying on/next to me
 5. When all of us are cuddled up in the living room
 6. Five green signals in a row during my morning commute 
-7. Beautiful green valleys during spring time 
+7. Beautiful green valleys during spring time
+8. Getting exceptional feedback in my yearly performance review
+9. Nothing but ocean in every direction from the cruise deck
+
