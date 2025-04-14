@@ -16,11 +16,13 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^20.10.4",
     "@types/react": "^18.2.45",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.55.0",
     "eslint-config-next": "14.0.4",
+    "marked": "^15.0.8",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
     "typescript": "^5.3.3"

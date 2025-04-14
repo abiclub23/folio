@@ -26,6 +26,11 @@ export default function Home() {
                 Things I Like
               </span>
             </Link>
+            <Link href="/tiwid" className="block">
+              <span className="text-7xl font-light inline-block hover:italic ">
+                This Is What I Did
+              </span>
+            </Link>
             <span className="block cursor-not-allowed">
               <span className="text-7xl font-light inline-block opacity-50">
                 Labs
