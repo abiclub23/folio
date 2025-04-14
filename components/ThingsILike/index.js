@@ -20,7 +20,14 @@ export default function ThingsILike({ years }) {
               href={`/things-i-like/${year}`}
               className="block hover:italic"
             >
-              <h2 className="text-xl font-semibold">{year}</h2>
+              <div>
+                <h2 className="text-xl font-semibold">{year}</h2>
+                <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString('en-US', { 
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}</p>
+              </div>
             </Link>
           ))}
         </div>

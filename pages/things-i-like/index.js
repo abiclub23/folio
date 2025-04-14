@@ -7,14 +7,13 @@ export default function ThingsILikePage({ years }) {
 }
 
 export async function getStaticProps() {
-  const filePath = path.join(process.cwd(), 'content/things-i-like/index.md');
-  const fileContents = fs.readFileSync(filePath, 'utf8');
+  const dirPath = path.join(process.cwd(), 'content/things-i-like');
+  const files = fs.readdirSync(dirPath);
   
-  // Extract unique years from the content
-  const years = fileContents
-    .split('\n# ')
-    .filter(Boolean)
-    .map(section => section.split('\n')[0].trim().replace('#', '').trim());
+  const years = files
+    .filter(file => file.endsWith('.md'))
+    .map(file => file.replace('.md', ''))
+    .sort((a, b) => b - a); // Sort years in descending order
 
   return {
     props: {
