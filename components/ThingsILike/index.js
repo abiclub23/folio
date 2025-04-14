@@ -1,39 +1,27 @@
 import Head from 'next/head';
+import Link from 'next/link';
 
-export default function ThingsILike({ sections, lastUpdated }) {
+export default function ThingsILike({ years }) {
   return (
     <>
       <Head>
         <title>Things I Like | Abhi Tondepu</title>
       </Head>
-      
-      <div className="">
-        {/* Hero Section */}
-        <div className="mb-8 border-b border-gray-950 pb-4">
-          <h1 className="text-4xl font-bold mb-4">Things I Like</h1>
-          <p className="text-lg text-gray-600">
-            Inspired by a Twitter thread, this is my collection of small, everyday moments that brought me joy. 
-            A reminder to appreciate the beautiful mundane in daily life.
-          </p>
-        </div>
-
-        {/* Content List */}
-        <div className="space-y-12">
-          {sections.map(({ year, items }) => (
-            <div key={year}>
-              <p className="text-sm text-gray-500 mb-4">Last updated: {lastUpdated}</p>
-              <h2 className="text-2xl font-medium text-gray-800 mb-6 inline-block border-b-2 border-gray-950">{year}</h2>
-              <ul className="space-y-4">
-                {items.map((item, index) => (
-                  <li
-                    key={index}
-                    className="text-base text-gray-700 leading-relaxed"
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <div>
+        <h1 className="text-4xl font-bold mb-6">Things I Like</h1>
+        <p className="text-lg text-gray-600 mb-8">
+          Inspired by a Twitter thread and The Positive Tetris Effect, this is my collection of small, everyday moments that brought me joy. 
+          A reminder to appreciate the beautiful mundane in daily life.
+        </p>
+        <div className="space-y-4 border-t border-gray-950 pt-6">
+          {years.map(year => (
+            <Link 
+              key={year} 
+              href={`/things-i-like/${year}`}
+              className="block hover:italic"
+            >
+              <h2 className="text-xl font-semibold">{year}</h2>
+            </Link>
           ))}
         </div>
       </div>

@@ -1,24 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import Head from 'next/head';
+import YearContent from '../../components/ThingsILike/YearContent';
+
+export const metadata = {
+  title: 'Things I Like: {year} | Abhi Tondepu',
+};
 
 export default function YearPage({ items, year, lastUpdated }) {
-  return (
-    <>
-      <Head>
-        <title>Things I Like: {year} | Abhi Tondepu</title>
-      </Head>
-      <div className="max-w-2xl mx-auto p-4">
-        <h1 className="text-3xl font-bold mb-6">Things I Like - {year}</h1>
-        <p className="text-sm text-gray-500 mb-4">Last updated: {lastUpdated}</p>
-        <ul className="space-y-4">
-          {items.map((item, index) => (
-            <li key={index} className="text-base text-gray-700 leading-relaxed">{item}</li>
-          ))}
-        </ul>
-      </div>
-    </>
-  );
+  return <YearContent items={items} year={year} lastUpdated={lastUpdated} />;
 }
 
 export async function getStaticPaths() {
