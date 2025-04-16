@@ -14,7 +14,7 @@ export default function ThingsILike({ years }) {
           A reminder to appreciate the beautiful mundane in daily life.
         </p>
         <div className="space-y-4 border-t border-gray-950 pt-6">
-          {years.map(year => (
+          {years.map(({ year, lastModified }) => (
             <Link 
               key={year} 
               href={`/things-i-like/${year}`}
@@ -22,11 +22,7 @@ export default function ThingsILike({ years }) {
             >
               <div>
                 <h2 className="text-xl font-semibold">{year}</h2>
-                <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString('en-US', { 
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}</p>
+                <p className="text-sm text-gray-500">Last updated: {lastModified}</p>
               </div>
             </Link>
           ))}

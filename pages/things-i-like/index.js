@@ -12,8 +12,22 @@ export async function getStaticProps() {
   
   const years = files
     .filter(file => file.endsWith('.md'))
-    .map(file => file.replace('.md', ''))
-    .sort((a, b) => b - a); // Sort years in descending order
+    .map(file => {
+      const year = file.replace('.md', '');
+      const filePath = path.join(dirPath, file);
+      const stats = fs.statSync(filePath);
+      const lastModified = new Date(stats.mtime).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      return {
+        year,
+        lastModified
+      };
+    })
+    .sort((a, b) => b.year - a.year); // Sort years in descending order
 
   return {
     props: {
