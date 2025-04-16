@@ -1,6 +1,6 @@
-import fs from 'fs';
 import path from 'path';
 import Link from 'next/link';
+import { getMarkdownFilesMetadata } from '../../lib/markdown';
 
 export const metadata = {
   title: 'This Is What I Did | Abhi Tondepu',
@@ -15,7 +15,7 @@ export default function TIWIDIndex({ articles }) {
         Here, I share my decisions and their context - hoping to make your own decision-making journey a bit easier.
       </p>
       <div className="space-y-4 border-t border-gray-950 pt-6">
-        {articles.map(({ slug, title, date }) => (
+        {articles.map(({ slug, title, lastModified }) => (
           <Link 
             key={slug} 
             href={`/tiwid/${slug}`}
@@ -23,7 +23,7 @@ export default function TIWIDIndex({ articles }) {
           >
             <div>
               <h2 className="text-xl font-semibold">{title}</h2>
-              <p className="text-sm text-gray-500">{date}</p>
+              <p className="text-sm text-gray-500">{lastModified}</p>
             </div>
           </Link>
         ))}
@@ -34,26 +34,10 @@ export default function TIWIDIndex({ articles }) {
 
 export async function getStaticProps() {
   const dirPath = path.join(process.cwd(), 'content/tiwid');
-  const files = fs.readdirSync(dirPath);
   
-  const articles = files
-    .filter(file => file.endsWith('.md'))
-    .map(file => {
-      const slug = file.replace('.md', '');
-      const filePath = path.join(dirPath, file);
-      const content = fs.readFileSync(filePath, 'utf8');
-      const title = content.split('\n')[0].replace('# ', '');
-      
-      const stats = fs.statSync(filePath);
-      const date = new Date(stats.mtime).toLocaleDateString('en-US', { 
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      
-      return { slug, title, date };
-    })
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const articles = getMarkdownFilesMetadata(dirPath, {
+    sortFn: (a, b) => new Date(b.lastModified) - new Date(a.lastModified)
+  });
 
   return {
     props: {

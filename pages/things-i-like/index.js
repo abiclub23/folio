@@ -1,6 +1,6 @@
-import fs from 'fs';
 import path from 'path';
 import ThingsILike from '../../components/ThingsILike';
+import { getMarkdownFilesMetadata } from '../../lib/markdown';
 
 export default function ThingsILikePage({ years }) {
   return <ThingsILike years={years} />;
@@ -8,26 +8,14 @@ export default function ThingsILikePage({ years }) {
 
 export async function getStaticProps() {
   const dirPath = path.join(process.cwd(), 'content/things-i-like');
-  const files = fs.readdirSync(dirPath);
   
-  const years = files
-    .filter(file => file.endsWith('.md'))
-    .map(file => {
-      const year = file.replace('.md', '');
-      const filePath = path.join(dirPath, file);
-      const stats = fs.statSync(filePath);
-      const lastModified = new Date(stats.mtime).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      
-      return {
-        year,
-        lastModified
-      };
-    })
-    .sort((a, b) => b.year - a.year); // Sort years in descending order
+  const years = getMarkdownFilesMetadata(dirPath, {
+    transformResult: ({ slug, lastModified }) => ({
+      year: slug,
+      lastModified
+    }),
+    sortFn: (a, b) => b.year - a.year
+  });
 
   return {
     props: {
