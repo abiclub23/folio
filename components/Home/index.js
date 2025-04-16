@@ -31,11 +31,11 @@ export default function Home() {
                 This Is What I Did
               </span>
             </Link>
-            <span className="block cursor-not-allowed">
-              <span className="text-7xl font-light inline-block opacity-50">
-                Labs
+            <Link href="/projects" className="block">
+              <span className="text-7xl font-light inline-block hover:italic">
+                Projects
               </span>
-            </span>
+            </Link>
             <span className="block cursor-not-allowed">
               <span className="text-7xl font-light inline-block opacity-50">
                 Blog

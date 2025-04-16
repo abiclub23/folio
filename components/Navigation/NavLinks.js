@@ -9,7 +9,7 @@ export default function NavLinks({ isMobile = false, onLinkClick = () => {} }) {
     { href: "/about", label: "About", active: true },
     { href: "/things-i-like", label: "Things I Like", active: true },
     { href: "/tiwid", label: "This Is What I Did", active: true },
-    { href: "#", label: "Labs", active: false },
+    { href: "/projects", label: "Projects", active: true },
     { href: "#", label: "Blog", active: false },
     { href: "#", label: "More", active: false }
   ]
