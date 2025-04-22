@@ -4,7 +4,7 @@ import { getMarkdownFilesMetadata } from '../../lib/markdown';
 import matter from 'gray-matter';
 
 const CATEGORY_DESCRIPTIONS = {
-  'Things I Like': 'Inspired by a Twitter thread and The Positive Tetris Effect, this is my collection of small, everyday moments that brought me joy. A reminder to appreciate the beautiful mundane in daily life.',
+  'Things I Like': 'Inspired by The Positive Tetris Effect and a twitter thread, this is my collection of small, everyday moments that brought me joy.',
   'My Decisions': 'Life is full of decisions that shape our path. While we have countless reviews for everyday purchases, we rarely find insights into life\'s broader choices. Here, I share my decisions and their context - hoping to make your own decision-making journey a bit easier.'
 };
 
