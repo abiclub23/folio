@@ -1,24 +1,48 @@
 import path from 'path';
 import Link from 'next/link';
 import { getMarkdownFilesMetadata } from '../../lib/markdown';
+import matter from 'gray-matter';
+
+const CATEGORY_DESCRIPTIONS = {
+  'Things I Like': 'Inspired by a Twitter thread and The Positive Tetris Effect, this is my collection of small, everyday moments that brought me joy. A reminder to appreciate the beautiful mundane in daily life.',
+  'My Decisions': 'Life is full of decisions that shape our path. While we have countless reviews for everyday purchases, we rarely find insights into life\'s broader choices. Here, I share my decisions and their context - hoping to make your own decision-making journey a bit easier.'
+};
 
 export default function WritingIndex({ articles }) {
   return (
     <div>
       <h1 className="text-4xl font-bold mb-6">Writing</h1>
       <p className="text-lg text-gray-600 mb-8">
-        A collection of thoughts, experiences, and moments worth sharing.
+        A collection of thoughts, experiences, and observations. Below are a few themed categories, though most posts are general musings.
       </p>
+
+      {/* Category Descriptions */}
+      <div className="space-y-6 mb-8">
+        {Object.entries(CATEGORY_DESCRIPTIONS).map(([category, description]) => (
+          <div key={category}>
+            <h2 className="text-xl font-semibold mb-2">{category}</h2>
+            <p className="text-gray-600 text-lg">{description}</p>
+          </div>
+        ))}
+      </div>
+      
       <div className="space-y-4 border-t border-gray-950 pt-6">
-        {articles.map(({ slug, title, lastModified }) => (
+        {articles.map(({ slug, metadata }) => (
           <Link 
             key={slug} 
             href={`/writing/${slug}`}
             className="block hover:italic"
           >
             <div>
-              <h2 className="text-xl font-semibold">{title}</h2>
-              <p className="text-sm text-gray-500">Last updated: {lastModified}</p>
+              <h2 className="text-xl font-semibold">{metadata.category} – {metadata.title}</h2>
+              <p className="text-sm text-gray-500">
+                Published: {new Date(metadata.date).toLocaleDateString()}
+                {metadata.lastModified && metadata.lastModified !== metadata.date && (
+                  <span className="ml-2">
+                    (Updated: {new Date(metadata.lastModified).toLocaleDateString()})
+                  </span>
+                )}
+              </p>
             </div>
           </Link>
         ))}
@@ -31,12 +55,18 @@ export async function getStaticProps() {
   const dirPath = path.join(process.cwd(), 'content/writing');
   
   const articles = getMarkdownFilesMetadata(dirPath, {
-    transformResult: ({ slug, lastModified }) => ({
-      slug,
-      title: slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-      lastModified
-    }),
-    sortFn: (a, b) => new Date(b.lastModified) - new Date(a.lastModified)
+    transformResult: ({ slug, content }) => {
+      const { data: metadata } = matter(content);
+      return {
+        slug,
+        metadata: {
+          ...metadata,
+          date: metadata.date ? new Date(metadata.date).toISOString() : null,
+          lastModified: metadata.lastModified ? new Date(metadata.lastModified).toISOString() : null
+        }
+      };
+    },
+    sortFn: (a, b) => new Date(b.metadata.date) - new Date(a.metadata.date)
   });
 
   return {

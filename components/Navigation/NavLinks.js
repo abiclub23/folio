@@ -7,9 +7,7 @@ export default function NavLinks({ isMobile = false, onLinkClick = () => {} }) {
   const links = [
     { href: "/", label: "Home", active: true },
     { href: "/about", label: "About", active: true },
-    { href: "/things-i-like", label: "Things I Like", active: true },
-    { href: "/tiwid", label: "This Is What I Did", active: true },
-    { href: "/writing", label: "Writing", active: false },
+    { href: "/writing", label: "Writing", active: true },
     { href: "/projects", label: "Projects", active: true },
     { href: "#", label: "More", active: false }
   ]

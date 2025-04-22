@@ -1,3 +1,10 @@
+---
+category: Things I Like
+title: 2025
+date: 2025-04-02
+lastModified: 2025-04-17
+---
+
 # Things I Like – 2025
 
 1. All of us sleeping in one bed

@@ -21,14 +21,9 @@ export default function Home() {
                 About
               </span>
             </Link>
-            <Link href="/things-i-like" className="block">
+            <Link href="/writing" className="block">
               <span className="text-7xl font-light inline-block hover:italic ">
-                Things I Like
-              </span>
-            </Link>
-            <Link href="/tiwid" className="block">
-              <span className="text-7xl font-light inline-block hover:italic ">
-                This Is What I Did
+                Writing
               </span>
             </Link>
             <Link href="/projects" className="block">
@@ -36,11 +31,6 @@ export default function Home() {
                 Projects
               </span>
             </Link>
-            <span className="block cursor-not-allowed">
-              <span className="text-7xl font-light inline-block opacity-50">
-                Blog
-              </span>
-            </span>
             <span className="block cursor-not-allowed">
               <span className="text-7xl font-light inline-block opacity-50">
                 More

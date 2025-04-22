@@ -1,3 +1,10 @@
+---
+category: My Decisions
+title: Should I Buy a Sedan or a Minivan?
+date: 2025-04-22
+
+---
+
 # My Decisions – Should I Buy a Sedan or a Minivan?
 
 ## What I Did
