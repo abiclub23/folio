@@ -1,8 +1,8 @@
 ---
 category: Things I Like
 title: 2025
-date: 2025-04-02
-lastModified: 2025-04-17
+date: 2024-04-02
+lastModified: 2024-04-17
 ---
 
 # Things I Like – 2025

@@ -1,19 +1,17 @@
 import path from 'path';
 import fs from 'fs';
-import Article from '../../components/tiwid/Article';
+import Article from '../../components/writing/Article';
 
-export default function ArticlePage({ content, slug }) {
-  return <Article content={content} title={slug} />;
+export default function WritingPage({ content, metadata }) {
+  return <Article content={content} title={metadata.title} />;
 }
 
 export async function getStaticPaths() {
   const dirPath = path.join(process.cwd(), 'content/writing');
   const files = fs.readdirSync(dirPath);
   
-  const paths = files.map((filename) => ({
-    params: {
-      slug: filename.replace('.md', '')
-    }
+  const paths = files.map(filename => ({
+    params: { slug: filename.replace('.md', '') }
   }));
 
   return {
@@ -30,7 +28,7 @@ export async function getStaticProps({ params }) {
   return {
     props: {
       content,
-      slug
+      metadata: { title: slug }
     }
   };
 } 
