@@ -1,6 +1,6 @@
 import path from 'path';
 import Link from 'next/link';
-import { getMarkdownFilesMetadata } from '../../lib/markdown';
+import { getMarkdownFilesMetadata } from '../../components/Writing/markdown';
 import matter from 'gray-matter';
 
 const CATEGORY_DESCRIPTIONS = {
@@ -34,7 +34,7 @@ export default function WritingIndex({ articles }) {
             className="block hover:italic"
           >
             <div>
-              <h2 className="text-xl font-semibold">{metadata.category} – {metadata.title}</h2>
+              <h2 className="text-xl font-semibold">{metadata.title}</h2>
               <p className="text-sm text-gray-500">
                 Published: {new Date(metadata.date).toLocaleDateString()}
                 {metadata.lastModified && metadata.lastModified !== metadata.date && (
@@ -66,7 +66,10 @@ export async function getStaticProps() {
         }
       };
     },
-    sortFn: (a, b) => new Date(b.metadata.date) - new Date(a.metadata.date)
+    sortFn: (a, b) => {
+      if (!a.metadata.date || !b.metadata.date) return 0;
+      return new Date(b.metadata.date) - new Date(a.metadata.date);
+    }
   });
 
   return {

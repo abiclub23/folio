@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import Article from '../../components/writing/Article';
+import Article from '../../components/Writing';
 
 export default function WritingPage({ content, metadata }) {
   return <Article content={content} title={metadata.title} />;
