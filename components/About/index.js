@@ -9,7 +9,7 @@ export default function About() {
       </Head>
 
       <div className="">
-        <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-800">About Me</h1>
+        <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-800">About me</h1>
         
         <div className="space-y-8">
           <section>

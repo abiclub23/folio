@@ -6,10 +6,9 @@ export default function NavLinks({ isMobile = false, onLinkClick = () => {} }) {
   
   const links = [
     { href: "/", label: "Home", active: true },
-    { href: "/about", label: "About", active: true },
     { href: "/writing", label: "Writing", active: true },
     { href: "/projects", label: "Projects", active: true },
-    { href: "#", label: "More", active: false }
+    { href: "/about", label: "About", active: true }
   ]
   
   if (isMobile) {

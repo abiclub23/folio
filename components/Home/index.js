@@ -14,13 +14,7 @@ export default function Home() {
           <p className="text-lg text-gray-950">
             Hi, I'm Abhi Tondepu
           </p>
-          
           <nav className="space-y-8">
-            <Link href="/about" className="block">
-              <span className="text-7xl font-light inline-block hover:italic ">
-                About
-              </span>
-            </Link>
             <Link href="/writing" className="block">
               <span className="text-7xl font-light inline-block hover:italic ">
                 Writing
@@ -31,11 +25,11 @@ export default function Home() {
                 Projects
               </span>
             </Link>
-            <span className="block cursor-not-allowed">
-              <span className="text-7xl font-light inline-block opacity-50">
-                More
+            <Link href="/about" className="block">
+              <span className="text-7xl font-light inline-block hover:italic ">
+                About
               </span>
-            </span>
+            </Link>
           </nav>
         </div>
       </div>
