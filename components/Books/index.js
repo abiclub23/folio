@@ -15,8 +15,14 @@ export default function Books() {
       <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-800">Books</h1>
       <div className="space-y-8">
         <section>
-          <p className="text-lg leading-relaxed text-gray-700 mb-2">
-            A collection of books that have made a lasting impression on me. While this isn’t a formal recommendation list, I hope you find something here that resonates with you as well.
+          <p className="text-lg leading-relaxed text-gray-700 mb-4">
+            A collection of books that I enjoyed. These aren't formal recommendations, but I hope you find something here that sparks your interest.
+          </p>
+          <p className="text-lg leading-relaxed text-gray-700 mb-4">
+            Inspired by Naval Ravikant, I read for ideas and themes, not just titles or authors. I don't always finish every book; if it's not adding value, I'm okay with putting it down. My goal isn't to read a certain number of books, but to learn and grow.
+          </p>
+          <p className="text-lg leading-relaxed text-gray-700 mb-8">
+            I stick to physical books only (no e-readers or audiobooks), so I can get off screens and set a good example for my kids. After all, kids tend to imitate what they see, not just what they're told.
           </p>
           <p className="text-sm text-gray-500 mb-8">Last updated: April 24, 2024</p>
         </section>
@@ -33,7 +39,7 @@ export default function Books() {
                   />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold mb-2">
+                  <h2 className="text-xl font-semibold">
                     <a 
                       href={book.link} 
                       className="text-gray-900 hover:italic"
@@ -43,13 +49,12 @@ export default function Books() {
                       {book.title} by {book.author}
                     </a>
                   </h2>
-                  <p className="text-gray-700 text-md leading-relaxed mb-4">
-                    Themes: {book.theme}
+                  <p className="text-sm text-emerald-800 mb-2">
+                    <span className="font-medium">Themes:</span> {book.theme}
                   </p>
                   <p className="text-gray-700 text-lg leading-relaxed">
                     {book.review}
                   </p>
-                  
                 </div>
               </div>
             ))}
@@ -57,7 +62,7 @@ export default function Books() {
         </section>
 
         <section className="mt-12 pt-6">
-            <p className="text-sm text-gray-500 mb-8">*This page contains affiliate links.</p>
+          <p className="text-sm text-gray-500 mb-8">*This page contains affiliate links.</p>
         </section>
       </div>
     </div>
