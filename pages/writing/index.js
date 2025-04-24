@@ -34,7 +34,9 @@ export default function WritingIndex({ articles }) {
             className="block hover:italic"
           >
             <div>
-              <h2 className="text-xl font-semibold">{metadata.title}</h2>
+              <h2 className="text-xl font-semibold">
+                {metadata.category ? `${metadata.category} – ` : ''}{metadata.title}
+              </h2>
               <p className="text-sm text-gray-500">
                 Published: {new Date(metadata.date).toLocaleDateString()}
                 {metadata.lastModified && metadata.lastModified !== metadata.date && (
