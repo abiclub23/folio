@@ -20,6 +20,11 @@ export default function Home() {
                 Writing
               </span>
             </Link>
+            <Link href="/books" className="block">
+              <span className="text-7xl font-light inline-block hover:italic">
+                Books
+              </span>
+            </Link>
             <Link href="/projects" className="block">
               <span className="text-7xl font-light inline-block hover:italic">
                 Projects

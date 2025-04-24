@@ -8,7 +8,7 @@ export default function About() {
         <meta name="description" content="About Abhi Tondepu - Engineer and dad" />
       </Head>
 
-      <div className="">
+      <div>
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-800">About me</h1>
         
         <div className="space-y-8">
