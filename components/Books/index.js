@@ -1,22 +1,13 @@
-export default function Books() {
-  const books = [
-    {
-      title: "Atomic Habits",
-      author: "James Clear",
-      theme: "Self-improvement, Productivity, Mindset",
-      cover: "/images/book-covers/atomic-habits.jpg",
-      link: "https://amzn.to/4jgEvaF",
-      review: "This book kickstarted my journey back into reading—even if it took me over a year to finish, mostly because I bought it, set it aside, and forgot about it for a while. Once I finally got into it, it helped me build new habits and let go of old ones, even though I still struggle at times. It provided a clear framework for moving in the right direction."
-    }
-  ];
+import { books } from '../../data/books';
 
+export default function Books() {
   return (
     <div>
       <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-800">Books</h1>
       <div className="space-y-8">
         <section>
           <p className="text-lg leading-relaxed text-gray-700 mb-4">
-            A collection of books that I enjoyed. These aren't formal recommendations, but I hope you find something here that sparks your interest.
+            A collection of books that I enjoyed, listed in no particular order. These aren't formal recommendations, but I hope you find something here that sparks your interest.
           </p>
           <p className="text-lg leading-relaxed text-gray-700 mb-4">
             Inspired by Naval Ravikant, I read for ideas and themes, not just titles or authors. I don't always finish every book; if it's not adding value, I'm okay with putting it down. My goal isn't to read a certain number of books, but to learn and grow.
