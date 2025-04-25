@@ -43,7 +43,7 @@ export default function Books() {
                   <p className="text-sm text-emerald-800 mb-2">
                     <span className="font-medium">Themes:</span> {book.theme}
                   </p>
-                  <p className="text-gray-700 text-lg leading-relaxed">
+                  <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
                     {book.review}
                   </p>
                 </div>
