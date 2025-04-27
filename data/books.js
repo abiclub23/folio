@@ -13,7 +13,7 @@ export const books = [
     theme: "Personal Finance, Psychology, Decision Making",
     cover: "/images/book-covers/psychology-of-money.jpg",
     link: "https://amzn.to/42uO4Ne",
-    review: "This book changed how I think about money and investing. Its insights into the psychology behind financial decisions are both eye-opening and relatable. It has had a positive impact on my relationship with money and honestly helps me sleep better at night. :)"
+    review: "This book changed how I think about money and investing. Its insights into the psychology behind financial decisions are both eye-opening and relatable. It has had a positive impact on my relationship with money and honestly helps me sleep better at night."
   },
   {
     title: "The Almanack of Naval Ravikant",
@@ -54,69 +54,61 @@ export const books = [
     cover: "/images/book-covers/happiness-advantage.jpg",
     link: "https://amzn.to/4jSQqeS",
     review: "Happiness is a choice. Success comes from happiness, not the other way around."
+  },
+  {
+    title: "The Staff Engineer's Path",
+    author: "Tanya Reilly",
+    theme: "Engineering Leadership, Career Development",
+    cover: "/images/book-covers/staff-engineers-path.jpg",
+    link: "https://amzn.to/4cQGGz6",
+    review: "I’m glad I picked up this book as my first career-related read. The staff engineer role is broad and often vague, differing between companies and teams, but this book helped me define what it means in my context and how to grow from there. As I read, a lot of things clicked-especially around evaluating my work for impact rather than just taking on side quests."
+  },
+  {
+    title: "The Software Engineer's Guidebook",
+    author: "Gergely Orosz",
+    theme: "Software Engineering, Career Development, Technical Skills",
+    cover: "/images/book-covers/software-engineer-guidebook.jpg",
+    link: "https://amzn.to/4lPJYXu",
+    review: "This book covers the full range of software engineering levels. Since I’m already at staff level, I skimmed the earlier sections, but found the later chapters more relevant. What stood out to me is how the book goes beyond just coding, diving into the broader responsibilities and intangible skills needed for a successful career-like collaboration, leadership, and impact."
+  },
+  {
+    title: "I Will Teach You To Be Rich",
+    author: "Ramit Sethi",
+    theme: "Personal Finance, Money Management, Investing",
+    cover: "/images/book-covers/i-will-teach-you-to-be-rich.jpg",
+    link: "https://amzn.to/4jRZTTB",
+    review: "A no-nonsense guide to taking control of your personal finances. It breaks down complex ideas into simple, actionable steps, with clear checklists at the end of each chapter. Having read it after years of interest in finance, it reinforced good habits and showed how automating basics gets you most of the way there. It also encourages you to optimize your spending for what matters most to you, rather than just cutting costs everywhere.If I’d read this earlier, it would’ve been a game changer."
+  },
+  {
+    title: "The Very Hungry Caterpillar",
+    author: "Eric Carle",
+    theme: "Children, Bedtime",
+    cover: "/images/book-covers/hungry-caterpillar.jpg",
+    link: "https://amzn.to/3YTcwFJ",
+    review: "A timeless classic. I have read this book to my elder daughter so many times that she could recite every word just by looking at the pages-even before she could read."
+  },
+  {
+    title: "The Good Night Train",
+    author: "June Sobel",
+    theme: "Children, Bedtime",
+    cover: "/images/book-covers/good-night-train.jpg",
+    link: "https://amzn.to/3GuHD49",
+    review: "A delightful bedtime story , it became a cherished part of our bedtime ritual. Choo Choo!"
+  },
+  {
+    title: "Poppi and Vivaldi",
+    author: "Magali Le Huche",
+    theme: "Children, Music",
+    cover: "/images/book-covers/poppi-and-vivaldi.jpg",
+    link: "https://amzn.to/3S954T7",
+    review: "A beautiful, interactive sound book that I enjoy reading just as much as my kids love listening to it."
+  },
+  {
+    title: "Octopus's Garden",
+    author: "Ringo Starr",
+    theme: "Children, Music",
+    cover: "/images/book-covers/octopus-garden.jpg",
+    link: "https://amzn.to/44MKSxZ",
+    review: "As a huge Beatles fan, this delightful picture book based on their classic song was a perfect way to introduce my kids to their music."
   }
-//   {
-//     title: "The Staff Engineer's Path",
-//     author: "Tanya Reilly",
-//     theme: "Engineering Leadership, Career Development, Technical Leadership",
-//     cover: "/images/book-covers/staff-engineers-path.jpg",
-//     link: "https://amzn.to/3QpQJQY",
-//     review: "An essential guide for engineers navigating the transition to senior technical roles. Reilly's insights about the unique challenges and opportunities of staff engineering have helped me understand how to balance technical depth with organizational impact. It's particularly valuable for understanding how to create value beyond just writing code."
-//   },
-//   {
-//     title: "The Software Engineer's Guidebook",
-//     author: "Gergely Orosz",
-//     theme: "Software Engineering, Career Development, Technical Skills",
-//     cover: "/images/book-covers/software-engineer-guidebook.jpg",
-//     link: "https://amzn.to/3QpQJQY",
-//     review: "A comprehensive guide for software engineers at all levels. Orosz's practical advice on technical skills, career progression, and navigating the industry has been invaluable. It's particularly helpful for understanding the different career paths in software engineering and how to grow in your chosen direction."
-//   },
-//   {
-//     title: "I Will Teach You To Be Rich",
-//     author: "Ramit Sethi",
-//     theme: "Personal Finance, Money Management, Investing",
-//     cover: "/images/book-covers/i-will-teach-you-to-be-rich.jpg",
-//     link: "https://amzn.to/3QpQJQY",
-//     review: "A no-nonsense approach to personal finance that focuses on the big wins rather than cutting out lattes. Sethi's practical advice on automating finances, investing, and negotiating has helped me develop a more systematic approach to money management. It's particularly valuable for its focus on psychology and behavior around money."
-//   },
-//   {
-//     title: "The Very Hungry Caterpillar",
-//     author: "Eric Carle",
-//     theme: "Children",
-//     cover: "/images/book-covers/hungry-caterpillar.jpg",
-//     link: "https://amzn.to/3QpQJQY",
-//     review: "A timeless classic that teaches children about growth, transformation, and the days of the week. The beautiful illustrations and simple story make it a favorite for both kids and parents. It's particularly valuable for teaching young children about the natural world and the concept of change."
-//   },
-//   {
-//     title: "The Good Night Train",
-//     author: "June Sobel",
-//     theme: "Children",
-//     cover: "/images/book-covers/good-night-train.jpg",
-//     link: "https://amzn.to/3QpQJQY",
-//     review: "A delightful bedtime story that takes children on a magical train ride to dreamland. The rhythmic text and cozy illustrations make it perfect for winding down at the end of the day. It's particularly valuable for establishing bedtime routines and sparking children's imagination."
-//   },
-//   {
-//     title: "Poppi and Vivali",
-//     author: "Unknown",
-//     theme: "Children",
-//     cover: "/images/book-covers/poppi-and-vivali.jpg",
-//     link: "https://amzn.to/3QpQJQY",
-//     review: "A heartwarming story about friendship and adventure. The charming characters and engaging plot make it a favorite for young readers. It's particularly valuable for teaching children about the importance of friendship and working together."
-//   },
-//   {
-//     title: "Hey Grandude!",
-//     author: "Paul McCartney",
-//     theme: "Children",
-//     cover: "/images/book-covers/hey-grandude.jpg",
-//     link: "https://amzn.to/3QpQJQY",
-//     review: "A magical adventure story from Paul McCartney that celebrates the special bond between grandparents and grandchildren. The whimsical illustrations and exciting story make it perfect for shared reading. It's particularly valuable for fostering intergenerational connections and sparking children's imagination."
-//   },
-//   {
-//     title: "Octopus's Garden",
-//     author: "Ringo Starr",
-//     theme: "Children",
-//     cover: "/images/book-covers/octopus-garden.jpg",
-//     link: "https://amzn.to/3QpQJQY",
-//     review: "A delightful picture book based on the classic Beatles song. The colorful illustrations and playful story make it perfect for young readers. It's particularly valuable for introducing children to music and encouraging their imagination."
-//   }
 ]; 
