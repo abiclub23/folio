@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @font-face {
   font-family: 'Switzer';
   src: url('/fonts/Switzer-Light.woff') format('woff');

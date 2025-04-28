@@ -21,7 +21,7 @@ export default function NavLinks({ isMobile = false, onLinkClick = () => {} }) {
             href={link.href}
             className={`text-lg px-2 py-2 
               ${!link.active ? 'opacity-50' : ''} 
-              ${pathname === link.href ? 'underline underline-offset-4' : 'hover:italic'}`}
+              ${pathname === link.href ? 'underline underline-offset-4' : 'hover:text-custom-green hover:italic'}`}
             onClick={onLinkClick}
           >
             {link.label}
@@ -30,7 +30,7 @@ export default function NavLinks({ isMobile = false, onLinkClick = () => {} }) {
         <div className="pt-4 mt-2 border-t border-gray-950">
           <a 
             href="mailto:atondepu@gmail.com" 
-            className="text-gray-700 hover:italic"
+            className="text-gray-700 hover:text-custom-green hover:italic"
             onClick={onLinkClick}
           >
             Contact Me
@@ -48,7 +48,7 @@ export default function NavLinks({ isMobile = false, onLinkClick = () => {} }) {
           href={link.href}
           className={`text-lg 
             ${!link.active ? 'opacity-50' : ''} 
-            ${pathname === link.href ? 'underline underline-offset-4' : 'hover:italic'}`}
+            ${pathname === link.href ? 'underline underline-offset-4' : 'hover:text-custom-green hover:italic'}`}
           onClick={onLinkClick}
         >
           {link.label}

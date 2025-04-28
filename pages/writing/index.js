@@ -28,25 +28,24 @@ export default function WritingIndex({ articles }) {
       
       <div className="space-y-4 border-t border-gray-950 pt-6">
         {articles.map(({ slug, metadata }) => (
-          <Link 
-            key={slug} 
-            href={`/writing/${slug}`}
-            className="block hover:italic"
-          >
-            <div>
+          <div key={slug} className="block">
+            <Link 
+              href={`/writing/${slug}`}
+              className="hover:text-custom-green hover:italic"
+            >
               <h2 className="text-xl font-semibold">
                 {metadata.category ? `${metadata.category} – ` : ''}{metadata.title}
               </h2>
-              <p className="text-sm text-gray-500">
-                Published: {new Date(metadata.date).toLocaleDateString()}
-                {metadata.lastModified && metadata.lastModified !== metadata.date && (
-                  <span className="ml-2">
-                    (Updated: {new Date(metadata.lastModified).toLocaleDateString()})
-                  </span>
-                )}
-              </p>
-            </div>
-          </Link>
+            </Link>
+            <p className="text-sm text-gray-500">
+              Published: {new Date(metadata.date).toLocaleDateString()}
+              {metadata.lastModified && metadata.lastModified !== metadata.date && (
+                <span className="ml-2">
+                  (Updated: {new Date(metadata.lastModified).toLocaleDateString()})
+                </span>
+              )}
+            </p>
+          </div>
         ))}
       </div>
     </div>

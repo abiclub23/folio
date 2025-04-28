@@ -13,6 +13,7 @@ module.exports = {
           'peach': '#fabc72',
           'sage': '#688a74',
           'periwinkle': '#7494de',
+          'green': '#197B58',
         }
       },
       fontFamily: {
