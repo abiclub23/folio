@@ -7,7 +7,7 @@ export default function Books() {
       <div className="space-y-8">
         <section>
           <p className="text-lg leading-relaxed text-gray-700 mb-4">
-            A collection of books that I enjoyed, listed in no particular order. These aren't formal recommendations, but I hope you find something here that sparks your interest.
+            A collection of books that I enjoyed, including stories I’ve read to my kids, listed in no particular order. These aren't formal recommendations, but I hope you find something here that sparks your interest.
           </p>
           <p className="text-lg leading-relaxed text-gray-700 mb-4">
             Inspired by Naval Ravikant, I read for ideas and themes, not just titles or authors. I don't always finish every book; if it's not adding value, I'm okay with putting it down. My goal isn't to read a certain number of books, but to learn and grow.
