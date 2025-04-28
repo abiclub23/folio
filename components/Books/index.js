@@ -15,7 +15,7 @@ export default function Books() {
           <p className="text-lg leading-relaxed text-gray-700 mb-8">
             I stick to physical books only (no e-readers or audiobooks), so I can get off screens and set a good example for my kids. After all, kids tend to imitate what they see, not just what they're told.
           </p>
-          <p className="text-sm text-gray-500 mb-8">Last updated: April 24, 2024</p>
+          <p className="text-sm text-gray-500 mb-8">Last updated: April 27, 2024</p>
         </section>
 
         <section className="mt-12 pt-6 border-t border-gray-950">
@@ -40,7 +40,7 @@ export default function Books() {
                       {book.title} by {book.author}
                     </a>
                   </h2>
-                  <p className="text-sm text-emerald-800 mb-2">
+                  <p className="text-sm text-gray-500 mb-2">
                     <span className="font-medium">Themes:</span> {book.theme}
                   </p>
                   <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
