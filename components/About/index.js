@@ -14,7 +14,8 @@ export default function About() {
         <div className="space-y-8">
           <section>
             <p className="text-lg leading-relaxed text-gray-700">
-            I'm a dad, engineer, and Manchester United fan who enjoys writing in my spare time. This site is where I share my thoughts and musings. 
+            I'm a dad, engineer, and Manchester United fan who enjoys writing in my spare time. This site is where I share my thoughts and musings.
+            For me finishing and sharing a post matters more than perfecting it, so please excuse the writing quality at times. 
             
             </p>
           </section>
