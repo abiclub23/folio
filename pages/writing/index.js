@@ -39,6 +39,11 @@ export default function WritingIndex({ articles }) {
             </Link>
             <p className="text-sm text-gray-500">
               Published: {new Date(metadata.date).toLocaleDateString()}
+              {metadata.decisionDate && (
+                <span className="ml-2">
+                  (Decision: {new Date(metadata.decisionDate).toLocaleDateString()})
+                </span>
+              )}
               {metadata.lastModified && metadata.lastModified !== metadata.date && (
                 <span className="ml-2">
                   (Updated: {new Date(metadata.lastModified).toLocaleDateString()})
@@ -63,7 +68,8 @@ export async function getStaticProps() {
         metadata: {
           ...metadata,
           date: metadata.date ? new Date(metadata.date).toISOString() : null,
-          lastModified: metadata.lastModified ? new Date(metadata.lastModified).toISOString() : null
+          lastModified: metadata.lastModified ? new Date(metadata.lastModified).toISOString() : null,
+          decisionDate: metadata.decisionDate ? new Date(metadata.decisionDate).toISOString() : null
         }
       };
     },
