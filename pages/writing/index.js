@@ -66,7 +66,8 @@ export async function getStaticProps() {
       return {
         slug,
         metadata: {
-          ...metadata,
+          category: metadata.category ?? null,
+          title: metadata.title ?? slug,
           date: metadata.date ? new Date(metadata.date).toISOString() : null,
           lastModified: metadata.lastModified ? new Date(metadata.lastModified).toISOString() : null,
           decisionDate: metadata.decisionDate ? new Date(metadata.decisionDate).toISOString() : null
