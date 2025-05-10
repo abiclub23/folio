@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export default function Projects() {
   return (
     <div>
@@ -29,6 +31,16 @@ export default function Projects() {
             <h2 className="text-xl font-semibold">South Park CSS</h2>
           </a>
           <p className="text-sm text-gray-500">South Park characters built entirely with CSS.</p>
+        </div>
+
+        <div className="block">
+          <Link 
+            href="/projects/easter-egg"
+            className="hover:text-custom-green hover:italic"
+          >
+            <h2 className="text-xl font-semibold">Website Easter Egg</h2>
+          </Link>
+          <p className="text-sm text-gray-500">Enter the Konami Code to discover a hidden surprise!</p>
         </div>
       </div>
     </div>
