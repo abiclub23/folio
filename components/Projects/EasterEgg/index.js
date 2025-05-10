@@ -27,7 +27,6 @@ export default function EasterEgg() {
   };
 
   const triggerEasterEgg = () => {
-    alert("Old school cheat detected. 30 lives, just like the good old days!");
     setShowEasterEgg(true);
     setCharacters([]);
 
@@ -41,8 +40,11 @@ export default function EasterEgg() {
         clearInterval(interval);
         // Remove everything after 3 seconds
         setTimeout(() => {
+          alert("Old school cheat detected. 30 lives, just like the good old days!");
           setShowEasterEgg(false);
-          setCharacters([]);
+          setTimeout(() => {
+            setCharacters([]);
+          }, 1000); // Wait for fade out to complete
         }, 3000);
       }
     }, 150); // Add a new life every 150ms
@@ -95,10 +97,6 @@ export default function EasterEgg() {
 
         <p>
           Contra was one of my most-played games as a kid. It brings back memories of summer days spent with my brother and cousins, playing for hours on end. Those were the good times.
-        </p>
-
-        <p>
-          I've always been a big Nintendo fan. I even had a Game Boy with those chunky 64-in-1 cartridges-endless games and endless fun.
         </p>
       </div>
 

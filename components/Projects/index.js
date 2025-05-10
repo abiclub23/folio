@@ -38,7 +38,7 @@ export default function Projects() {
             href="/projects/easter-egg"
             className="hover:text-custom-green hover:italic"
           >
-            <h2 className="text-xl font-semibold">Website Easter Egg</h2>
+            <h2 className="text-xl font-semibold">A Fun Website Easter Egg</h2>
           </Link>
           <p className="text-sm text-gray-500">Enter the Konami Code to discover a hidden surprise!</p>
         </div>
