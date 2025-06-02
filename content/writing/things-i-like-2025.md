@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2025
 date: 2025-04-02
-lastModified: 2025-05-18
+lastModified: 2025-05-31
 ---
 
 # Things I Like – 2025
@@ -19,3 +19,4 @@ lastModified: 2025-05-18
 10. Mango Lassi
 11. Manchester Utd vs Lyon 2nd leg. What a game!
 12. Playing football after ages.
+13. Recitals
