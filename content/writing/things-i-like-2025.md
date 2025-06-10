@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2025
 date: 2025-04-02
-lastModified: 2025-05-31
+lastModified: 2025-06-11
 ---
 
 # Things I Like – 2025
@@ -20,3 +20,5 @@ lastModified: 2025-05-31
 11. Manchester Utd vs Lyon 2nd leg. What a game!
 12. Playing football after ages.
 13. Recitals
+14. SF vibes in rush hour
+15. Poolside on the weekends
