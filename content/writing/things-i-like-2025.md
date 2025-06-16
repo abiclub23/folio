@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2025
 date: 2025-04-02
-lastModified: 2025-06-11
+lastModified: 2025-06-15
 ---
 
 # Things I Like – 2025
@@ -22,3 +22,5 @@ lastModified: 2025-06-11
 13. Recitals
 14. SF vibes in rush hour
 15. Poolside on the weekends
+16. Casion night
+17. Tilden park
