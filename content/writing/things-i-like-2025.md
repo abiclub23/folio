@@ -2,13 +2,13 @@
 category: Things I Like
 title: 2025
 date: 2025-04-02
-lastModified: 2025-06-15
+lastModified: 2025-07-23
 ---
 
 # Things I Like – 2025
 
 1. All of us sleeping in one bed
-2. Morning hug with my wife
+2. Morning hugs with my wife
 3. My hoka shoes
 4. Kids lying on/next to me
 5. When all of us are cuddled up in the living room
@@ -24,3 +24,6 @@ lastModified: 2025-06-15
 15. Poolside on the weekends
 16. Casion night
 17. Tilden park
+18. Pondy: Late night beach walks,peacock fanfare
+20. Chennai: filter coffee, Ajanabi bhel puri
+21. Srilanka: elephants, Galle, turtles, KAI cafe
