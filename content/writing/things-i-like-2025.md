@@ -25,5 +25,5 @@ lastModified: 2025-07-23
 16. Casion night
 17. Tilden park
 18. Pondy: Late night beach walks,peacock fanfare
-20. Chennai: filter coffee, Ajanabi bhel puri
-21. Srilanka: elephants, Galle, turtles, KAI cafe
+19. Chennai: filter coffee, Ajanabi bhel puri
+20. Srilanka: elephants, Galle, turtles, KAI cafe
