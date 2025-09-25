@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2025
 date: 2025-04-02
-lastModified: 2025-07-23
+lastModified: 2025-09-25
 ---
 
 # Things I Like – 2025
@@ -22,8 +22,10 @@ lastModified: 2025-07-23
 13. Recitals
 14. SF vibes in rush hour
 15. Poolside on the weekends
-16. Casion night
+16. Casino night
 17. Tilden park
 18. Pondy: Late night beach walks,peacock fanfare
 19. Chennai: filter coffee, Ajanabi bhel puri
 20. Srilanka: elephants, Galle, turtles, KAI cafe
+21. Kpop party for my kid
+22. Promotion!!!!
