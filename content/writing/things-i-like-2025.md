@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2025
 date: 2025-04-02
-lastModified: 2025-09-25
+lastModified: 2025-11-07
 ---
 
 # Things I Like – 2025
@@ -29,3 +29,5 @@ lastModified: 2025-09-25
 20. Srilanka: elephants, Galle, turtles, KAI cafe
 21. Kpop party for my kid
 22. Promotion!!!!
+23. Sunrise on eastbound 580
+24. Kiddo scoring 2 goals
