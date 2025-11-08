@@ -30,15 +30,8 @@ export default function Books() {
                   />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">
-                    <a 
-                      href={book.link} 
-                      className="text-gray-900 hover:text-custom-green hover:italic"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {book.title} by {book.author}
-                    </a>
+                  <h2 className="text-xl font-semibold text-gray-900 hover:text-custom-green hover:italic">
+                    {book.title} by {book.author}
                   </h2>
                   <p className="text-sm text-gray-500 mb-2">
                     <span className="font-medium">Themes:</span> {book.theme}
@@ -50,10 +43,6 @@ export default function Books() {
               </div>
             ))}
           </div>
-        </section>
-
-        <section className="mt-12 pt-6">
-          <p className="text-sm text-gray-500 mb-8">*This page contains affiliate links.</p>
         </section>
       </div>
     </div>
