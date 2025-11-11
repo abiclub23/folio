@@ -111,24 +111,11 @@ export default function Thoughts({ thoughts = [] }) {
     );
   }, []);
 
-  // Early return for empty state
-  if (!thoughts.length) {
-    return (
-      <div>
-        <h1 className="text-4xl font-bold mb-6">Thoughts</h1>
-        <p className="text-lg text-gray-600 mb-8">
-          Fleeting thoughts that don't warrant a full post. These are my fleets—short musings captured in the moment.
-        </p>
-        <p className="text-gray-500">No thoughts yet. Check back soon!</p>
-      </div>
-    );
-  }
-
   return (
     <div>
       <h1 className="text-4xl font-bold mb-6">Thoughts</h1>
       <p className="text-lg text-gray-600 mb-8">
-        Fleeting thoughts that don't warrant a full post. These are my fleets—short musings captured in the moment.
+        Random thoughts that don't warrant a full post. Don't really engage on X, so this is my place to share them.
       </p>
       
       <div 
