@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2025
 date: 2025-04-02
-lastModified: 2025-11-07
+lastModified: 2025-11-28
 ---
 
 # Things I Like – 2025
@@ -32,3 +32,10 @@ lastModified: 2025-11-07
 23. Sunrise on eastbound 580
 24. Kiddo scoring 2 goals
 25. Wilder fields
+26. Dave's Hot Not Chicken
+27. Coldplay — Parachutes
+28. Fall dance recital
+29. Fall colors from my balcony
+30. Cloud-soaked Pleastton Ridge
+31. My presentation went well today
+32. Thanking a senior architect in person
