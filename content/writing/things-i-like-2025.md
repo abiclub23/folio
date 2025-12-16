@@ -39,3 +39,7 @@ lastModified: 2025-11-28
 30. Cloud-soaked Pleastton Ridge
 31. My presentation went well today
 32. Thanking a senior architect in person
+33. Christmas recital 
+34. Irani Chai
+35. Football passing drills with Mira
+36. New mac and airpods pro

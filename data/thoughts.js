@@ -42,6 +42,14 @@ export const thoughts = [
   {
     text: "It's a privilege to spend time with kids when they are young.",
     timestamp: "November 23, 2025"
-  }
+  },
+  {
+    text: "My kiddo made her own stickers. How cool is that?",
+    timestamp: "December 12, 2025"
+  },
+  {
+    text: "I'm liking the liquid glass iOS UI — it's pretty cool.",
+    timestamp: "December 13, 2025"
+  },
 ];
 
