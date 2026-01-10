@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2025
 date: 2025-04-02
-lastModified: 2025-12-15
+lastModified: 2025-12-29
 ---
 
 # Things I Like – 2025
@@ -43,3 +43,7 @@ lastModified: 2025-12-15
 34. Irani Chai
 35. Football passing drills with Mira
 36. New mac and airpods pro
+37. South Indian breakfast
+38. Picturesque NorCal valleys off I-580 S
+39. Paneer Biryani
+40. Beautiful San Diego
