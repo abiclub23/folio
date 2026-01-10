@@ -51,5 +51,17 @@ export const thoughts = [
     text: "I'm liking the liquid glass iOS UI — it's pretty cool.",
     timestamp: "December 13, 2025"
   },
+  {
+    text: "Libraries are awesome.",
+    timestamp: "December 23, 2025"
+  },
+  {
+    text: "The visa rescheduling change is brutal.",
+    timestamp: "December 26, 2025"
+  },
+  {
+    text: "San Diego is a beautiful city — loving all the houses on the hills.",
+    timestamp: "December 26, 2025"
+  },
 ];
 
