@@ -28,7 +28,6 @@ npm run lint      # Run ESLint
 - **Components**: PascalCase directories, each with `index.js` entry point
 - **Pages**: Lowercase filenames with hyphens (Next.js convention)
 - **Language**: JavaScript (.js), not TypeScript — despite TS being in devDeps, the codebase is plain JS
-- **No tests**: No test framework or test files exist
 
 ### Styling
 - Use **Tailwind utility classes** for all styling
@@ -54,9 +53,6 @@ npm run lint      # Run ESLint
   decisionDate: YYYY-MM-DD  # optional, for decision posts
   ---
   ```
-- Posts are statically generated via `getStaticProps` / `getStaticPaths`
-- Parsed using `gray-matter` (frontmatter) and `marked` (HTML rendering)
-- Rendered with Tailwind Typography plugin (`prose` classes)
 
 ### Data Files
 - `data/books.js` — Array of book objects: `{ title, author, theme, cover, link, review }`
@@ -65,12 +61,6 @@ npm run lint      # Run ESLint
 ### Routing
 - Home page (`/`) has no navigation bar — unique layout
 - All other pages use the shared `Layout` component with sticky navigation
-- Dynamic writing routes use `[slug].js` with slug derived from filename
-
-### Navigation
-- Desktop: Horizontal nav links in sticky header
-- Mobile: Hamburger menu with full-screen overlay + backdrop blur
-- Scroll effect on sticky header
 
 ## Adding Content
 
@@ -85,11 +75,4 @@ npm run lint      # Run ESLint
 1. Add entry to `data/books.js` with all required fields
 2. Place cover image in `public/images/book-covers/`
 
-## Architecture Notes
 
-- No database — all content is file-based (markdown + JS data files)
-- No API routes — purely static/SSG site
-- No authentication or user accounts
-- `reactStrictMode` is disabled in `next.config.js`
-- The Thoughts component is the most complex: floating animated cards with grid positioning, two display modes (float/list), CSS animations, and `prefers-reduced-motion` support
-- Easter egg at `/projects/easter-egg` activated by Konami code (arrow sequence)
