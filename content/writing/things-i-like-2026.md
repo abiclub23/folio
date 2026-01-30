@@ -9,7 +9,6 @@ lastModified: 2026-01-16
 
 1. Mission Peak
 2. Kids giggly and running around the kitchen
-3. San Diego
-4. Paneer biryani
-5. Friday walks to school with kiddo
+3. Paneer biryani
+4. Friday walks to school with kiddo
 
