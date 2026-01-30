@@ -63,5 +63,9 @@ export const thoughts = [
     text: "San Diego is a beautiful city — loving all the houses on the hills.",
     timestamp: "December 26, 2025"
   },
+  {
+    text: "The past is uncontrollable and the future is unknowable.",
+    timestamp: "January 13, 2026"
+  },
 ];
 
