@@ -22,42 +22,6 @@ npm start         # Start production server
 npm run lint      # Run ESLint
 ```
 
-## Project Structure
-
-```
-folio/
-├── components/           # React components (PascalCase directories)
-│   ├── About/
-│   ├── Books/
-│   ├── Home/
-│   ├── Layout/           # Shared layout wrapper with nav + footer
-│   ├── Navigation/       # NavLinks, MobileMenu, MenuButton
-│   ├── Projects/
-│   │   └── EasterEgg/    # Konami code easter egg
-│   ├── Thoughts/         # Floating/list thoughts with CSS Modules
-│   └── Writing/          # Article renderer + markdown utilities
-├── content/writing/      # Markdown blog posts with frontmatter
-├── data/                 # Static data (books.js, thoughts.js)
-├── docs/llm/             # LLM-facing documentation
-├── pages/                # Next.js pages (file-based routing)
-│   ├── _app.js           # App wrapper (Layout + Vercel Analytics)
-│   ├── index.js          # Home (/)
-│   ├── about.js          # About (/about)
-│   ├── books.js          # Books (/books)
-│   ├── projects.js       # Projects (/projects)
-│   ├── thoughts.js       # Thoughts (/thoughts)
-│   ├── projects/
-│   │   └── easter-egg.js # Easter egg (/projects/easter-egg)
-│   └── writing/
-│       ├── index.js      # Writing list (/writing)
-│       └── [slug].js     # Dynamic post (/writing/:slug)
-├── public/               # Static assets (fonts, images, favicon)
-├── styles/globals.css    # Global CSS + Tailwind directives + @font-face
-├── tailwind.config.js    # Custom colors, fonts, typography plugin
-├── next.config.js        # reactStrictMode: false, SWC minification
-└── package.json
-```
-
 ## Key Conventions
 
 ### Code Style
