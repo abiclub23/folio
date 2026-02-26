@@ -1,0 +1,226 @@
+import { useState } from "react";
+
+const SVG_W = 800;
+const SVG_H = 520;
+
+const PARKS = [
+  {
+    id: 1,
+    kidName: "Splash Park",
+    officialName: "Emerald Glen Park",
+    x: 482,
+    y: 280,
+    note: "The one with the water jets. A summer essential — we go at least once a week when it's hot.",
+    label: { anchor: "middle", dx: 0, dy: -16 },
+    tip: "top-right",
+  },
+  {
+    id: 2,
+    kidName: "Soccer Park",
+    officialName: "Fallon Sports Park",
+    x: 742,
+    y: 318,
+    note: "Endless fields. Great for burning off energy. The kids always want to stay until dark.",
+    label: { anchor: "end", dx: -14, dy: 4 },
+    tip: "top-left",
+  },
+  {
+    id: 3,
+    kidName: "Red Park",
+    officialName: "Shannon Park",
+    x: 55,
+    y: 175,
+    note: "Named after the big red slide. One of the oldest parks in the neighborhood.",
+    label: { anchor: "start", dx: 16, dy: 4 },
+    tip: "top-right",
+  },
+  {
+    id: 4,
+    kidName: "The Swings",
+    officialName: "Kolb Park",
+    x: 75,
+    y: 237,
+    note: "Small park, but always has the best swings open. A quick stop on the way back from school.",
+    label: { anchor: "start", dx: 16, dy: 4 },
+    tip: "top-right",
+  },
+  {
+    id: 5,
+    kidName: "Wood Park",
+    officialName: "Ted Fairfield Park",
+    x: 520,
+    y: 93,
+    note: "Wooden climbing structures that feel like a real adventure course. Worth the drive north.",
+    label: { anchor: "middle", dx: 0, dy: 22 },
+    tip: "bottom-right",
+  },
+  {
+    id: 6,
+    kidName: "Baseball Park",
+    officialName: "Dublin Sports Grounds",
+    x: 110,
+    y: 410,
+    note: "We've watched a dozen little league games here. Brings the whole neighborhood out.",
+    label: { anchor: "start", dx: 16, dy: 4 },
+    tip: "top-right",
+  },
+];
+
+function tooltipStyle(park) {
+  const l = (park.x / SVG_W) * 100;
+  const t = (park.y / SVG_H) * 100;
+  const base = { position: "absolute", zIndex: 10, pointerEvents: "none" };
+
+  if (park.tip === "top-left") {
+    return { ...base, right: `${100 - l + 1}%`, top: `${t - 18}%` };
+  }
+  if (park.tip === "bottom-right") {
+    return { ...base, left: `${l + 1}%`, top: `${t + 4}%` };
+  }
+  // default: top-right
+  return { ...base, left: `${l + 1}%`, bottom: `${100 - t + 2}%` };
+}
+
+export default function DublinParksMap() {
+  const [active, setActive] = useState(null);
+
+  return (
+    <div className="relative w-full select-none">
+      <svg
+        viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+        className="w-full rounded-xl"
+        style={{ background: "#ece2ca" }}
+        aria-label="Map of Dublin, CA parks"
+      >
+        {/* Dublin Hills — decorative north fill */}
+        <path
+          d="M0,0 L800,0 L800,88 Q680,46 540,72 Q400,22 260,66 Q130,32 0,78 Z"
+          fill="#c2d0a8"
+          opacity="0.55"
+        />
+        <text
+          x="630"
+          y="50"
+          fontSize="10"
+          fill="#7a9060"
+          fontFamily="sans-serif"
+          textAnchor="middle"
+          opacity="0.75"
+        >
+          Dublin Hills
+        </text>
+
+        {/* ── Freeway ── */}
+        <line x1="0" y1="454" x2="800" y2="454" stroke="#b4a484" strokeWidth="10" strokeLinecap="round" />
+        <text x="730" y="448" fontSize="9" fill="#7a6c52" textAnchor="middle">
+          I–580
+        </text>
+
+        {/* ── East-West Roads ── */}
+
+        {/* Dublin Blvd */}
+        <line x1="30" y1="363" x2="790" y2="363" stroke="#c8b896" strokeWidth="3.5" />
+        <text x="260" y="357" fontSize="9" fill="#9a8a6a" textAnchor="middle">
+          Dublin Blvd
+        </text>
+
+        {/* Central Pkwy (east of Dougherty) */}
+        <line x1="200" y1="288" x2="790" y2="288" stroke="#c8b896" strokeWidth="2" />
+        <text x="370" y="283" fontSize="8" fill="#b0a080" textAnchor="middle">
+          Central Pkwy
+        </text>
+
+        {/* Amador Valley Blvd (west side only) */}
+        <line x1="30" y1="227" x2="200" y2="227" stroke="#c8b896" strokeWidth="2" />
+
+        {/* Gleason Dr (east side) */}
+        <line x1="440" y1="121" x2="790" y2="121" stroke="#c8b896" strokeWidth="2" />
+        <text x="615" y="115" fontSize="8" fill="#b0a080" textAnchor="middle">
+          Gleason Dr
+        </text>
+
+        {/* ── North-South Roads ── */}
+
+        {/* Dougherty Rd */}
+        <line x1="124" y1="88" x2="124" y2="468" stroke="#c8b896" strokeWidth="3.5" />
+
+        {/* Arnold Rd */}
+        <line x1="322" y1="88" x2="322" y2="468" stroke="#c8b896" strokeWidth="2" />
+
+        {/* Tassajara Rd */}
+        <line x1="520" y1="55" x2="520" y2="400" stroke="#c8b896" strokeWidth="2.5" />
+        <text x="526" y="388" fontSize="9" fill="#9a8a6a">
+          Tassajara Rd
+        </text>
+
+        {/* Fallon Rd */}
+        <line x1="750" y1="88" x2="750" y2="400" stroke="#c8b896" strokeWidth="2" />
+        <text x="756" y="230" fontSize="9" fill="#9a8a6a">
+          Fallon Rd
+        </text>
+
+        {/* ── Emerald Glen park footprint (large park) ── */}
+        <rect x="445" y="256" width="76" height="52" rx="10" fill="#688a74" opacity="0.2" />
+
+        {/* ── Park markers ── */}
+        {PARKS.map((park) => (
+          <g
+            key={park.id}
+            onMouseEnter={() => setActive(park)}
+            onMouseLeave={() => setActive(null)}
+            style={{ cursor: "pointer" }}
+          >
+            {/* hover ring */}
+            <circle
+              cx={park.x}
+              cy={park.y}
+              r="18"
+              fill="#688a74"
+              opacity={active?.id === park.id ? 0.18 : 0}
+              style={{ transition: "opacity 0.15s" }}
+            />
+            {/* dot */}
+            <circle
+              cx={park.x}
+              cy={park.y}
+              r="9"
+              fill={active?.id === park.id ? "#197B58" : "#688a74"}
+              stroke="#ece2ca"
+              strokeWidth="2.5"
+              style={{ transition: "fill 0.15s" }}
+            />
+            {/* kid name label */}
+            <text
+              x={park.x + park.label.dx}
+              y={park.y + park.label.dy}
+              textAnchor={park.label.anchor}
+              fontSize="11"
+              fontWeight="500"
+              fill="#333"
+              fontFamily="'Switzer', sans-serif"
+            >
+              {park.kidName}
+            </text>
+          </g>
+        ))}
+
+        {/* Attribution */}
+        <text x="796" y="516" fontSize="9" fill="#b0a070" textAnchor="end">
+          Dublin, CA
+        </text>
+      </svg>
+
+      {/* Tooltip */}
+      {active && (
+        <div
+          style={tooltipStyle(active)}
+          className="bg-white border border-gray-200 rounded-lg shadow-md px-4 py-3 w-52"
+        >
+          <p className="font-semibold text-sm text-gray-900">{active.kidName}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{active.officialName}</p>
+          <p className="text-sm text-gray-600 mt-2 leading-snug">{active.note}</p>
+        </div>
+      )}
+    </div>
+  );
+}
