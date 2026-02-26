@@ -46,6 +46,19 @@ decisionDate: YYYY-MM-DD  # optional — for "My Decisions" posts
 ---
 ```
 
+## Writing Style
+
+Influenced by Scott Adams' principles: simple, direct, one idea per sentence.
+
+- **Voice**: First person, conversational — write like you're talking to a friend
+- **First sentence**: Hook immediately — don't ease in, start with the point or an interesting fact
+- **Sentences**: One thought per sentence; short to medium length; no filler phrases
+- **Words**: Plain everyday words; no jargon unless explained; every word earns its place
+- **Structure**: Use numbered lists to organize — already a natural habit; use headers for longer posts
+- **Specificity**: Concrete details over vague generalities (name the place, the car, the dollar amount)
+- **Humor**: Light and natural — don't force it
+- **Length**: As short as it needs to be; trim anything that doesn't add meaning
+
 ## Project Structure (top-level only)
 
 ```
