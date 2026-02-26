@@ -48,8 +48,6 @@ decisionDate: YYYY-MM-DD  # optional — for "My Decisions" posts
 
 ## Writing Style
 
-Influenced by Scott Adams' principles: simple, direct, one idea per sentence.
-
 - **Voice**: First person, conversational — write like you're talking to a friend
 - **First sentence**: Hook immediately — don't ease in, start with the point or an interesting fact
 - **Sentences**: One thought per sentence; short to medium length; no filler phrases
