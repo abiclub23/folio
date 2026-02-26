@@ -67,5 +67,9 @@ export const thoughts = [
     text: "The past is uncontrollable and the future is unknowable.",
     timestamp: "January 13, 2026"
   },
+  {
+    text: "Agent tool calls are just async/await at the LLM level. The model delegates work it can't do itself, pauses, and resumes with the result. Same pattern as JS, different runtime.",
+    timestamp: "February 26, 2026"
+  },
 ];
 
