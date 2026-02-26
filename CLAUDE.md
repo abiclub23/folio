@@ -11,14 +11,6 @@ Personal website for Abhi Tondepu ([abhi-tondepu.com](https://abhi-tondepu.com/)
 - **Content**: Markdown via `marked` + `gray-matter`
 - **Deployment**: Vercel + Vercel Analytics
 
-## Commands
-
-```bash
-npm run dev    # development server
-npm run build  # production build
-npm run lint   # ESLint
-```
-
 ## Key Conventions
 
 - **Language**: Plain JavaScript (.js) — TypeScript is in devDeps but not used
@@ -29,19 +21,6 @@ npm run lint   # ESLint
 - **Layout**: `max-w-5xl` container, `px-4 sm:px-6 lg:px-8` padding
 - **Home page** (`/`): no navigation bar — Layout hides nav when `pathname === '/'`
 - **No TypeScript, no SSR (`getServerSideProps`), no new CSS Module files**
-
-## Custom Colors (`tailwind.config.js`)
-
-| Token | Hex |
-|-------|-----|
-| `custom-green` | #197B58 — primary hover accent |
-| `custom-plum` | #825d73 |
-| `custom-rose` | #c06370 |
-| `custom-peach` | #fabc72 |
-| `custom-sage` | #688a74 |
-| `custom-periwinkle` | #7494de |
-
-Base: beige background `#f5ecd9`, gray text `#333`. Fonts: `font-switzer` (body), `font-playwrite` (cursive accent).
 
 ## Adding Content
 
