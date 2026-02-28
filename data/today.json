@@ -1,0 +1,24 @@
+
+
+  {
+    "headline": "layered realities",
+    "subheadline": "writing · books · projects · about",
+    "mood": "calm",
+    "layout": "split",
+    "accent": "mono",
+    "animation": {
+      "type": "image-blend",
+      "intensity": "low",
+      "interactive": true,
+      "image": "abstract-gradient",
+      "blend": "multiply",
+      "opacity": 0.3,
+      "parallax": true
+    },
+    "navigation": {
+      "style": "traditional",
+      "position": "top",
+      "glass": true
+    },
+    "generatedNote": "composited at dawn"
+  }

@@ -2,8 +2,14 @@ import '../styles/globals.css'
 import Head from 'next/head'
 import Layout from '../components/Layout'
 import { Analytics } from '@vercel/analytics/react'
+import { useRouter } from 'next/router'
 
 function MyApp({ Component, pageProps }) {
+  const router = useRouter()
+
+  // Skip layout for /today page (it renders its own navigation)
+  const skipLayout = router.pathname === '/today'
+
   return (
     <>
       <Head>
@@ -11,10 +17,14 @@ function MyApp({ Component, pageProps }) {
         <meta name="description" content="Abhi Tondepu - Personal Website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      
-      <Layout>
+
+      {skipLayout ? (
         <Component {...pageProps} />
-      </Layout>
+      ) : (
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      )}
       <Analytics />
     </>
   )
