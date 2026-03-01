@@ -464,17 +464,6 @@ export default function DublinParksMap() {
           <text x="-24" y="4" textAnchor="middle" fontSize="9" fill="#7F8C8D" fontFamily="'Fredoka', cursive">W</text>
         </g>
 
-        {/* Title */}
-        <g transform="translate(30, 35)">
-          <text x="0" y="0" fontSize="36" fontWeight="800" fill="#2C3E50" fontFamily="'Fredoka', cursive" letterSpacing="-1"
-            style={{ filter: 'drop-shadow(2px 2px 0 rgba(255,255,255,0.5))' }}>
-            Our Parks
-          </text>
-          <text x="0" y="20" fontSize="13" fill="#6A7A6F" fontFamily="'Patrick Hand', cursive">
-            Dublin, California
-          </text>
-        </g>
-
       </svg>
 
       {/* Info card */}
