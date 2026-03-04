@@ -108,4 +108,33 @@ Wisdom from the battlefield of Kurukshetra. Oddly fitting for a debugging sessio
 
 ---
 
+## Naval Ravikant
+
+Navalisms. Each one hits different at 2am when the build is broken.
+
+```json
+{
+  "spinnerVerbs": {
+    "mode": "replace",
+    "verbs": [
+      "Desire is a contract to be unhappy",
+      "Play long-term games with long-term people",
+      "Earn with your mind, not your time",
+      "Specific knowledge can't be trained",
+      "Code and media are permissionless leverage",
+      "All returns come from compound interest",
+      "Reading is faster than listening",
+      "Happiness is a choice and a skill",
+      "Be a maker, not a manager",
+      "Free time is the most dangerous time",
+      "Judge a book by its author",
+      "If it's not a definite yes, it's a no",
+      "A calm mind, a fit body, a house full of love"
+    ]
+  }
+}
+```
+
+---
+
 More sections coming. If you've got a themed set you like, let me know.
