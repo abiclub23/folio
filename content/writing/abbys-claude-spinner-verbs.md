@@ -78,4 +78,34 @@ For when you need Claude to reflect exactly how you feel at 2am debugging.
 
 ---
 
+## Bhagavad Gita
+
+Wisdom from the battlefield of Kurukshetra. Oddly fitting for a debugging session.
+
+```json
+{
+  "spinnerVerbs": {
+    "mode": "replace",
+    "verbs": [
+      "You have a right to action, not to its fruits",
+      "Change is the law of the universe",
+      "The soul is never born, nor does it die",
+      "Do your duty and leave the rest",
+      "Fear not what is not real",
+      "Man is made by his belief",
+      "Let go of what has passed",
+      "The mind is a friend and also an enemy",
+      "Arise, awake, stop not till the goal is reached",
+      "You came empty handed, you will leave empty handed",
+      "A gift given with joy is a divine gift",
+      "Lust and anger are the enemy of the soul",
+      "He who has no attachments can love others generously",
+      "One who sees inaction in action, and action in inaction"
+    ]
+  }
+}
+```
+
+---
+
 More sections coming. If you've got a themed set you like, let me know.
