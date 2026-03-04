@@ -1,12 +1,12 @@
 ---
-title: Abby's Claude Spinner Verbs
+title: Abhi's Claude Spinners
 date: 2026-03-04
 lastModified: 2026-03-04
 ---
 
-# Abby's Claude Spinner Verbs
+# Abhi's Claude Spinners
 
-Claude Code shows a little verb while it thinks — "Analyzing...", "Considering..." — you can swap these out with anything you want. I made a few themed sets. Pick a section, copy the JSON, and drop it into your `~/.claude/settings.json`.
+Claude Code shows a little word while it thinks — "Analyzing...", "Considering..." — you can swap these out with anything. Some sections below use actual verbs, others are full phrases — Claude Code accepts both. Pick a section, copy the JSON, drop it into `~/.claude/settings.json`.
 
 ## How to use
 
@@ -80,27 +80,28 @@ For when you need Claude to reflect exactly how you feel at 2am debugging.
 
 ## Bhagavad Gita
 
-Wisdom from the battlefield of Kurukshetra. Oddly fitting for a debugging session.
+Gita in verb form. Each one is a practice, not just a quote.
 
 ```json
 {
   "spinnerVerbs": {
     "mode": "replace",
     "verbs": [
-      "You have a right to action, not to its fruits",
-      "Change is the law of the universe",
-      "The soul is never born, nor does it die",
-      "Do your duty and leave the rest",
-      "Fear not what is not real",
-      "Man is made by his belief",
-      "Let go of what has passed",
-      "The mind is a friend and also an enemy",
-      "Arise, awake, stop not till the goal is reached",
-      "You came empty handed, you will leave empty handed",
-      "A gift given with joy is a divine gift",
-      "Lust and anger are the enemy of the soul",
-      "He who has no attachments can love others generously",
-      "One who sees inaction in action, and action in inaction"
+      "Surrendering",
+      "Detaching",
+      "Transcending",
+      "Renouncing",
+      "Witnessing",
+      "Karma-ing",
+      "Dharma-ing",
+      "Meditating",
+      "Accepting",
+      "Persevering",
+      "Arising",
+      "Awakening",
+      "Flowing",
+      "Moksha-seeking",
+      "Seva-ing"
     ]
   }
 }
