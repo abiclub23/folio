@@ -1,12 +1,12 @@
 ---
-title: Abhi's Claude Spinners
+title: Fun Claude Spinners
 date: 2026-03-04
-lastModified: 2026-03-04
+lastModified: 2026-03-13
 ---
 
-# Abhi's Claude Spinners
+# Fun Claude Spinners
 
-Claude Code shows a little word while it thinks — "Analyzing...", "Considering..." — you can swap these out with anything. Some sections below use actual verbs, others are full phrases — Claude Code accepts both. Pick a section, copy the JSON, drop it into `~/.claude/settings.json`.
+Just a fun way to improve your development and coding time — and a reminder of how customizable Claude is. Claude Code shows a little word while it thinks — "Analyzing...", "Considering..." — you can swap these out with anything. Some sections below use actual verbs, others are full phrases — Claude Code accepts both. Pick a section, copy the JSON, drop it into `~/.claude/settings.json`.
 
 ## How to use
 
@@ -108,8 +108,6 @@ Navalisms. Each one hits different at 2am when the build is broken.
       "Desire is a contract to be unhappy",
       "Play long-term games with long-term people",
       "Earn with your mind, not your time",
-      "Specific knowledge can't be trained",
-      "Code and media are permissionless leverage",
       "All returns come from compound interest",
       "Reading is faster than listening",
       "Happiness is a choice and a skill",
@@ -137,12 +135,10 @@ What's actually happening behind the spinner.
       "Hallucinating confidently",
       "Apologizing preemptively",
       "Adding unnecessary caveats",
-      "Confidently wrong",
       "Padding the response",
       "About to suggest a refactor",
       "Definitely not making this up",
       "Re-reading the prompt",
-      "Being diplomatically vague",
       "Adding a disclaimer"
     ]
   }
