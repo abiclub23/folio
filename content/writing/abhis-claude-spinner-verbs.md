@@ -38,8 +38,6 @@ The Thalaiva himself. Let him narrate your coding sessions.
       "Ivlo easy-a",
       "Kabali Da",
       "Style-a",
-      "Don't mistake my kindness for weakness",
-      "I don't get old, I level up",
       "Naan oru thadavai sonna nooru thadavai sonna maadiri",
       "Rewind panna mudiyathu",
       "Eppo varuven, eppadi varuven, yarukkum theriyathu",
@@ -52,25 +50,20 @@ The Thalaiva himself. Let him narrate your coding sessions.
 
 ---
 
-## Telugu Boothulu
+## Telugu comedy
 
-For when you need Claude to reflect exactly how you feel at 2am debugging.
+Telugu comedy legends. Your terminal deserves this energy.
 
 ```json
 {
   "spinnerVerbs": {
     "mode": "replace",
     "verbs": [
-      "Denguతున్నా",
-      "Gudda-ing",
-      "Puku-ing",
-      "Lanja-coding",
-      "Bokka-debugging",
-      "Nayana-ing",
-      "Baadu-fixing",
-      "Ammoru-deploying",
-      "Pichodi-ing",
-      "Arey-yem-ra-ing"
+      "Arey-yem-ra-ing",
+      "Gap vachindhi",
+      "Dinemma jeevitham",
+      "nee bonda raa nee bonda",
+      "pothavu ra re nuuvu pothavu"
     ]
   }
 }
@@ -87,21 +80,15 @@ Gita in verb form. Each one is a practice, not just a quote.
   "spinnerVerbs": {
     "mode": "replace",
     "verbs": [
-      "Surrendering",
       "Detaching",
       "Transcending",
-      "Renouncing",
       "Witnessing",
       "Karma-ing",
       "Dharma-ing",
       "Meditating",
-      "Accepting",
-      "Persevering",
-      "Arising",
       "Awakening",
       "Flowing",
-      "Moksha-seeking",
-      "Seva-ing"
+      "Moksha-seeking"
     ]
   }
 }
@@ -131,6 +118,32 @@ Navalisms. Each one hits different at 2am when the build is broken.
       "Judge a book by its author",
       "If it's not a definite yes, it's a no",
       "A calm mind, a fit body, a house full of love"
+    ]
+  }
+}
+```
+
+---
+
+## Honest Claude
+
+What's actually happening behind the spinner.
+
+```json
+{
+  "spinnerVerbs": {
+    "mode": "replace",
+    "verbs": [
+      "Hallucinating confidently",
+      "Apologizing preemptively",
+      "Adding unnecessary caveats",
+      "Confidently wrong",
+      "Padding the response",
+      "About to suggest a refactor",
+      "Definitely not making this up",
+      "Re-reading the prompt",
+      "Being diplomatically vague",
+      "Adding a disclaimer"
     ]
   }
 }
