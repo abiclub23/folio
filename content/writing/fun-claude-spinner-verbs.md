@@ -1,12 +1,16 @@
 ---
-title: Fun Claude Spinners
+title: Fun Claude Spinner Verbs
 date: 2026-03-04
 lastModified: 2026-03-13
 ---
 
-# Fun Claude Spinners
+# Fun Claude Spinner Verbs
 
-Just a fun way to improve your development and coding time — and a reminder of how customizable Claude is. Claude Code shows a little word while it thinks — "Analyzing...", "Considering..." — you can swap these out with anything. Some sections below use actual verbs, others are full phrases — Claude Code accepts both. Pick a section, copy the JSON, drop it into `~/.claude/settings.json`.
+Small things can make your AI system genuinely more enjoyable to use. The main reason I wanted to do this was to make development feel fun and personal — not just productive.
+
+Claude Code shows a little word while it thinks — "Analyzing...", "Considering..." — and you can swap these out with anything. That's it. It's a tiny thing. But when Rajinikanth is narrating your build or the Bhagavad Gita is reminding you to detach from outcomes while your tests run, it hits different. It's yours.
+
+Some sections below use actual verbs, others are full phrases — Claude Code accepts both. Pick a section, copy the JSON, drop it into `~/.claude/settings.json`.
 
 ## How to use
 
