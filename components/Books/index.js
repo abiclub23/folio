@@ -21,8 +21,8 @@ export default function Books() {
         <section className="mt-12 pt-6 border-t border-gray-950">
           <div className="space-y-8">
             {books.map((book) => (
-              <div key={book.title} className="flex gap-8 items-start">
-                <div className="w-20 sm:w-40 flex-shrink-0">
+              <div key={book.title} className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-center sm:items-start">
+                <div className="w-32 sm:w-40 flex-shrink-0">
                   <img 
                     src={book.cover} 
                     alt={`${book.title} Cover`} 

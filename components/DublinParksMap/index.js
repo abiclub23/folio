@@ -13,7 +13,7 @@ export default function DublinParksMap() {
   const [active, setActive] = useState(null)
 
   return (
-    <div className="relative w-full rounded-2xl shadow-2xl" style={{ aspectRatio: '800/520' }}>
+    <div className="relative w-full rounded-2xl shadow-2xl" style={{ aspectRatio: '800/520' }} onClick={() => setActive(null)}>
       {/* SVG layer — clipped to rounded corners */}
       <div className="absolute inset-0 rounded-2xl overflow-hidden">
         <svg viewBox="0 0 800 520" className="w-full h-full">
@@ -167,6 +167,7 @@ export default function DublinParksMap() {
               <g key={park.id}
                 onMouseEnter={() => setActive(park)}
                 onMouseLeave={() => setActive(null)}
+                onClick={(e) => { e.stopPropagation(); setActive(active?.id === park.id ? null : park) }}
                 style={{
                   cursor: 'pointer',
                   transformOrigin: `${park.x}px ${park.y}px`,
