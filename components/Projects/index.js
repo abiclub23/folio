@@ -34,13 +34,23 @@ export default function Projects() {
         </div>
 
         <div className="block">
-          <Link 
+          <Link
             href="/projects/easter-egg"
             className="hover:text-custom-green hover:italic"
           >
             <h2 className="text-xl font-semibold">A Fun Website Easter Egg</h2>
           </Link>
           <p className="text-sm text-gray-500">Enter the Konami Code to discover a hidden surprise!</p>
+        </div>
+
+        <div className="block">
+          <Link
+            href="/projects/space-invaders"
+            className="hover:text-custom-green hover:italic"
+          >
+            <h2 className="text-xl font-semibold">Claude Invaders</h2>
+          </Link>
+          <p className="text-sm text-gray-500">Space Invaders, but the aliens are Claude Code bots. They think, dodge, and drop code on you.</p>
         </div>
       </div>
     </div>
