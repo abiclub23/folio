@@ -20,9 +20,9 @@ export function getTooltipStyle(park) {
 export const PARKS = [
   {
     id: 1,
-    kidName: "Splash Park",
+    kidName: "Vidanshi Park",
     officialName: "Emerald Glen Park",
-    note: "The one with the water jets. A summer essential, but also great year round. It also hosts farmer's market in the fall and has wave water park in the summer.",
+    note: "Named after her then best friend Vidanshi, we met at this park often. A summer essential, but also great year round. It also hosts farmer's market in the fall and has wave water park in the summer.",
     x: 482, y: 280,
     color: "#5BB5F0",
     bgColor: "#A8D5E2",
@@ -33,7 +33,7 @@ export const PARKS = [
     kidName: "Red Park",
     officialName: "Bray Commons",
     note: "Named for the red climbing structure you can see from the parking lot. Probably our most used park, lot of great memories here.",
-    x: 676, y: 328,
+    x: 625, y: 285,
     color: "#F26B5A",
     bgColor: "#FFB4C8",
     icon: "🛝"
@@ -70,7 +70,7 @@ export const PARKS = [
   },
   {
     id: 6,
-    kidName: "Wood Park",
+    kidName: "Forest Park",
     officialName: "Forest Park",
     note: "Deep in Jordan Ranch. Log bridges, rope climbs. Rolling hills views.",
     x: 672, y: 165,
