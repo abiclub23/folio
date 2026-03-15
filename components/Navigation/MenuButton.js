@@ -2,7 +2,7 @@ export default function MenuButton({ isOpen, onClick }) {
   return (
     <button 
       onClick={onClick}
-      className="hover:text-gray-600 focus:outline-none"
+      className="hover:text-gray-600 focus:outline-none p-2 -m-2"
       aria-label={isOpen ? "Close menu" : "Open menu"}
     >
       {!isOpen ? (
