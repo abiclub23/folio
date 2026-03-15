@@ -1,11 +1,34 @@
 import { useState } from 'react'
 
+function getTooltipStyle(park) {
+  const leftPct = (park.x / 800) * 100
+  const topPct  = (park.y / 520) * 100
+  const flipX   = park.x > 400       // pin in right half → open card leftward
+  const flipY   = park.y > 346       // pin in bottom third → open card upward
+  const PIN_GAP = 28                  // px offset from pin center (accounts for PIN_R=18 + label)
+
+  return {
+    position: 'absolute',
+    left: `${leftPct}%`,
+    top: `${topPct}%`,
+    transform: [
+      flipX ? 'translateX(-100%)' : 'translateX(0)',
+      flipY
+        ? `translateY(calc(-100% - ${PIN_GAP}px))`
+        : `translateY(${PIN_GAP}px)`,
+    ].join(' '),
+    width: '210px',
+    pointerEvents: 'none',
+    zIndex: 20,
+  }
+}
+
 const PARKS = [
   {
     id: 1,
     kidName: "Splash Park",
     officialName: "Emerald Glen Park",
-    note: "The one with the water jets. A summer essential — we go at least once a week when it's hot.",
+    note: "The one with the water jets. A summer essential , but also great year round. It also hosts farmer's market in the fall and has wave water park in the summer.",
     x: 482, y: 280,
     color: "#5BB5F0",
     bgColor: "#A8D5E2",
@@ -13,53 +36,83 @@ const PARKS = [
   },
   {
     id: 2,
-    kidName: "Soccer Park",
-    officialName: "Fallon Sports Park",
-    note: "Endless fields. Great for burning off energy. The kids always want to stay until dark.",
-    x: 742, y: 318,
-    color: "#90E66E",
-    bgColor: "#B8E6C9",
-    icon: "⚽"
-  },
-  {
-    id: 3,
     kidName: "Red Park",
-    officialName: "Shannon Park",
-    note: "Named after the big red slide. One of the oldest parks in the neighborhood.",
-    x: 55, y: 175,
+    officialName: "Bray Commons",
+    note: "Named for the red climbing structure you can see from the parking lot. Probably our most used park, lot of great memories here.",
+    x: 676, y: 328,
     color: "#F26B5A",
     bgColor: "#FFB4C8",
     icon: "🛝"
   },
   {
-    id: 4,
-    kidName: "The Swings",
-    officialName: "Kolb Park",
-    note: "Small park, but always has the best swings open. A quick stop on the way back from school.",
-    x: 75, y: 237,
-    color: "#FFB142",
+    id: 3,
+    kidName: "Library Park",
+    officialName: "Imagine Playground",
+    note: "Right next to the library. We stop here every time — return the books, then spend an hour on the swings.",
+    x: 300, y: 352,
+    color: "#FF8C00",
     bgColor: "#FFE4B5",
-    icon: "🎪"
+    icon: "📚"
+  },
+  {
+    id: 4,
+    kidName: "School Park",
+    officialName: "Passatempo Park",
+    note: "Cross it to and fro from school. It has a nice playground , filled with classmates.",
+    x: 588, y: 248,
+    color: "#27AE60",
+    bgColor: "#C8E6C9",
+    icon: "🌿"
   },
   {
     id: 5,
-    kidName: "Wood Park",
-    officialName: "Ted Fairfield Park",
-    note: "Wooden climbing structures that feel like a real adventure course. Worth the drive north.",
-    x: 520, y: 93,
-    color: "#3FC380",
-    bgColor: "#B4E7CE",
-    icon: "🌲"
+    kidName: "Pink Park",
+    officialName: "Don Biddle Community Park",
+    note: "Biggest park on the list. The pink play equipment is impossible to miss. Zipline is a big hit with the kids.",
+    x: 378, y: 336,
+    color: "#E91E8C",
+    bgColor: "#F8BBD0",
+    icon: "🌸"
   },
   {
     id: 6,
-    kidName: "Baseball Park",
-    officialName: "Dublin Sports Grounds",
-    note: "We've watched a dozen little league games here. Brings the whole neighborhood out.",
-    x: 110, y: 410,
-    color: "#B07CC6",
-    bgColor: "#E0C9F0",
-    icon: "⚾"
+    kidName: "Wood Park",
+    officialName: "Forest Park",
+    note: "Deep in Jordan Ranch. Log bridges, rope climbs. Rolling hills views",
+    x: 672, y: 165,
+    color: "#2E7D32",
+    bgColor: "#A5D6A7",
+    icon: "🌲"
+  },
+  {
+    id: 7,
+    kidName: "Mountain Park",
+    officialName: "Sunset Park",
+    note: "Bit of a hike to get here, hence the name 'Mountain Park'. But the evening light here is something else. Great views of the city and the hills.",
+    x: 755, y: 318,
+    color: "#E67E22",
+    bgColor: "#FAD7A0",
+    icon: "🌅"
+  },
+  {
+    id: 8,
+    kidName: "Really Far Park",
+    officialName: "Schaefer Ranch Park",
+    note: "Way out in Schaefer Ranch. Feels like the edge of Dublin. Worth the drive when the weather is good.",
+    x: 55, y: 395,
+    color: "#D4845A",
+    bgColor: "#F5CBA7",
+    icon: "🚗"
+  },
+  {
+    id: 9,
+    kidName: "Parachutes Park",
+    officialName: "Wallis Ranch Community Park",
+    note: "The parachute climbing dome is the main event, the kids discovered it by accident.",
+    x: 565, y: 155,
+    color: "#2980B9",
+    bgColor: "#AED6F1",
+    icon: "🪂"
   }
 ]
 
@@ -164,6 +217,123 @@ const KidRunning = ({ x, y, scale = 1 }) => (
   </g>
 )
 
+// Dog walker — person + leash + dog
+const DogWalker = ({ x, y, scale = 1 }) => (
+  <g transform={`translate(${x}, ${y}) scale(${scale})`}>
+    <circle cx="0" cy="-20" r="5.5" fill="#F5C5A3"/>
+    <path d="M0,-14 L0,0" stroke="#C4845A" strokeWidth="2.5" strokeLinecap="round"/>
+    <path d="M0,-10 L10,-5" stroke="#C4845A" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M0,0 L-5,12" stroke="#6B5A4A" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M0,0 L5,12" stroke="#6B5A4A" strokeWidth="2" strokeLinecap="round"/>
+    {/* Leash */}
+    <path d="M10,-5 Q18,2 22,5" stroke="#8B7355" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    {/* Dog body */}
+    <ellipse cx="26" cy="6" rx="8" ry="4.5" fill="#C4A882"/>
+    <circle cx="33" cy="3.5" r="4" fill="#C4A882"/>
+    <ellipse cx="35" cy="0.5" rx="2" ry="3" fill="#B09070" transform="rotate(15,35,0.5)"/>
+    <line x1="20" y1="10" x2="19" y2="16" stroke="#8B6F52" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="24" y1="10" x2="23" y2="16" stroke="#8B6F52" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="28" y1="10" x2="29" y2="16" stroke="#8B6F52" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="32" y1="10" x2="33" y2="16" stroke="#8B6F52" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M18,5 Q14,1 15,-3" stroke="#C4A882" strokeWidth="2" fill="none" strokeLinecap="round"/>
+  </g>
+)
+
+// Picnic scene — two figures sitting on a blanket
+const PicnicScene = ({ x, y, scale = 1 }) => (
+  <g transform={`translate(${x}, ${y}) scale(${scale})`}>
+    {/* Blanket */}
+    <ellipse cx="0" cy="8" rx="22" ry="9" fill="#E8A87C" opacity="0.85"/>
+    <line x1="-7" y1="2" x2="-5" y2="17" stroke="#D4755A" strokeWidth="1.5" opacity="0.45"/>
+    <line x1="3" y1="1" x2="5" y2="17" stroke="#D4755A" strokeWidth="1.5" opacity="0.45"/>
+    {/* Person 1 — leaning back */}
+    <circle cx="-10" cy="-8" r="5.5" fill="#F5C5A3"/>
+    <path d="M-10,-2 L-10,8" stroke="#5B7EC4" strokeWidth="3" strokeLinecap="round"/>
+    <path d="M-10,2 L-18,3" stroke="#5B7EC4" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M-10,8 L-15,15" stroke="#6B5A4A" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M-10,8 L-5,15" stroke="#6B5A4A" strokeWidth="2" strokeLinecap="round"/>
+    {/* Person 2 — gesturing */}
+    <circle cx="10" cy="-8" r="5.5" fill="#F5C5A3"/>
+    <path d="M10,-2 L10,6" stroke="#E8845A" strokeWidth="3" strokeLinecap="round"/>
+    <path d="M10,2 L18,0" stroke="#E8845A" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M10,6 L5,15" stroke="#6B5A4A" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M10,6 L15,15" stroke="#6B5A4A" strokeWidth="2" strokeLinecap="round"/>
+    {/* Basket + snacks */}
+    <rect x="-2" y="4" width="7" height="6" rx="2" fill="#C4A882"/>
+    <path d="M-2,4 Q1.5,1 5,4" stroke="#8B7355" strokeWidth="1.5" fill="none"/>
+    <circle cx="15" cy="11" r="2" fill="#F2C94C" opacity="0.9"/>
+    <circle cx="19" cy="9" r="1.5" fill="#F26B5A" opacity="0.9"/>
+  </g>
+)
+
+// Pond — soft organic lake (Emerald Glen has a real lake)
+const Pond = ({ x, y }) => (
+  <g transform={`translate(${x}, ${y})`} opacity="0.78">
+    <ellipse cx="0" cy="0" rx="34" ry="16" fill="#7EC8E3" filter="url(#watercolor)"/>
+    <ellipse cx="0" cy="0" rx="32" ry="14" fill="#A8DDF2" opacity="0.5"/>
+    <ellipse cx="-5" cy="-3" rx="14" ry="6" fill="#C8EEF9" opacity="0.4"/>
+    <ellipse cx="8" cy="4" rx="8" ry="3.5" fill="none" stroke="#B8E4F2" strokeWidth="0.8" opacity="0.55"/>
+  </g>
+)
+
+// House — simple side-view flat illustration
+const House = ({ x, y, scale = 1, wallColor = "#E8D5B8", roofColor = "#C4845A" }) => (
+  <g transform={`translate(${x}, ${y}) scale(${scale})`} opacity="0.87">
+    <rect x="-12" y="0" width="24" height="17" rx="1.5" fill={wallColor} stroke="#B8A080" strokeWidth="0.7"/>
+    <path d="M-14,0 L0,-14 L14,0 Z" fill={roofColor} stroke="#906040" strokeWidth="0.7"/>
+    <rect x="-4" y="7" width="8" height="10" rx="1" fill="#8B6E50" opacity="0.72"/>
+    <rect x="-11" y="3" width="7" height="5.5" rx="1" fill="#B8D8F0" opacity="0.8"/>
+    <rect x="4" y="3" width="7" height="5.5" rx="1" fill="#B8D8F0" opacity="0.8"/>
+  </g>
+)
+
+// Car — compact top-down view
+const Car = ({ x, y, scale = 1, color = "#D4845A" }) => (
+  <g transform={`translate(${x}, ${y}) scale(${scale})`}>
+    <rect x="-11" y="-4.5" width="22" height="9" rx="3" fill={color} opacity="0.87"/>
+    <rect x="4" y="-3" width="5.5" height="6" rx="1.5" fill="#B8D8F0" opacity="0.65"/>
+    <rect x="-9.5" y="-3" width="5" height="6" rx="1.5" fill="#B8D8F0" opacity="0.45"/>
+    <rect x="-12" y="-6.5" width="5" height="3" rx="1" fill="#2A2A2A" opacity="0.75"/>
+    <rect x="-12" y="3.5" width="5" height="3" rx="1" fill="#2A2A2A" opacity="0.75"/>
+    <rect x="7" y="-6.5" width="5" height="3" rx="1" fill="#2A2A2A" opacity="0.75"/>
+    <rect x="7" y="3.5" width="5" height="3" rx="1" fill="#2A2A2A" opacity="0.75"/>
+  </g>
+)
+
+// Street lamp — small post + globe light
+const StreetLamp = ({ x, y, scale = 1 }) => (
+  <g transform={`translate(${x}, ${y}) scale(${scale})`}>
+    <rect x="-1.5" y="-1" width="3" height="3" rx="0.5" fill="#9A8070"/>
+    <line x1="0" y1="-1" x2="0" y2="-20" stroke="#9A8070" strokeWidth="1.4" strokeLinecap="round"/>
+    <path d="M0,-20 L4,-22" stroke="#9A8070" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+    <circle cx="4" cy="-23" r="2.8" fill="#F5E870" opacity="0.88"/>
+    <circle cx="4" cy="-23" r="5" fill="#FFFAD0" opacity="0.2"/>
+  </g>
+)
+
+// Bench — park bench side view
+const Bench = ({ x, y, scale = 1 }) => (
+  <g transform={`translate(${x}, ${y}) scale(${scale})`}>
+    <rect x="-10" y="-5" width="20" height="3" rx="1.5" fill="#B09070" opacity="0.88"/>
+    <rect x="-10" y="-1" width="20" height="3.5" rx="1.5" fill="#C4A882" opacity="0.92"/>
+    <line x1="-7" y1="2.5" x2="-7" y2="7" stroke="#8B7355" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="7" y1="2.5" x2="7" y2="7" stroke="#8B7355" strokeWidth="1.5" strokeLinecap="round"/>
+  </g>
+)
+
+// Bridge — wooden deck over Alamo Creek at Dublin Blvd crossing
+const Bridge = ({ x, y }) => (
+  <g transform={`translate(${x}, ${y})`}>
+    <rect x="-9" y="-4.5" width="18" height="9" rx="0.5" fill="#D0B888" opacity="0.93"/>
+    <rect x="-10" y="-6.5" width="20" height="2.2" rx="1" fill="#A88858" opacity="0.88"/>
+    <rect x="-10" y="4.3" width="20" height="2.2" rx="1" fill="#A88858" opacity="0.88"/>
+    <line x1="-7" y1="-4" x2="-7" y2="4" stroke="#B89868" strokeWidth="0.9" opacity="0.5"/>
+    <line x1="-3" y1="-4" x2="-3" y2="4" stroke="#B89868" strokeWidth="0.9" opacity="0.5"/>
+    <line x1="1" y1="-4" x2="1" y2="4" stroke="#B89868" strokeWidth="0.9" opacity="0.5"/>
+    <line x1="5" y1="-4" x2="5" y2="4" stroke="#B89868" strokeWidth="0.9" opacity="0.5"/>
+  </g>
+)
+
 // Parent pushing stroller — near Baseball Park
 const ParentStroller = ({ x, y, scale = 1 }) => (
   <g transform={`translate(${x}, ${y}) scale(${scale})`}>
@@ -190,7 +360,9 @@ export default function DublinParksMap() {
   const [active, setActive] = useState(null)
 
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl" style={{ aspectRatio: '800/520' }}>
+    <div className="relative w-full rounded-2xl shadow-2xl" style={{ aspectRatio: '800/520' }}>
+      {/* SVG layer — clipped to rounded corners */}
+      <div className="absolute inset-0 rounded-2xl overflow-hidden">
       <svg viewBox="0 0 800 520" className="w-full h-full">
         <defs>
           {/* Watercolor texture for background/parks */}
@@ -290,6 +462,9 @@ export default function DublinParksMap() {
           Alamo Creek
         </text>
 
+        {/* Pond — Emerald Glen lake near Splash Park */}
+        <Pond x={548} y={238}/>
+
         {/* Grass tufts — open areas and road edges */}
         <GrassTuft x={230} y={165} scale={1.1}/>
         <GrassTuft x={300} y={248} scale={0.9}/>
@@ -357,7 +532,22 @@ export default function DublinParksMap() {
             d="M 749 88 C 746 160 752 240 748 312 C 745 360 749 382 747 400"
             stroke="#FFFFFF" strokeWidth="4.5" fill="none" strokeLinecap="round"
           />
+          {/* Center dashes — Dublin Blvd */}
+          <path
+            d="M 25 362 Q 180 360 340 364 Q 520 367 700 362 L 790 362"
+            stroke="#F0D878" strokeWidth="1.2" fill="none"
+            strokeLinecap="round" strokeDasharray="10 14" opacity="0.5"
+          />
+          {/* Center dashes — Central Pkwy */}
+          <path
+            d="M 200 287 Q 360 285 480 289 Q 620 291 790 287"
+            stroke="#F0D878" strokeWidth="1" fill="none"
+            strokeLinecap="round" strokeDasharray="8 12" opacity="0.42"
+          />
         </g>
+
+        {/* Bridge over Alamo Creek at Dublin Blvd crossing */}
+        <Bridge x={99} y={362}/>
 
         {/* Road labels — outside filter so text stays crisp */}
         <text x="710" y="457" fontSize="11" fill="#6A7A65" fontFamily="'Patrick Hand', cursive" fontWeight="bold">I-580</text>
@@ -378,6 +568,21 @@ export default function DublinParksMap() {
         <TreeIcon x="455" y="218" scale="0.7" color="#6B8E6F"/>
         <TreeIcon x="605" y="248" scale="0.85" color="#7A9E7F"/>
 
+        {/* Houses — scattered neighborhood blocks */}
+        <House x={230} y={158} wallColor="#E8D5B8" roofColor="#C4845A"/>
+        <House x={585} y={195} wallColor="#D8D4E8" roofColor="#8870A8"/>
+        <House x={282} y={318} wallColor="#D0E4E8" roofColor="#5880A0"/>
+        <House x={635} y={328} wallColor="#E0E8D8" roofColor="#789060"/>
+
+        {/* Cars — top-down on Dublin Blvd and Central Pkwy */}
+        <Car x={475} y={362} scale={0.75} color="#E8754A"/>
+        <Car x={310} y={287} scale={0.65} color="#5B8AAE"/>
+
+        {/* Benches — near Splash Park, Baseball Park, Red Park */}
+        <Bench x={515} y={315}/>
+        <Bench x={145} y={432}/>
+        <Bench x={88} y={200}/>
+
         {/* Characters */}
         {/* Cyclist cruising near Dublin Blvd */}
         <Cyclist x={320} y={422} scale={0.85}/>
@@ -387,6 +592,10 @@ export default function DublinParksMap() {
         <KidRunning x={695} y={292} scale={0.8}/>
         {/* Parent with stroller near Baseball Park */}
         <ParentStroller x={155} y={402} scale={0.78}/>
+        {/* Dog walker between Central Pkwy and Dublin Blvd */}
+        <DogWalker x={358} y={318} scale={0.78}/>
+        {/* Picnic scene near Baseball Park */}
+        <PicnicScene x={192} y={443} scale={0.76}/>
 
         {/* Parks — compact badge pins */}
         {PARKS.map((park) => {
@@ -465,41 +674,36 @@ export default function DublinParksMap() {
         </g>
 
       </svg>
+      </div>
 
-      {/* Info card */}
+      {/* Floating tooltip — not clipped by inner overflow-hidden */}
       {active && (
         <div
-          className="absolute bottom-6 left-6 right-6 rounded-2xl"
           style={{
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 248, 231, 0.98) 100%)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-            animation: 'slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            border: `3px solid ${active.color}`,
+            ...getTooltipStyle(active),
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,248,231,0.98) 100%)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            border: `2.5px solid ${active.color}`,
+            borderRadius: '16px',
+            animation: 'tooltipAppear 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)',
           }}
         >
-          <div className="p-6">
-            <div className="flex items-start gap-4">
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg"
-                style={{ background: `linear-gradient(135deg, ${active.color} 0%, ${active.bgColor} 100%)` }}
-              >
-                <div className="text-3xl">{active.icon}</div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-3xl font-black mb-1"
-                  style={{ fontFamily: "'Fredoka', cursive", color: active.color, letterSpacing: '-0.5px' }}>
-                  {active.kidName}
-                </h3>
-                <p className="text-xs uppercase tracking-widest font-bold mb-3"
-                  style={{ color: '#95A5A6', fontFamily: "'Fredoka', cursive" }}>
-                  {active.officialName}
-                </p>
-                <p className="text-sm leading-relaxed"
-                  style={{ color: '#34495E', fontFamily: "'Patrick Hand', cursive", fontSize: '16px', lineHeight: '1.6' }}>
-                  {active.note}
-                </p>
-              </div>
+          <div className="p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-2xl">{active.icon}</span>
+              <h3 className="text-base font-black leading-tight"
+                style={{ fontFamily: "'Fredoka', cursive", color: active.color }}>
+                {active.kidName}
+              </h3>
             </div>
+            <p className="text-xs uppercase tracking-widest font-bold mb-1.5"
+              style={{ color: '#95A5A6', fontFamily: "'Fredoka', cursive" }}>
+              {active.officialName}
+            </p>
+            <p className="leading-relaxed"
+              style={{ color: '#34495E', fontFamily: "'Patrick Hand', cursive", fontSize: '13px' }}>
+              {active.note}
+            </p>
           </div>
         </div>
       )}
@@ -507,10 +711,9 @@ export default function DublinParksMap() {
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Patrick+Hand&display=swap');
 
-        @keyframes slideUp {
-          0% { transform: translateY(100px); opacity: 0; }
-          60% { transform: translateY(-8px); }
-          100% { transform: translateY(0); opacity: 1; }
+        @keyframes tooltipAppear {
+          0%   { opacity: 0; scale: 0.92; }
+          100% { opacity: 1; scale: 1; }
         }
       `}</style>
     </div>
