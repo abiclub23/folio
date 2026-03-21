@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import NavLinks from './NavLinks'
 import MobileMenu from './MobileMenu'
 import MenuButton from './MenuButton'
@@ -28,10 +29,15 @@ export default function Navigation() {
     <>
       <header className={`sticky top-0 z-50 transition-all duration-200 border-b border-gray-950 ${scrolled ? 'bg-[#f5ecd9] shadow-sm' : 'bg-[#f5ecd9]/90 backdrop-blur-sm'}`}>
         <nav className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-start items-center">
+          <div className="flex justify-between items-center">
+            {/* Logo */}
+            <Link href="/" className="font-['Playwrite_IT_Moderna'] text-xl text-[#333] hover:text-custom-green transition-colors">
+              AT
+            </Link>
+
             {/* Desktop Navigation */}
             <NavLinks />
-            
+
             {/* Mobile menu button */}
             <div className="md:hidden">
               <MenuButton isOpen={isMenuOpen} onClick={toggleMenu} />
