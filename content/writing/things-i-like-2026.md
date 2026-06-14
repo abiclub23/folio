@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2026
 date: 2026-01-10
-lastModified: 2026-06-04
+lastModified: 2026-06-13
 ---
 
 # Things I Like – 2026
@@ -19,4 +19,6 @@ lastModified: 2026-06-04
 10. New digs
 11. Summer backyard vibes
 12. Yesterday, the movie
+13. Daft Punk
+14. Lifafa
 
