@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2026
 date: 2026-01-10
-lastModified: 2026-05-23
+lastModified: 2026-06-13
 ---
 
 # Things I Like – 2026
@@ -18,4 +18,6 @@ lastModified: 2026-05-23
 9. Daily Show with Jon Stewart
 10. Home
 11. Summer backyard vibes
+12. Daft Punk
+13. Lifafa
 
