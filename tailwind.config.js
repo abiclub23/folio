@@ -7,8 +7,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        kraft: '#C8A97E',
-        'kraft-light': '#D4BC96',
+        kraft: '#D4BC96',
         ink: '#333333',
         olive: '#3D5C2E',
       },
