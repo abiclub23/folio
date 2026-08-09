@@ -7,18 +7,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'custom': {
-          'plum': '#825d73',
-          'rose': '#c06370',
-          'peach': '#fabc72',
-          'sage': '#688a74',
-          'periwinkle': '#7494de',
-          'green': '#197B58',
-        }
+        kraft: '#C8A97E',
+        'kraft-light': '#D4BC96',
+        ink: '#333333',
+        olive: '#3D5C2E',
       },
       fontFamily: {
         'switzer': ['Switzer', 'sans-serif'],
-        
         'playwrite': ['Playwrite IT Moderna', 'cursive'],
       },
     },
@@ -26,4 +21,4 @@ module.exports = {
   plugins: [
     require('@tailwindcss/typography'),
   ],
-} 
+}

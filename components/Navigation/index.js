@@ -27,11 +27,11 @@ export default function Navigation() {
   
   return (
     <>
-      <header className={`sticky top-0 z-50 transition-all duration-200 border-b border-gray-950 ${scrolled ? 'bg-[#f5ecd9] shadow-sm' : 'bg-[#f5ecd9]/90 backdrop-blur-sm'}`}>
+      <header className={`sticky top-0 z-50 transition-all duration-200 border-b border-gray-950 ${scrolled ? 'bg-kraft shadow-sm' : 'bg-kraft/90 backdrop-blur-sm'}`}>
         <nav className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link href="/" className="font-['Playwrite_IT_Moderna'] text-xl text-[#333] hover:text-custom-green transition-colors">
+            <Link href="/" className="font-playwrite text-xl text-ink hover:text-olive hover:italic transition-colors">
               AT
             </Link>
 

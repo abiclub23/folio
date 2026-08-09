@@ -14,7 +14,7 @@ export default function Projects() {
             href="https://abiclub23.github.io/BreakingBadFont/index.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-custom-green hover:italic"
+            className="hover:text-olive hover:italic"
           >
             <h2 className="text-xl font-semibold">Breaking Bad Font Generator</h2>
           </a>
@@ -26,7 +26,7 @@ export default function Projects() {
             href="https://abiclub23.github.io/Southpark/southpark.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-custom-green hover:italic"
+            className="hover:text-olive hover:italic"
           >
             <h2 className="text-xl font-semibold">South Park CSS</h2>
           </a>
@@ -36,7 +36,7 @@ export default function Projects() {
         <div className="block">
           <Link
             href="/projects/easter-egg"
-            className="hover:text-custom-green hover:italic"
+            className="hover:text-olive hover:italic"
           >
             <h2 className="text-xl font-semibold">A Fun Website Easter Egg</h2>
           </Link>
@@ -46,7 +46,7 @@ export default function Projects() {
         <div className="block">
           <Link
             href="/projects/dublin-parks"
-            className="hover:text-custom-green hover:italic"
+            className="hover:text-olive hover:italic"
           >
             <h2 className="text-xl font-semibold">Dublin Parks, Kid Edition</h2>
           </Link>
