@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2026
 date: 2026-01-10
-lastModified: 2026-07-17
+lastModified: 2026-08-08
 ---
 
 # Things I Like – 2026
@@ -23,4 +23,6 @@ lastModified: 2026-07-17
 14. Lifafa
 15. Brazil vs Norway at the World Cup
 16. Backyard birthday for kiddo
+17. Bean hollow state beach
+18. Sister family time
 

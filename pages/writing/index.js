@@ -31,7 +31,7 @@ export default function WritingIndex({ articles }) {
           <div key={slug} className="block">
             <Link 
               href={`/writing/${slug}`}
-              className="hover:text-custom-green hover:italic"
+              className="hover:text-olive hover:italic"
             >
               <h2 className="text-xl font-semibold">
                 {metadata.category ? `${metadata.category} – ` : ''}{metadata.title}

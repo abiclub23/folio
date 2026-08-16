@@ -25,9 +25,7 @@ body {
   padding: 0;
   margin: 0;
   font-family: "Switzer", sans-serif;
-  
-  color: #333;
-  background-color: #f5ecd9;
+  @apply bg-kraft text-ink;
 }
 
 a {
@@ -38,4 +36,4 @@ a {
 
 * {
   box-sizing: border-box;
-} 
+}

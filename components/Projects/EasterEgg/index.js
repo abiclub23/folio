@@ -115,7 +115,7 @@ export default function EasterEgg() {
           <div className="flex flex-col items-center gap-4">
             <button 
               onClick={triggerEasterEgg}
-              className="px-4 py-2 bg-custom-green text-white rounded hover:bg-opacity-90 transition-colors"
+              className="px-4 py-2 bg-olive text-kraft rounded hover:bg-opacity-90 transition-colors"
             >
               Test Easter Egg
             </button>

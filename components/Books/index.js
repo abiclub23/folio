@@ -30,7 +30,7 @@ export default function Books() {
                   />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 hover:text-custom-green hover:italic">
+                  <h2 className="text-xl font-semibold text-gray-900 hover:text-olive hover:italic">
                     {book.title} by {book.author}
                   </h2>
                   <p className="text-sm text-gray-500 mb-2">
