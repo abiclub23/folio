@@ -52,6 +52,16 @@ export default function Projects() {
           </Link>
           <p className="text-sm text-gray-500">A custom map of our neighborhood parks, named by the kids.</p>
         </div>
+
+        <div className="block">
+          <Link
+            href="/projects/roadster"
+            className="hover:text-olive hover:italic"
+          >
+            <h2 className="text-xl font-semibold">Roadster Launch</h2>
+          </Link>
+          <p className="text-sm text-gray-500">0–60 in under a second, off a ramp into the sky. Land it.</p>
+        </div>
       </div>
     </div>
   )
