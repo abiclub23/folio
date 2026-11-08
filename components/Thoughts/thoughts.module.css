@@ -213,7 +213,7 @@
 }
 
 .listText {
-  color: #2c2c2c;
+  color: #333333; /* ink */
   font-size: 16px;
   line-height: 1.6;
   margin-bottom: 0.75rem;
@@ -221,9 +221,8 @@
 
 .listTimestamp {
   display: block;
-  color: #8d6e63;
+  color: #564B3B; /* ink-muted */
   font-size: 12px;
-  opacity: 0.7;
 }
 
 .listObserver {

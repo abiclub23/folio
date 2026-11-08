@@ -11,7 +11,7 @@ export default function Home() {
 
       <div className="py-8">
         <div className="space-y-12">
-          <p className="text-lg text-gray-950">
+          <p className="text-lg text-ink">
             Hi, I'm Abhi Tondepu
           </p>
           <nav className="space-y-8">

@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2026
 date: 2026-01-10
-lastModified: 2026-08-08
+lastModified: 2026-11-07
 ---
 
 # Things I Like – 2026
@@ -25,4 +25,7 @@ lastModified: 2026-08-08
 16. Backyard birthday for kiddo
 17. Bean hollow state beach
 18. Sister family time
+19. Mystery spot
+20. Santa cruz lighthouse
+21. Park sunsets
 
