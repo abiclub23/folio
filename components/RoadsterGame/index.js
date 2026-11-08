@@ -70,6 +70,13 @@ function newGame() {
   }
 }
 
+// Thrust doubles as the start key: launch from the line, or reset once a run has ended
+function pressThrust(game) {
+  if (game.phase === 'ready') startGame(game)
+  else if ((game.phase === 'landed' || game.phase === 'crashed') && game.t - game.endedAt > 0.6) return newGame()
+  return game
+}
+
 function startGame(game) {
   if (game.phase !== 'ready') return
   game.phase = 'countdown'
@@ -81,11 +88,6 @@ function hash(i) {
   const r = Math.sin(i * 12.9898) * 43758.5453
   return r - Math.floor(r)
 }
-const CLOUDS = Array.from({ length: 80 }, (_, i) => ({
-  x: -150 + i * 55 + hash(i) * 30,
-  y: 35 + ((i * 37) % 170),
-  w: 14 + hash(i + 99) * 18,
-}))
 const STARS = Array.from({ length: 110 }, (_, i) => ({ x: hash(i + 7), y: hash(i + 300), r: 0.6 + hash(i + 600) * 1.2 }))
 
 function step(game, input, dt) {
@@ -123,6 +125,7 @@ function step(game, input, dt) {
     game.flightTime += dt
     const turn = (input.left ? 1 : 0) - (input.right ? 1 : 0)
     car.angle = wrapAngle(car.angle + turn * TURN_RATE * dt)
+    if (turn) emitJets(game, turn)
     if (input.thrust) {
       car.vx += -Math.sin(car.angle) * THRUST * dt
       car.vy += Math.cos(car.angle) * THRUST * dt
@@ -184,9 +187,9 @@ function emitThrust(game) {
   const car = game.car
   const fx = Math.cos(car.angle), fy = Math.sin(car.angle)
   const ux = -fy, uy = fx
-  for (const off of [-0.85, 0.85]) {
-    const px = car.x + fx * off + ux * 0.1
-    const py = car.y + fy * off + uy * 0.1
+  for (const off of [-0.9, 0.9]) {
+    const px = car.x + fx * off + ux * 0.18
+    const py = car.y + fy * off + uy * 0.18
     const speed = 18 + Math.random() * 8
     game.particles.push({
       x: px, y: py,
@@ -202,6 +205,29 @@ function emitThrust(game) {
       })
     }
   }
+}
+
+// Small side jets at the nose and tail push opposite ways to rotate the car
+const JETS = [{ x: 1.95, y: 0.52 }, { x: -2.05, y: 0.62 }]
+function jetDirs(turn) {
+  // Nose up (turn > 0): nose jet blows down, tail jet blows up
+  return [-turn, turn]
+}
+function emitJets(game, turn) {
+  if (Math.random() < 0.5) return
+  const car = game.car
+  const fx = Math.cos(car.angle), fy = Math.sin(car.angle)
+  const ux = -fy, uy = fx
+  const dirs = jetDirs(turn)
+  JETS.forEach((j, i) => {
+    const s = 8 + Math.random() * 4
+    game.particles.push({
+      x: car.x + fx * j.x + ux * j.y, y: car.y + fy * j.x + uy * j.y,
+      vx: car.vx + ux * dirs[i] * s + (Math.random() - 0.5) * 2,
+      vy: car.vy + uy * dirs[i] * s + (Math.random() - 0.5) * 2,
+      g: -1, drag: 3, life: 0.5 + Math.random() * 0.4, max: 0.9, size: 0.35, kind: 'smoke',
+    })
+  })
 }
 
 function dust(game) {
@@ -329,18 +355,6 @@ function render(ctx, game, W, H) {
   drawRange(ctx, W, horizon, cam.left * S * 0.06, H * 0.2, '#0e1420', 1.3)
   drawRange(ctx, W, horizon, cam.left * S * 0.16, H * 0.1, '#0a0e16', 4.2)
 
-  // Faint night clouds
-  ctx.fillStyle = 'rgba(150,170,210,0.07)'
-  for (const c of CLOUDS) {
-    const x = sx(c.x), y = sy(c.y), w = c.w * S
-    if (x + w < 0 || x - w > W || y < -w || y > H + w) continue
-    ctx.beginPath()
-    ctx.ellipse(x, y, w * 0.5, w * 0.16, 0, 0, Math.PI * 2)
-    ctx.ellipse(x - w * 0.2, y - w * 0.05, w * 0.24, w * 0.15, 0, 0, Math.PI * 2)
-    ctx.ellipse(x + w * 0.12, y - w * 0.09, w * 0.22, w * 0.18, 0, 0, Math.PI * 2)
-    ctx.fill()
-  }
-
   // Ground
   if (gy < H) {
     const ground = ctx.createLinearGradient(0, gy, 0, H)
@@ -443,7 +457,7 @@ function render(ctx, game, W, H) {
     const a = Math.max(0, p.life / p.max)
     const r = Math.max(1.5, p.size * S)
     if (p.kind === 'smoke' || p.kind === 'dust') {
-      ctx.fillStyle = p.kind === 'dust' ? `rgba(160,140,110,${a * 0.5})` : `rgba(120,120,125,${a * 0.35})`
+      ctx.fillStyle = p.kind === 'dust' ? `rgba(160,140,110,${a * 0.5})` : `rgba(238,240,244,${a * 0.45})`
       ctx.beginPath()
       ctx.arc(sx(p.x), sy(p.y), r * (2 - a), 0, Math.PI * 2)
       ctx.fill()
@@ -461,9 +475,9 @@ function render(ctx, game, W, H) {
     const r = Math.max(2, p.size * S * (p.kind === 'fire' ? 1.6 : 1))
     const g = ctx.createRadialGradient(sx(p.x), sy(p.y), 0, sx(p.x), sy(p.y), r)
     if (p.kind === 'flame') {
-      g.addColorStop(0, `rgba(230,242,255,${a})`)
-      g.addColorStop(0.4, `rgba(90,160,255,${a * 0.8})`)
-      g.addColorStop(1, 'rgba(40,80,255,0)')
+      g.addColorStop(0, `rgba(255,255,255,${a})`)
+      g.addColorStop(0.45, `rgba(235,238,244,${a * 0.6})`)
+      g.addColorStop(1, 'rgba(220,224,232,0)')
     } else {
       g.addColorStop(0, `rgba(255,240,200,${a})`)
       g.addColorStop(0.4, `rgba(255,${Math.round(110 + 90 * a)},40,${a * 0.8})`)
@@ -563,17 +577,17 @@ function drawCar(ctx, game, x, y, S) {
   const thrusting = game.phase === 'flight' && game.input && game.input.thrust
   if (thrusting) {
     ctx.globalCompositeOperation = 'lighter'
-    for (const off of [-0.85, 0.85]) {
+    for (const off of [-0.9, 0.9]) {
       const len = 1.4 + Math.random() * 0.9
-      const g = ctx.createLinearGradient(0, 0.1, 0, 0.1 - len)
-      g.addColorStop(0, 'rgba(235,245,255,1)')
-      g.addColorStop(0.3, 'rgba(110,180,255,0.95)')
-      g.addColorStop(1, 'rgba(40,90,255,0)')
+      const g = ctx.createLinearGradient(0, 0.12, 0, 0.12 - len)
+      g.addColorStop(0, 'rgba(255,255,255,1)')
+      g.addColorStop(0.35, 'rgba(240,244,250,0.85)')
+      g.addColorStop(1, 'rgba(225,230,240,0)')
       ctx.fillStyle = g
       ctx.beginPath()
-      ctx.moveTo(off - 0.22, 0.1)
-      ctx.quadraticCurveTo(off - 0.18, 0.1 - len * 0.5, off, 0.1 - len)
-      ctx.quadraticCurveTo(off + 0.18, 0.1 - len * 0.5, off + 0.22, 0.1)
+      ctx.moveTo(off - 0.13, 0.12)
+      ctx.quadraticCurveTo(off - 0.2, 0.12 - len * 0.5, off, 0.12 - len)
+      ctx.quadraticCurveTo(off + 0.2, 0.12 - len * 0.5, off + 0.13, 0.12)
       ctx.closePath()
       ctx.fill()
     }
@@ -737,10 +751,50 @@ function drawCar(ctx, game, x, y, S) {
     ctx.arc(wx, WHEEL_R, 0.045, 0, Math.PI * 2)
     ctx.fill()
   }
-  for (const off of [-0.85, 0.85]) {
-    ctx.fillStyle = thrusting ? '#93c5fd' : '#4b5563'
-    ctx.fillRect(off - 0.16, 0.12, 0.32, 0.1)
+  // Thruster pods on the side, nozzles pointing down
+  for (const off of [-0.9, 0.9]) {
+    ctx.fillStyle = '#2a2d33'
+    rrect(ctx, off - 0.3, 0.27, 0.6, 0.14, 0.07)
+    ctx.fill()
+    ctx.fillStyle = '#6b7079'
+    ctx.fillRect(off - 0.3, 0.37, 0.6, 0.025)
+    ctx.fillStyle = '#3a3e45'
+    ctx.beginPath()
+    ctx.moveTo(off - 0.08, 0.27)
+    ctx.lineTo(off + 0.08, 0.27)
+    ctx.lineTo(off + 0.13, 0.12)
+    ctx.lineTo(off - 0.13, 0.12)
+    ctx.closePath()
+    ctx.fill()
+    if (thrusting) {
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(off - 0.12, 0.11, 0.24, 0.03)
+    }
   }
+  // Steering jets at nose and tail
+  const turn = game.phase === 'flight' && game.input ? (game.input.left ? 1 : 0) - (game.input.right ? 1 : 0) : 0
+  JETS.forEach((j, i) => {
+    ctx.fillStyle = '#1a1c20'
+    ctx.beginPath()
+    ctx.arc(j.x, j.y, 0.06, 0, Math.PI * 2)
+    ctx.fill()
+    if (!turn) return
+    const d = jetDirs(turn)[i]
+    const len = 0.5 + Math.random() * 0.3
+    ctx.globalCompositeOperation = 'lighter'
+    const g = ctx.createLinearGradient(j.x, j.y, j.x, j.y + d * len)
+    g.addColorStop(0, 'rgba(255,255,255,0.95)')
+    g.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = g
+    ctx.beginPath()
+    ctx.moveTo(j.x - 0.05, j.y)
+    ctx.lineTo(j.x + 0.05, j.y)
+    ctx.lineTo(j.x + 0.12, j.y + d * len)
+    ctx.lineTo(j.x - 0.12, j.y + d * len)
+    ctx.closePath()
+    ctx.fill()
+    ctx.globalCompositeOperation = 'source-over'
+  })
   ctx.restore()
 }
 
@@ -864,16 +918,17 @@ function drawHud(ctx, game, W, H) {
 
   // Message card
   let msg = null
-  if (game.phase === 'ready') msg = ['ROADSTER LAUNCH', 'Hit 60 in under a second, fly off the ramp, land it.']
+  if (game.phase === 'ready') msg = ['ROADSTER LAUNCH', W < 520 ? 'Tap Thrust to launch' : 'Press ↑ or W to launch']
   else if (game.phase === 'crashed') msg = ['CRASHED', game.reason]
   else if (game.phase === 'landed') {
     msg = ['LANDED', `${Math.round(game.touchdown.descent * MPH)} mph touchdown · ${Math.round(Math.abs(car.x - RUNWAY) * FT)} ft from the ramp · ${Math.round(game.maxAlt * FT)} ft high`]
   }
+  const again = (game.phase === 'landed' || game.phase === 'crashed') && game.t - game.endedAt > 0.6
   if (msg) {
     const boxW = Math.min(W - 24, 480)
     const top = Math.max(H * 0.2, 12 + panelH + 16)
     ctx.fillStyle = 'rgba(15,17,21,0.78)'
-    rrect(ctx, (W - boxW) / 2, top, boxW, 78, 14)
+    rrect(ctx, (W - boxW) / 2, top, boxW, again ? 100 : 78, 14)
     ctx.fill()
     ctx.strokeStyle = 'rgba(255,255,255,0.14)'
     ctx.lineWidth = 1
@@ -885,6 +940,11 @@ function drawHud(ctx, game, W, H) {
     ctx.fillStyle = 'rgba(255,255,255,0.8)'
     ctx.font = `500 ${W < 420 ? 11 : 13}px ${FONT}`
     ctx.fillText(msg[1], W / 2, top + 58)
+    if (again) {
+      ctx.fillStyle = 'rgba(255,255,255,0.55)'
+      ctx.font = `600 12px ${FONT}`
+      ctx.fillText(W < 520 ? 'Tap Thrust to go again' : 'Press ↑ or W to go again', W / 2, top + 84)
+    }
   }
 }
 
@@ -903,14 +963,10 @@ export default function RoadsterGame() {
   const inputRef = useRef({ thrust: false, left: false, right: false })
   const [phase, setPhase] = useState('ready')
 
-  const start = () => {
-    const game = gameRef.current
-    if (game.phase === 'ready') {
-      startGame(game)
-    } else if (game.phase === 'landed' || game.phase === 'crashed') {
-      gameRef.current = newGame()
-      gameRef.current.input = inputRef.current
-    }
+  const pressStart = () => {
+    const next = pressThrust(gameRef.current)
+    next.input = inputRef.current
+    gameRef.current = next
   }
 
   useEffect(() => {
@@ -942,14 +998,7 @@ export default function RoadsterGame() {
           handled = true
         }
       }
-      const game = gameRef.current
-      const ended = game.phase === 'landed' || game.phase === 'crashed'
-      if (down && !e.repeat && (e.key === ' ' || e.key === 'Enter' || e.key === 'r' || e.key === 'R')) {
-        if (game.phase === 'ready' || (ended && game.t - game.endedAt > 0.6)) {
-          start()
-          handled = true
-        }
-      }
+      if (down && !e.repeat && KEYS.thrust.includes(e.key)) pressStart()
       if (handled) e.preventDefault()
     }
     const down = onKey(true), up = onKey(false)
@@ -984,14 +1033,17 @@ export default function RoadsterGame() {
   }, [])
 
   const hold = (action) => ({
-    onPointerDown: (e) => { e.preventDefault(); inputRef.current[action] = true },
+    onPointerDown: (e) => {
+      e.preventDefault()
+      inputRef.current[action] = true
+      if (action === 'thrust') pressStart()
+    },
     onPointerUp: () => { inputRef.current[action] = false },
     onPointerLeave: () => { inputRef.current[action] = false },
     onPointerCancel: () => { inputRef.current[action] = false },
     onContextMenu: (e) => e.preventDefault(),
   })
 
-  const ended = phase === 'landed' || phase === 'crashed'
   const btn = 'select-none rounded border border-gray-950 py-4 text-lg font-semibold active:bg-gray-200 transition-colors'
 
   return (
@@ -999,21 +1051,15 @@ export default function RoadsterGame() {
       <canvas ref={canvasRef} className="block w-full rounded border border-gray-950" />
 
       <div className="mt-3">
-        {phase === 'ready' || ended ? (
-          <button onClick={start} className={`${btn} w-full bg-[#c8102e] text-white active:bg-red-800`}>
-            {phase === 'ready' ? 'GO' : 'Try again'}
-          </button>
-        ) : (
-          <div className="grid grid-cols-4 gap-2">
-            <button {...hold('left')} className={btn} aria-label="Tilt back">⟲</button>
-            <button {...hold('thrust')} className={`${btn} col-span-2`}>THRUST</button>
-            <button {...hold('right')} className={btn} aria-label="Tilt forward">⟳</button>
-          </div>
-        )}
+        <div className="grid grid-cols-4 gap-2">
+          <button {...hold('left')} className={btn} aria-label="Tilt back">⟲</button>
+          <button {...hold('thrust')} className={`${btn} col-span-2`}>{phase === 'ready' ? 'LAUNCH' : 'THRUST'}</button>
+          <button {...hold('right')} className={btn} aria-label="Tilt forward">⟳</button>
+        </div>
       </div>
 
       <p className="text-sm text-gray-500 mt-3">
-        Keyboard: Space to launch, then Space/W to thrust, A/D or arrows to tilt. Land with descent under 11 mph and tilt under 15°.
+        Keyboard: ↑ or W to launch and thrust, A/D or ←/→ to tilt. Land with descent under 11 mph and tilt under 15°.
       </p>
     </div>
   )
