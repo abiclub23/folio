@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PARKS, getTooltipStyle } from './parks'
 import {
   PIN_R, GrassTuft, Bird, Wildflowers, TreeIcon,
@@ -9,14 +9,33 @@ import {
   DogWalker, PicnicScene, ParentStroller,
 } from './characters'
 
-export default function DublinParksMap() {
+export default function DublinParksMap({ fullPage = false, onLayout }) {
   const [active, setActive] = useState(null)
+  const [isNarrow, setIsNarrow] = useState(false)
+
+  // Phones get a bottom-sheet card instead of a floating tooltip
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const update = () => setIsNarrow(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  // Let the page re-center the scroll area whenever the map's width changes
+  useEffect(() => { onLayout?.() }, [isNarrow, onLayout])
 
   return (
-    <div className="relative w-full rounded-2xl shadow-2xl" style={{ aspectRatio: '800/520' }} onClick={() => setActive(null)}>
+    <div
+      className={fullPage ? 'relative' : 'relative w-full rounded-2xl shadow-2xl'}
+      style={fullPage
+        ? { aspectRatio: '800/520', flexShrink: 0, width: isNarrow ? 'calc(100svh * 800 / 520)' : 'min(100vw, calc(100svh * 800 / 520))' }
+        : { aspectRatio: '800/520' }}
+      onClick={() => setActive(null)}
+    >
       {/* SVG layer — clipped to rounded corners */}
-      <div className="absolute inset-0 rounded-2xl overflow-hidden">
-        <svg viewBox="0 0 800 520" className="w-full h-full">
+      <div className={fullPage ? (isNarrow ? 'absolute inset-0 overflow-hidden' : 'absolute inset-0') : 'absolute inset-0 rounded-2xl overflow-hidden'}>
+        <svg viewBox="0 0 800 520" className="w-full h-full" style={fullPage && !isNarrow ? { overflow: 'visible' } : undefined}>
           <defs>
             <filter id="watercolor">
               <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise"/>
@@ -49,14 +68,14 @@ export default function DublinParksMap() {
           </defs>
 
           {/* Background */}
-          <rect width="800" height="520" fill="#C8D5B9"/>
-          <rect width="800" height="520" fill="url(#grassNoise)" opacity="0.2"/>
-          <rect width="800" height="520" fill="url(#vignette)"/>
+          <rect x="-2000" y="-2000" width="4800" height="4520" fill="#C8D5B9"/>
+          <rect x="-2000" y="-2000" width="4800" height="4520" fill="url(#grassNoise)" opacity="0.2"/>
+          <rect x="-2000" y="-2000" width="4800" height="4520" fill="url(#vignette)"/>
 
           {/* Dublin Hills */}
-          <path d="M0,0 L800,0 L800,95 Q680,55 540,82 Q400,38 260,78 Q130,48 0,88 Z"
+          <path d="M-2000,-2000 L2800,-2000 L2800,95 L800,95 Q680,55 540,82 Q400,38 260,78 Q130,48 0,88 L-2000,88 Z"
             fill="#A8B89A" opacity="0.6" filter="url(#watercolor)"/>
-          <path d="M0,0 L800,0 L800,88 Q685,52 545,78 Q405,38 265,74 Q135,46 0,84 Z"
+          <path d="M-2000,-2000 L2800,-2000 L2800,88 L800,88 Q685,52 545,78 Q405,38 265,74 Q135,46 0,84 L-2000,84 Z"
             fill="#B8C9AA" opacity="0.3"/>
           <text x="615" y="52" fontSize="14" fill="#5A7355" fontFamily="'Fredoka', cursive" fontWeight="600" opacity="0.85">
             Dublin Hills
@@ -98,11 +117,11 @@ export default function DublinParksMap() {
 
           {/* Roads */}
           <g filter="url(#handDrawn)">
-            <path d="M 0 452 Q 120 449 260 453 Q 420 456 580 452 Q 700 449 800 452"
+            <path d="M -2000 452 L 0 452 Q 120 449 260 453 Q 420 456 580 452 Q 700 449 800 452 L 2800 452"
               stroke="#FFFFFF" strokeWidth="14" fill="none" strokeLinecap="round"/>
-            <path d="M 25 362 Q 180 360 340 364 Q 520 367 700 362 L 790 362"
+            <path d="M -2000 362 L 25 362 Q 180 360 340 364 Q 520 367 700 362 L 2800 362"
               stroke="#FFFFFF" strokeWidth="7" fill="none" strokeLinecap="round"/>
-            <path d="M 200 287 Q 360 285 480 289 Q 620 291 790 287"
+            <path d="M -2000 287 L 200 287 Q 360 285 480 289 Q 620 291 800 287 L 2800 287"
               stroke="#FFFFFF" strokeWidth="5" fill="none" strokeLinecap="round"/>
             <path d="M 124 88 C 121 180 127 270 123 363 C 120 410 124 435 122 460"
               stroke="#FFFFFF" strokeWidth="6" fill="none" strokeLinecap="round"/>
@@ -165,8 +184,8 @@ export default function DublinParksMap() {
             const isHovered = active?.id === park.id
             return (
               <g key={park.id}
-                onMouseEnter={() => setActive(park)}
-                onMouseLeave={() => setActive(null)}
+                onPointerEnter={(e) => { if (e.pointerType === 'mouse') setActive(park) }}
+                onPointerLeave={(e) => { if (e.pointerType === 'mouse') setActive(null) }}
                 onClick={(e) => { e.stopPropagation(); setActive(active?.id === park.id ? null : park) }}
                 style={{
                   cursor: 'pointer',
@@ -208,27 +227,31 @@ export default function DublinParksMap() {
       {/* Floating tooltip */}
       {active && (
         <div style={{
-          ...getTooltipStyle(active),
+          ...(isNarrow
+            ? { position: 'fixed', left: 12, right: 12, bottom: 12, zIndex: 40, pointerEvents: 'auto' }
+            : getTooltipStyle(active)),
           background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,248,231,0.98) 100%)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
           border: `2.5px solid ${active.color}`,
           borderRadius: '16px',
           animation: 'tooltipAppear 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}>
-          <div className="p-3">
+          <div className="p-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-2xl">{active.icon}</span>
               <h3 className="text-base font-black leading-tight"
                 style={{ fontFamily: "'Fredoka', cursive", color: active.color }}>
                 {active.kidName}
               </h3>
+              {isNarrow && (
+                <button type="button" aria-label="Close" onClick={() => setActive(null)}
+                  className="ml-auto px-2 text-2xl leading-none text-ink-muted">×</button>
+              )}
             </div>
-            <p className="text-xs uppercase tracking-widest font-bold mb-1.5"
-              style={{ color: '#95A5A6', fontFamily: "'Fredoka', cursive" }}>
+            <p className="text-xs uppercase tracking-widest font-bold mb-1.5 text-ink-muted">
               {active.officialName}
             </p>
-            <p className="leading-relaxed"
-              style={{ color: '#34495E', fontFamily: "'Patrick Hand', cursive", fontSize: '13px' }}>
+            <p className={`leading-relaxed text-ink-soft ${isNarrow ? 'text-base' : 'text-sm'}`}>
               {active.note}
             </p>
           </div>
