@@ -86,7 +86,7 @@ function newGame() {
 // Thrust doubles as the start key: launch from the line, or reset once a run has ended
 function pressThrust(game) {
   if (game.phase === 'ready') startGame(game)
-  else if ((game.phase === 'landed' || game.phase === 'crashed') && game.t - game.endedAt > 0.6) return newGame()
+  else if ((game.phase === 'landed' || (game.phase === 'crashed' && crashCardReady(game))) && game.t - game.endedAt > 0.6) return newGame()
   return game
 }
 
@@ -94,15 +94,6 @@ function startGame(game) {
   if (game.phase !== 'ready') return
   game.phase = 'runway'
   game.t = 0
-  say(game, 'Ludicrous mode: engaged')
-}
-
-// The driver's speech bubble; each line plays at most once per run
-function say(game, text, key = text) {
-  if (!game.said) game.said = {}
-  if (game.said[key]) return
-  game.said[key] = true
-  game.bubble = { text, until: game.t + 2.2 }
 }
 
 const CRASH_QUIPS = [
@@ -150,14 +141,10 @@ function step(game, input, dt) {
 
   if (game.phase === 'runway') {
     car.x += game.speed * dt
-    if (game.zeroSixty === null && game.speed * MPH >= 60) {
-      game.zeroSixty = game.t
-      say(game, `0–60 in ${game.t.toFixed(2)}s. Not bad.`, 'zero60')
-    }
+    if (game.zeroSixty === null && game.speed * MPH >= 60) game.zeroSixty = game.t
     if (car.x >= RUNWAY) {
       game.phase = 'ramp'
       game.phi = (car.x - RUNWAY) / RAMP_R
-      say(game, 'Oh no. Oh YES.')
     }
   } else if (game.phase === 'ramp') {
     game.speed -= G * Math.sin(game.phi) * dt
@@ -170,11 +157,8 @@ function step(game, input, dt) {
       car.vx = game.speed * Math.cos(game.phi)
       car.vy = game.speed * Math.sin(game.phi)
       game.flightTime = 0
-      if (Math.abs(wrapAngle(game.phi)) > 2) say(game, 'I can see my house!')
-      else say(game, 'This is fine.')
     } else if (game.phi < 0) {
       // Rolled back down onto the runway
-      say(game, 'Needs more speed...')
       game.phase = 'runway'
       car.x = RUNWAY + game.phi * RAMP_R
       car.y = 0
@@ -195,7 +179,6 @@ function step(game, input, dt) {
       car.vx += -Math.sin(car.angle) * THRUST * dt
       car.vy += Math.cos(car.angle) * THRUST * dt
       emitThrust(game)
-      if (game.flightTime > 0.3) say(game, 'Jetpack: activate!')
     }
     car.vy -= G * dt
     const v = Math.hypot(car.vx, car.vy)
@@ -204,7 +187,6 @@ function step(game, input, dt) {
     car.x += car.vx * dt
     car.y += car.vy * dt
     game.maxAlt = Math.max(game.maxAlt, car.y)
-    if (-car.vy > 15 && car.y > 8) say(game, 'Brakes? BRAKES?!')
 
     const corners = carCorners(car)
     const hitRamp =
@@ -225,8 +207,6 @@ function step(game, input, dt) {
         car.y = 0
         car.vy = 0
         dust(game)
-        const mph = descent * MPH
-        game.bubble = { text: mph <= 3 ? 'Smooth.' : mph <= 7 ? 'Nailed it.' : 'Ow. My coffee.', until: game.t + 2.5 }
       }
     }
   } else if (game.phase === 'rolling') {
@@ -241,6 +221,8 @@ function step(game, input, dt) {
       confetti(game)
     }
   }
+
+  if (game.driver) stepDriver(game.driver, dt)
 
   // Particles
   for (const p of game.particles) {
@@ -342,7 +324,7 @@ function crash(game, reason) {
   game.phase = 'crashed'
   game.reason = reason
   game.quip = CRASH_QUIPS[Math.floor(Math.random() * CRASH_QUIPS.length)]
-  game.bubble = null
+  ejectDriver(game)
   game.endedAt = game.t
   for (let i = 0; i < 110; i++) {
     const a = Math.random() * Math.PI * 2
@@ -356,6 +338,38 @@ function crash(game, reason) {
       kind, color: i % 8 === 0 ? '#c1121f' : '#1f2937',
     })
   }
+}
+
+// On a crash the driver pops out, does a somersault, lands on their feet and gives a thumbs up
+function ejectDriver(game) {
+  const car = game.car
+  const y0 = Math.max(car.y, 0) + 1
+  const vy = 11
+  const vx = Math.max(-6, Math.min(6, car.vx * 0.15))
+  // Spin a whole number of flips so the landing is upright
+  const airtime = (vy + Math.sqrt(vy * vy + 2 * G * y0)) / G
+  const flips = Math.max(1, Math.round(airtime / 1.1))
+  game.driver = { x: car.x, y: y0, vx, vy, rot: 0, spin: (-2 * Math.PI * flips) / airtime, state: 'air', t: 0 }
+}
+
+function stepDriver(d, dt) {
+  d.t += dt
+  if (d.state !== 'air') return
+  d.vy -= G * dt
+  d.x += d.vx * dt
+  d.y += d.vy * dt
+  d.rot += d.spin * dt
+  if (d.y <= 0 && d.vy < 0) {
+    d.y = 0
+    d.rot = 0
+    d.state = 'standing'
+    d.t = 0
+  }
+}
+
+// Crash card waits until the driver has landed and given the thumbs up
+function crashCardReady(game) {
+  return !game.driver || (game.driver.state === 'standing' && game.driver.t > 0.9)
 }
 
 // ---------- Sound ----------
@@ -511,7 +525,8 @@ function rrect(ctx, x, y, w, h, r) {
 }
 
 function updateCamera(game, W, H, dt) {
-  const car = game.car
+  // After a crash, follow the ejected driver
+  const car = game.driver ? { x: game.driver.x, y: game.driver.y, vx: game.driver.vx } : game.car
   const parked = game.phase === 'ready'
   const span = TOWER_X + TOWER_W + 10
   const slow = slowMo(game)
@@ -519,6 +534,8 @@ function updateCamera(game, W, H, dt) {
     ? Math.max(TOWER_H * 1.35, (span * H) / W)
     : slow
       ? 20
+      : game.driver
+        ? Math.max(26, game.driver.y * 1.3 + 16)
       : Math.min(170, Math.max(40, car.y * 1.3 + 25))
   const cam = game.cam || { viewH: targetViewH, left: 0, bottom: -6 }
   const k = Math.min(1, dt * 3)
@@ -734,31 +751,65 @@ function render(ctx, game, W, H) {
     ctx.fillRect(0, H - bar, W, bar)
   }
 
-  if (game.bubble && game.t < game.bubble.until && game.phase !== 'crashed') {
-    drawBubble(ctx, game.bubble.text, sx(car.x), sy(car.y) - Math.max(56, CAR_H * S * 1.8), W)
-  }
+  if (game.driver) drawDriver(ctx, game.driver, sx(game.driver.x), sy(game.driver.y), S)
 }
 
-// Comic speech bubble with a tail pointing down at the car
-function drawBubble(ctx, text, x, y, W) {
-  ctx.font = `700 13px ${FONT}`
-  const w = ctx.measureText(text).width + 22
-  const h = 30
-  const bx = Math.min(W - w - 8, Math.max(8, x - w / 2))
-  const by = Math.max(8, y - h)
-  ctx.fillStyle = '#ffffff'
-  rrect(ctx, bx, by, w, h, 15)
+// Little astronaut-style driver, origin at the feet, ~1.8 m tall
+function drawDriver(ctx, d, x, y, S) {
+  const vis = Math.max(1, 52 / (1.8 * S))
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.scale(S * vis, -S * vis)
+  ctx.translate(0, 0.9)
+  ctx.rotate(d.rot)
+  ctx.translate(0, -0.9)
+  const suit = '#f1f3f6', edge = '#1f2329'
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+
+  const tuck = d.state === 'air' ? 1 : 0
+  const thumbs = d.state === 'standing' && d.t > 0.3
+  const limb = (x1, y1, x2, y2, w) => {
+    ctx.lineWidth = w + 0.06
+    ctx.strokeStyle = edge
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
+    ctx.lineWidth = w
+    ctx.strokeStyle = suit
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
+  }
+
+  // Legs (tucked while flipping)
+  limb(-0.1, 0.85, tuck ? -0.25 : -0.12, tuck ? 0.55 : 0.05, 0.16)
+  limb(0.1, 0.85, tuck ? 0.3 : 0.12, tuck ? 0.5 : 0.05, 0.16)
+  // Torso
+  ctx.fillStyle = edge
+  rrect(ctx, -0.22, 0.78, 0.44, 0.64, 0.14)
   ctx.fill()
-  const tx = Math.min(bx + w - 18, Math.max(bx + 18, x))
-  ctx.beginPath()
-  ctx.moveTo(tx - 7, by + h - 1)
-  ctx.lineTo(tx + 7, by + h - 1)
-  ctx.lineTo(tx, by + h + 9)
-  ctx.closePath()
+  ctx.fillStyle = suit
+  rrect(ctx, -0.19, 0.81, 0.38, 0.58, 0.12)
   ctx.fill()
-  ctx.fillStyle = '#17191c'
-  ctx.textAlign = 'center'
-  ctx.fillText(text, bx + w / 2, by + 20)
+  ctx.fillStyle = '#d62828'
+  ctx.fillRect(-0.19, 1.05, 0.38, 0.05)
+  // Arms: tucked in the air, one raised for the thumbs up once standing
+  limb(-0.2, 1.3, tuck ? -0.3 : -0.32, tuck ? 0.95 : 0.85, 0.13)
+  if (thumbs) {
+    limb(0.2, 1.3, 0.38, 1.62, 0.13)
+    ctx.fillStyle = edge
+    ctx.beginPath(); ctx.arc(0.4, 1.68, 0.09, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = suit
+    ctx.beginPath(); ctx.arc(0.4, 1.68, 0.065, 0, Math.PI * 2); ctx.fill()
+    limb(0.4, 1.72, 0.4, 1.86, 0.06)
+  } else {
+    limb(0.2, 1.3, tuck ? 0.3 : 0.32, tuck ? 0.95 : 0.85, 0.13)
+  }
+  // Helmet with a dark visor facing forward
+  ctx.fillStyle = edge
+  ctx.beginPath(); ctx.arc(0, 1.58, 0.22, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = suit
+  ctx.beginPath(); ctx.arc(0, 1.58, 0.19, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = '#111318'
+  ctx.beginPath(); ctx.ellipse(0.06, 1.59, 0.12, 0.09, 0, 0, Math.PI * 2); ctx.fill()
+  ctx.restore()
 }
 
 // White ")" ramp with a lattice tower behind it, like the demo
@@ -1181,7 +1232,7 @@ function drawHud(ctx, game, W, H) {
   // Message card: title, main line, optional detail
   let msg = null
   if (game.phase === 'ready') msg = { title: 'ROADSTER LAUNCH', line: W < 520 ? 'Hold Thrust to rev and go' : 'Hold ↑ or W to rev and go', color: '#f8fafc' }
-  else if (game.phase === 'crashed') msg = { title: 'CRASHED', line: game.quip, detail: game.reason, color: bad }
+  else if (game.phase === 'crashed' && crashCardReady(game)) msg = { title: 'CRASHED', line: game.quip, detail: game.reason, color: bad }
   else if (game.phase === 'landed') {
     const mph = game.touchdown.descent * MPH
     msg = {
@@ -1190,11 +1241,11 @@ function drawHud(ctx, game, W, H) {
       color: good,
     }
   }
-  const again = (game.phase === 'landed' || game.phase === 'crashed') && game.t - game.endedAt > 0.6
+  const again = (game.phase === 'landed' || (game.phase === 'crashed' && crashCardReady(game))) && game.t - game.endedAt > 0.6
   if (msg) {
     const small = W < 420
-    const boxW = Math.min(W - 24, 480)
-    const boxH = 78 + (msg.detail ? 20 : 0) + (again ? 24 : 0)
+    const boxW = Math.min(W - 24, 620)
+    const boxH = (small ? 96 : 112) + (msg.detail ? 22 : 0) + (again ? 26 : 0)
     const top = Math.max(H / 2 - boxH / 2, 12 + panelH + 16)
     ctx.fillStyle = 'rgba(15,17,21,0.82)'
     rrect(ctx, (W - boxW) / 2, top, boxW, boxH, 14)
@@ -1204,22 +1255,28 @@ function drawHud(ctx, game, W, H) {
     ctx.stroke()
     ctx.textAlign = 'center'
     ctx.fillStyle = msg.color
-    ctx.font = `800 ${small ? 20 : 24}px ${FONT}`
-    ctx.fillText(msg.title, W / 2, top + 34)
-    ctx.fillStyle = 'rgba(255,255,255,0.85)'
-    ctx.font = `500 ${small ? 11 : 13}px ${FONT}`
-    ctx.fillText(msg.line, W / 2, top + 58)
-    let y = top + 58
+    // Shrink the big lines to fit narrow screens
+    const fit = (text, weight, size, maxW) => {
+      let s = size
+      ctx.font = `${weight} ${s}px ${FONT}`
+      while (s > 12 && ctx.measureText(text).width > maxW) ctx.font = `${weight} ${--s}px ${FONT}`
+    }
+    fit(msg.title, 800, small ? 28 : 36, boxW - 28)
+    ctx.fillText(msg.title, W / 2, top + (small ? 40 : 48))
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'
+    fit(msg.line, 600, small ? 17 : 20, boxW - 28)
+    let y = top + (small ? 72 : 86)
+    ctx.fillText(msg.line, W / 2, y)
     if (msg.detail) {
-      y += 20
+      y += 24
       ctx.fillStyle = 'rgba(255,255,255,0.55)'
-      ctx.font = `500 ${small ? 11 : 12}px ${FONT}`
+      ctx.font = `500 ${small ? 12 : 14}px ${FONT}`
       ctx.fillText(msg.detail, W / 2, y)
     }
     if (again) {
       ctx.fillStyle = 'rgba(255,255,255,0.5)'
-      ctx.font = `600 12px ${FONT}`
-      ctx.fillText(W < 520 ? 'Tap Thrust to go again' : 'Press ↑ or W to go again', W / 2, y + 26)
+      ctx.font = `600 13px ${FONT}`
+      ctx.fillText(W < 520 ? 'Tap Thrust to go again' : 'Press ↑ or W to go again', W / 2, y + 28)
     }
   }
 }
