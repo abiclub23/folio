@@ -1,4 +1,14 @@
 /** @type {import('tailwindcss').Config} */
+const colors = {
+  kraft: '#D4BC96',
+  ink: {
+    DEFAULT: '#333333', // primary: headings, body
+    soft: '#443D33',    // secondary: intros, descriptions
+    muted: '#514839',   // tertiary: dates, timestamps, captions
+  },
+  olive: '#3D5C2E',
+};
+
 module.exports = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx}',
@@ -6,14 +16,33 @@ module.exports = {
   ],
   theme: {
     extend: {
-      colors: {
-        kraft: '#D4BC96',
-        ink: '#333333',
-        olive: '#3D5C2E',
-      },
+      colors,
       fontFamily: {
         'switzer': ['Switzer', 'sans-serif'],
         'playwrite': ['Playwrite IT Moderna', 'cursive'],
+      },
+      // Replace the typography plugin's cool-gray defaults with the warm palette
+      typography: {
+        DEFAULT: {
+          css: {
+            '--tw-prose-body': colors.ink.DEFAULT,
+            '--tw-prose-headings': colors.ink.DEFAULT,
+            '--tw-prose-lead': colors.ink.soft,
+            '--tw-prose-links': colors.ink.DEFAULT,
+            '--tw-prose-bold': colors.ink.DEFAULT,
+            '--tw-prose-counters': colors.ink.soft,
+            '--tw-prose-bullets': colors.ink.soft,
+            '--tw-prose-hr': colors.ink.DEFAULT,
+            '--tw-prose-quotes': colors.ink.DEFAULT,
+            '--tw-prose-quote-borders': colors.ink.muted,
+            '--tw-prose-captions': colors.ink.muted,
+            '--tw-prose-code': colors.ink.DEFAULT,
+            '--tw-prose-pre-code': colors.ink.DEFAULT,
+            '--tw-prose-pre-bg': 'transparent',
+            '--tw-prose-th-borders': colors.ink.muted,
+            '--tw-prose-td-borders': colors.ink.muted,
+          },
+        },
       },
     },
   },

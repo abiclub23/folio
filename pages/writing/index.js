@@ -12,7 +12,7 @@ export default function WritingIndex({ articles }) {
   return (
     <div>
       <h1 className="text-4xl font-bold mb-6">Writing</h1>
-      <p className="text-lg text-gray-600 mb-8">
+      <p className="text-lg text-ink-soft mb-8">
         A collection of thoughts, experiences, and observations. Below are a few themed categories, though most posts are general musings.
       </p>
 
@@ -21,12 +21,12 @@ export default function WritingIndex({ articles }) {
         {Object.entries(CATEGORY_DESCRIPTIONS).map(([category, description]) => (
           <div key={category}>
             <h2 className="text-xl font-semibold mb-2">{category}</h2>
-            <p className="text-gray-600 text-lg">{description}</p>
+            <p className="text-ink-soft text-lg">{description}</p>
           </div>
         ))}
       </div>
       
-      <div className="space-y-4 border-t border-gray-950 pt-6">
+      <div className="space-y-4 border-t border-ink pt-6">
         {articles.map(({ slug, metadata }) => (
           <div key={slug} className="block">
             <Link 
@@ -37,7 +37,7 @@ export default function WritingIndex({ articles }) {
                 {metadata.category ? `${metadata.category} – ` : ''}{metadata.title}
               </h2>
             </Link>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-ink-muted">
               Published: {new Date(metadata.date).toLocaleDateString()}
               {metadata.decisionDate && (
                 <span className="ml-2">
