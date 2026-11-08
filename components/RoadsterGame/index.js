@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 // Physics (meters, seconds, y points up)
 const G = 9.8
 const LAUNCH_ACCEL = 30 // m/s² → 0–60 mph in ~0.9s
-const LAUNCH_SPEED = 33 // top speed on the runway (~74 mph): just enough to carry the car over the top of the curve
 const RUNWAY = 40 // flat track before the ramp
 const RAMP_R = 20 // radius of the ")" curve
 const RAMP_END = (165 * Math.PI) / 180 // the curve bends back over the top; the car leaves upside down, heading back
@@ -20,7 +19,7 @@ const WHEEL_R = 0.36
 const SAFE_VY = 5 // max touchdown descent speed (m/s, ~11 mph)
 const SAFE_TILT = (15 * Math.PI) / 180
 const ROLL_BRAKE = 14
-const AIR_DRAG = 0.008 // quadratic drag, terminal velocity ~35 m/s
+const AIR_DRAG = 0.02 // quadratic drag: bleeds off launch speed fast, terminal velocity ~22 m/s
 const COUNTDOWN = 1.5
 const STEP = 1 / 120
 
@@ -98,12 +97,14 @@ function step(game, input, dt) {
 
   if (game.phase === 'countdown') {
     game.countdown -= dt
+    tireSmoke(game, 0.6) // revving on the line
     if (game.countdown <= 0) {
       game.phase = 'runway'
       game.t = 0
     }
   } else if (game.phase === 'runway') {
-    game.speed = Math.min(LAUNCH_SPEED, game.speed + LAUNCH_ACCEL * dt)
+    game.speed += LAUNCH_ACCEL * dt
+    tireSmoke(game, 1)
     car.x += game.speed * dt
     if (game.zeroSixty === null && game.speed * MPH >= 60) game.zeroSixty = game.t
     if (car.x >= RUNWAY) {
@@ -210,6 +211,17 @@ function emitThrust(game) {
       })
     }
   }
+}
+
+// White tire smoke billowing from the rear wheel while revving and launching
+function tireSmoke(game, rate) {
+  if (Math.random() > rate * 0.5) return
+  const car = game.car
+  game.particles.push({
+    x: car.x - 1.6 + (Math.random() - 0.5) * 0.4, y: 0.3,
+    vx: -3 - Math.random() * 6 - game.speed * 0.15, vy: 0.5 + Math.random() * 1.5,
+    g: -0.6, drag: 1.2, life: 1.2 + Math.random() * 1.2, max: 2.4, size: 0.9 + Math.random() * 0.6, kind: 'smoke',
+  })
 }
 
 // Small side jets at the nose and tail push opposite ways to rotate the car
