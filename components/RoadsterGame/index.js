@@ -12,14 +12,17 @@ const RAMP_TOP_Y = RAMP_R * (1 - Math.cos(RAMP_END))
 const THRUST = 22
 const TURN_RATE = 2.2 // rad/s
 const CAR_L = 4.5
-const CAR_H = 1.3
+const CAR_H = 1.2
+const WHEEL_R = 0.36
 const SAFE_VY = 5 // max touchdown descent speed (m/s, ~11 mph)
 const SAFE_TILT = (15 * Math.PI) / 180
 const ROLL_BRAKE = 10
+const COUNTDOWN = 1.5
 const STEP = 1 / 120
 
 const MPH = 2.23694
 const FT = 3.28084
+const FONT = 'Switzer, sans-serif'
 
 function rampHeightAt(x) {
   if (x < RUNWAY || x > RAMP_TOP_X) return null
@@ -46,11 +49,12 @@ function carCorners(car) {
 
 function newGame() {
   return {
-    phase: 'ready', // ready → runway → ramp → flight → rolling → landed | crashed
+    phase: 'ready', // ready → countdown → runway → ramp → flight → rolling → landed | crashed
     car: { x: 4, y: 0, vx: 0, vy: 0, angle: 0 },
     speed: 0,
     phi: 0,
     t: 0,
+    countdown: COUNTDOWN,
     zeroSixty: null,
     flightTime: 0,
     maxAlt: 0,
@@ -61,23 +65,35 @@ function newGame() {
   }
 }
 
+function startGame(game) {
+  if (game.phase !== 'ready') return
+  game.phase = 'countdown'
+  game.countdown = COUNTDOWN
+}
+
 // Deterministic scenery
-const CLOUDS = Array.from({ length: 80 }, (_, i) => {
+function hash(i) {
   const r = Math.sin(i * 12.9898) * 43758.5453
-  const f = r - Math.floor(r)
-  return { x: -150 + i * 55 + f * 30, y: 35 + ((i * 37) % 170), w: 14 + f * 18 }
-})
-const STARS = Array.from({ length: 90 }, (_, i) => {
-  const a = Math.sin(i * 78.233) * 43758.5453
-  const b = Math.sin(i * 39.425) * 24634.6345
-  return { x: a - Math.floor(a), y: b - Math.floor(b) }
-})
+  return r - Math.floor(r)
+}
+const CLOUDS = Array.from({ length: 80 }, (_, i) => ({
+  x: -150 + i * 55 + hash(i) * 30,
+  y: 35 + ((i * 37) % 170),
+  w: 14 + hash(i + 99) * 18,
+}))
+const STARS = Array.from({ length: 110 }, (_, i) => ({ x: hash(i + 7), y: hash(i + 300), r: 0.6 + hash(i + 600) * 1.2 }))
 
 function step(game, input, dt) {
   const car = game.car
   game.t += dt
 
-  if (game.phase === 'runway') {
+  if (game.phase === 'countdown') {
+    game.countdown -= dt
+    if (game.countdown <= 0) {
+      game.phase = 'runway'
+      game.t = 0
+    }
+  } else if (game.phase === 'runway') {
     game.speed += LAUNCH_ACCEL * dt
     car.x += game.speed * dt
     if (game.zeroSixty === null && game.speed * MPH >= 60) game.zeroSixty = game.t
@@ -133,6 +149,7 @@ function step(game, input, dt) {
         game.phase = 'rolling'
         car.y = 0
         car.vy = 0
+        dust(game)
       }
     }
   } else if (game.phase === 'rolling') {
@@ -144,12 +161,15 @@ function step(game, input, dt) {
     if (car.vx === 0) {
       game.phase = 'landed'
       game.endedAt = game.t
+      confetti(game)
     }
   }
 
   // Particles
   for (const p of game.particles) {
     p.vy -= p.g * dt
+    p.vx *= 1 - (p.drag || 0) * dt
+    p.vy *= 1 - (p.drag || 0) * dt
     p.x += p.vx * dt
     p.y += p.vy * dt
     if (p.y < 0) { p.y = 0; p.vy *= -0.3; p.vx *= 0.7 }
@@ -162,15 +182,46 @@ function emitThrust(game) {
   const car = game.car
   const fx = Math.cos(car.angle), fy = Math.sin(car.angle)
   const ux = -fy, uy = fx
-  for (const off of [-0.8, 0.8]) {
-    const px = car.x + fx * off + ux * 0.15
-    const py = car.y + fy * off + uy * 0.15
+  for (const off of [-0.85, 0.85]) {
+    const px = car.x + fx * off + ux * 0.1
+    const py = car.y + fy * off + uy * 0.1
     const speed = 18 + Math.random() * 8
     game.particles.push({
       x: px, y: py,
       vx: car.vx - ux * speed + (Math.random() - 0.5) * 4,
       vy: car.vy - uy * speed + (Math.random() - 0.5) * 4,
-      g: -2, life: 0.35 + Math.random() * 0.3, max: 0.65, size: 0.5, kind: 'smoke',
+      g: -2, life: 0.3 + Math.random() * 0.3, max: 0.6, size: 0.45, kind: 'flame',
+    })
+    if (Math.random() < 0.35) {
+      game.particles.push({
+        x: px, y: py,
+        vx: car.vx * 0.3 - ux * speed * 0.4, vy: car.vy * 0.3 - uy * speed * 0.4,
+        g: -1.5, drag: 1.5, life: 1 + Math.random() * 0.8, max: 1.8, size: 0.9, kind: 'smoke',
+      })
+    }
+  }
+}
+
+function dust(game) {
+  const car = game.car
+  for (let i = 0; i < 30; i++) {
+    game.particles.push({
+      x: car.x + (Math.random() - 0.5) * 3, y: 0.2,
+      vx: car.vx * 0.3 + (Math.random() - 0.5) * 10, vy: Math.random() * 3,
+      g: -0.5, drag: 2, life: 0.8 + Math.random() * 0.8, max: 1.6, size: 0.8, kind: 'dust',
+    })
+  }
+}
+
+function confetti(game) {
+  const car = game.car
+  const colors = ['#ef4444', '#f8fafc', '#facc15', '#38bdf8']
+  for (let i = 0; i < 70; i++) {
+    game.particles.push({
+      x: car.x, y: 2,
+      vx: (Math.random() - 0.5) * 16, vy: 8 + Math.random() * 12,
+      g: G * 0.6, drag: 1.2, life: 2 + Math.random(), max: 3, size: 0.25, kind: 'confetti',
+      color: colors[i % colors.length],
     })
   }
 }
@@ -180,14 +231,16 @@ function crash(game, reason) {
   game.phase = 'crashed'
   game.reason = reason
   game.endedAt = game.t
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 110; i++) {
     const a = Math.random() * Math.PI * 2
-    const s = 4 + Math.random() * 22
+    const s = 4 + Math.random() * 24
+    const kind = i % 4 === 0 ? 'debris' : i % 4 === 1 ? 'smoke' : 'fire'
     game.particles.push({
       x: car.x, y: Math.max(car.y, 0.5),
       vx: Math.cos(a) * s + car.vx * 0.2, vy: Math.abs(Math.sin(a)) * s,
-      g: G, life: 0.8 + Math.random() * 1.2, max: 2, size: 0.4 + Math.random() * 0.6,
-      kind: i % 3 === 0 ? 'debris' : 'fire',
+      g: kind === 'smoke' ? -1 : G, drag: kind === 'smoke' ? 1.5 : 0,
+      life: 0.8 + Math.random() * 1.6, max: 2.4, size: kind === 'smoke' ? 1.4 : 0.35 + Math.random() * 0.6,
+      kind, color: i % 8 === 0 ? '#c1121f' : '#1f2937',
     })
   }
 }
@@ -199,23 +252,44 @@ function mixColor(c1, c2, t) {
   const r = Math.round(lerp(c1[0], c2[0], t)), g = Math.round(lerp(c1[1], c2[1], t)), b = Math.round(lerp(c1[2], c2[2], t))
   return `rgb(${r},${g},${b})`
 }
+function rrect(ctx, x, y, w, h, r) {
+  ctx.beginPath()
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r)
+  else ctx.rect(x, y, w, h)
+}
 
 function updateCamera(game, W, H, dt) {
   const car = game.car
-  const ready = game.phase === 'ready'
-  const targetViewH = ready ? 80 : Math.min(170, Math.max(40, car.y * 1.3 + 25))
+  const parked = game.phase === 'ready' || game.phase === 'countdown'
+  const targetViewH = parked ? 80 : Math.min(170, Math.max(40, car.y * 1.3 + 25))
   const cam = game.cam || { viewH: targetViewH, left: 0, bottom: -6 }
   const k = Math.min(1, dt * 3)
   cam.viewH = lerp(cam.viewH, targetViewH, k)
   const scale = H / cam.viewH
   const viewW = W / scale
-  const targetLeft = ready ? -6 : car.x - viewW * 0.35
-  const targetBottom = car.y < cam.viewH * 0.6 ? -cam.viewH * 0.08 : car.y - cam.viewH * 0.6
+  const targetLeft = parked ? -6 : car.x - viewW * 0.35
+  const targetBottom = car.y < cam.viewH * 0.6 ? -cam.viewH * 0.1 : car.y - cam.viewH * 0.6
   cam.left = game.cam ? lerp(cam.left, targetLeft, Math.min(1, dt * 6)) : targetLeft
   cam.bottom = game.cam ? lerp(cam.bottom, targetBottom, Math.min(1, dt * 6)) : targetBottom
   cam.scale = scale
   game.cam = cam
   return cam
+}
+
+// Rolling mountain silhouette in screen space, scrolled by parallax offset
+function drawRange(ctx, W, base, offset, amp, color, seed) {
+  if (base - amp > ctx.canvas.height) return
+  ctx.fillStyle = color
+  ctx.beginPath()
+  ctx.moveTo(0, base + 2)
+  for (let x = 0; x <= W + 8; x += 8) {
+    const u = x + offset
+    const n = Math.sin(u * 0.004 + seed) * 0.45 + Math.sin(u * 0.011 + seed * 2.1) * 0.3 + Math.sin(u * 0.027 + seed * 3.7) * 0.15
+    ctx.lineTo(x, base - amp * (0.55 + n * 0.5))
+  }
+  ctx.lineTo(W, base + 2)
+  ctx.closePath()
+  ctx.fill()
 }
 
 function render(ctx, game, W, H) {
@@ -225,174 +299,358 @@ function render(ctx, game, W, H) {
   const sy = (y) => H - (y - cam.bottom) * S
   const car = game.car
 
+  ctx.save()
+  if (game.phase === 'crashed') {
+    const k = Math.max(0, 1 - (game.t - game.endedAt) / 0.5)
+    ctx.translate((Math.random() - 0.5) * 14 * k, (Math.random() - 0.5) * 14 * k)
+  }
+
   // Sky darkens with altitude, stars come out up high
   const dark = Math.min(1, Math.max(0, car.y / 220))
   const sky = ctx.createLinearGradient(0, 0, 0, H)
-  sky.addColorStop(0, mixColor([126, 192, 238], [10, 14, 40], dark))
-  sky.addColorStop(1, mixColor([226, 241, 250], [52, 72, 120], dark))
+  sky.addColorStop(0, mixColor([92, 164, 222], [6, 10, 30], dark))
+  sky.addColorStop(0.7, mixColor([176, 216, 240], [30, 44, 88], dark))
+  sky.addColorStop(1, mixColor([248, 226, 198], [70, 80, 120], dark))
   ctx.fillStyle = sky
-  ctx.fillRect(0, 0, W, H)
+  ctx.fillRect(-20, -20, W + 40, H + 40)
 
   const starAlpha = Math.min(1, Math.max(0, (car.y - 80) / 120))
   if (starAlpha > 0) {
     ctx.fillStyle = `rgba(255,255,255,${starAlpha})`
-    for (const s of STARS) ctx.fillRect(s.x * W, s.y * H * 0.8, 1.5, 1.5)
+    for (const s of STARS) {
+      ctx.beginPath()
+      ctx.arc(s.x * W, s.y * H * 0.85, s.r, 0, Math.PI * 2)
+      ctx.fill()
+    }
   }
 
+  const gy = sy(0)
+  const horizon = gy > H ? H + (gy - H) * 0.3 : gy
+
+  // Low sun with a soft glow
+  const sunX = W * 0.78 - cam.left * S * 0.01
+  const sunY = horizon - H * 0.32
+  const glow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, H * 0.35)
+  glow.addColorStop(0, `rgba(255,236,200,${0.9 - dark * 0.6})`)
+  glow.addColorStop(1, 'rgba(255,236,200,0)')
+  ctx.fillStyle = glow
+  ctx.fillRect(0, 0, W, H)
+  ctx.fillStyle = `rgba(255,248,230,${1 - dark * 0.5})`
+  ctx.beginPath()
+  ctx.arc(sunX, sunY, Math.max(14, H * 0.04), 0, Math.PI * 2)
+  ctx.fill()
+
+  // Parallax mountains and hills
+  drawRange(ctx, W, horizon, cam.left * S * 0.06, H * 0.3, mixColor([150, 170, 196], [36, 46, 74], dark), 1.3)
+  drawRange(ctx, W, horizon, cam.left * S * 0.16, H * 0.17, mixColor([112, 138, 120], [26, 36, 46], dark), 4.2)
+
   // Clouds
-  ctx.fillStyle = `rgba(255,255,255,${0.85 - dark * 0.4})`
+  ctx.fillStyle = `rgba(255,255,255,${0.85 - dark * 0.45})`
   for (const c of CLOUDS) {
     const x = sx(c.x), y = sy(c.y), w = c.w * S
     if (x + w < 0 || x - w > W || y < -w || y > H + w) continue
     ctx.beginPath()
-    ctx.ellipse(x, y, w * 0.5, w * 0.18, 0, 0, Math.PI * 2)
-    ctx.ellipse(x - w * 0.22, y + w * 0.04, w * 0.28, w * 0.14, 0, 0, Math.PI * 2)
-    ctx.ellipse(x + w * 0.2, y - w * 0.06, w * 0.25, w * 0.16, 0, 0, Math.PI * 2)
+    ctx.ellipse(x, y, w * 0.5, w * 0.16, 0, 0, Math.PI * 2)
+    ctx.ellipse(x - w * 0.2, y - w * 0.05, w * 0.24, w * 0.15, 0, 0, Math.PI * 2)
+    ctx.ellipse(x + w * 0.12, y - w * 0.09, w * 0.22, w * 0.18, 0, 0, Math.PI * 2)
     ctx.fill()
   }
 
   // Ground
-  const gy = sy(0)
   if (gy < H) {
-    ctx.fillStyle = '#6b8e4e'
-    ctx.fillRect(0, gy, W, H - gy)
-    ctx.fillStyle = '#56763d'
-    ctx.fillRect(0, gy, W, Math.max(2, 0.6 * S))
-    // Runway
-    ctx.fillStyle = '#3a3a3a'
-    ctx.fillRect(sx(-30), gy - Math.max(1, 0.15 * S), (RUNWAY + 30) * S, Math.max(3, 0.6 * S))
+    const ground = ctx.createLinearGradient(0, gy, 0, H)
+    ground.addColorStop(0, '#7c9a55')
+    ground.addColorStop(1, '#4b6334')
+    ctx.fillStyle = ground
+    ctx.fillRect(-20, gy, W + 40, H - gy + 20)
+
+    // Runway with dashed center line and a checkered start line
+    const band = Math.max(4, 1.4 * S)
+    ctx.fillStyle = '#2f3136'
+    ctx.fillRect(sx(-40), gy, (RUNWAY + 40) * S, band)
+    ctx.fillStyle = '#e5e7eb'
+    for (let x = -36; x < RUNWAY - 2; x += 6) ctx.fillRect(sx(x), gy + band * 0.45, 3 * S, Math.max(1, band * 0.1))
+    const sq = Math.max(2, 0.35 * S)
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j * sq < band; j++) {
+        ctx.fillStyle = (i + j) % 2 ? '#111' : '#f8fafc'
+        ctx.fillRect(sx(1.5) + i * sq, gy + j * sq, sq, Math.min(sq, band - j * sq))
+      }
+    }
+
     // Distance markers past the ramp
-    ctx.fillStyle = '#f5f5f0'
-    ctx.font = '11px Switzer, sans-serif'
+    ctx.font = `600 11px ${FONT}`
     ctx.textAlign = 'center'
     const first = Math.ceil((cam.left - RAMP_TOP_X) / 25) * 25
     for (let d = Math.max(25, first); d < cam.left - RAMP_TOP_X + W / S + 25; d += 25) {
       const x = sx(RAMP_TOP_X + d)
-      ctx.fillRect(x - 1, gy - 6, 2, 6)
-      if (S * 25 > 40) ctx.fillText(`${Math.round(d * FT)} ft`, x, gy + 16)
+      ctx.fillStyle = '#f8fafc'
+      ctx.fillRect(x - 1, gy - 8, 2, 8)
+      ctx.fillStyle = '#ef4444'
+      ctx.fillRect(x - 1, gy - 8, 2, 3)
+      if (S * 25 > 40) {
+        ctx.fillStyle = 'rgba(255,255,255,0.85)'
+        ctx.fillText(`${Math.round(d * FT)} ft`, x, gy + 16)
+      }
     }
   }
 
-  // Ramp: curved surface rising like ")" toward the sky
-  ctx.beginPath()
-  ctx.moveTo(sx(RUNWAY), sy(0))
-  for (let i = 0; i <= 40; i++) {
-    const phi = (RAMP_END * i) / 40
-    ctx.lineTo(sx(RUNWAY + RAMP_R * Math.sin(phi)), sy(RAMP_R * (1 - Math.cos(phi))))
-  }
-  ctx.lineTo(sx(RAMP_TOP_X), sy(0))
-  ctx.closePath()
-  ctx.fillStyle = 'rgba(203,213,225,0.55)'
-  ctx.fill()
-  ctx.strokeStyle = '#64748b'
-  ctx.lineWidth = Math.max(1, 0.25 * S)
-  for (let x = RUNWAY + 6; x < RAMP_TOP_X; x += 6) {
-    ctx.beginPath()
-    ctx.moveTo(sx(x), sy(0))
-    ctx.lineTo(sx(x), sy(rampHeightAt(x)))
-    ctx.stroke()
-  }
-  ctx.beginPath()
-  ctx.moveTo(sx(RAMP_TOP_X), sy(0))
-  ctx.lineTo(sx(RAMP_TOP_X), sy(RAMP_TOP_Y))
-  ctx.stroke()
-  ctx.beginPath()
-  for (let i = 0; i <= 40; i++) {
-    const phi = (RAMP_END * i) / 40
-    const x = sx(RUNWAY + RAMP_R * Math.sin(phi)), y = sy(RAMP_R * (1 - Math.cos(phi)))
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-  }
-  ctx.strokeStyle = '#334155'
-  ctx.lineWidth = Math.max(3, 0.6 * S)
-  ctx.stroke()
+  drawRamp(ctx, sx, sy, S)
 
-  // Particles
+  // Car shadow on the ground
+  if (gy < H + 20 && game.phase !== 'crashed') {
+    const k = 1 / (1 + Math.max(0, car.y) / 12)
+    ctx.fillStyle = `rgba(0,0,0,${0.35 * k})`
+    ctx.beginPath()
+    ctx.ellipse(sx(car.x), gy + 1, Math.max(14, CAR_L * S * 0.55) * k, Math.max(2, 0.25 * S) * k, 0, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  // Speed streaks
+  const speed = game.phase === 'runway' || game.phase === 'ramp' ? game.speed : Math.hypot(car.vx, car.vy)
+  if (speed > 30 && game.phase !== 'crashed') {
+    const dir = game.phase === 'runway' ? 0 : game.phase === 'ramp' ? car.angle : Math.atan2(car.vy, car.vx)
+    const a = Math.min(0.35, (speed - 30) / 100)
+    const len = Math.min(120, speed * 1.5)
+    ctx.strokeStyle = `rgba(255,255,255,${a})`
+    ctx.lineWidth = 1.5
+    for (let i = 0; i < 14; i++) {
+      const px = (hash(i) * W * 1.4 - ((game.t * speed * 9 + i * 97) % (W * 1.4)) + W * 1.4) % (W * 1.4) - W * 0.2
+      const py = hash(i + 50) * H
+      ctx.beginPath()
+      ctx.moveTo(px, py)
+      ctx.lineTo(px - Math.cos(dir) * len, py + Math.sin(dir) * len)
+      ctx.stroke()
+    }
+  }
+
+  // Particles: solid ones first, then glowing ones added on top
   for (const p of game.particles) {
+    if (p.kind === 'flame' || p.kind === 'fire') continue
     const a = Math.max(0, p.life / p.max)
-    ctx.fillStyle =
-      p.kind === 'smoke' ? `rgba(255,${Math.round(150 + 100 * a)},60,${a})`
-      : p.kind === 'fire' ? `rgba(255,${Math.round(80 + 120 * a)},20,${a})`
-      : `rgba(40,40,40,${a})`
     const r = Math.max(1.5, p.size * S)
+    if (p.kind === 'smoke' || p.kind === 'dust') {
+      ctx.fillStyle = p.kind === 'dust' ? `rgba(160,140,110,${a * 0.5})` : `rgba(120,120,125,${a * 0.35})`
+      ctx.beginPath()
+      ctx.arc(sx(p.x), sy(p.y), r * (2 - a), 0, Math.PI * 2)
+      ctx.fill()
+    } else {
+      ctx.globalAlpha = Math.min(1, a * 2)
+      ctx.fillStyle = p.color
+      ctx.fillRect(sx(p.x) - r / 2, sy(p.y) - r / 2, r, r * (p.kind === 'confetti' ? 0.6 : 1))
+      ctx.globalAlpha = 1
+    }
+  }
+  ctx.globalCompositeOperation = 'lighter'
+  for (const p of game.particles) {
+    if (p.kind !== 'flame' && p.kind !== 'fire') continue
+    const a = Math.max(0, p.life / p.max)
+    const r = Math.max(2, p.size * S * (p.kind === 'fire' ? 1.6 : 1))
+    const g = ctx.createRadialGradient(sx(p.x), sy(p.y), 0, sx(p.x), sy(p.y), r)
+    g.addColorStop(0, `rgba(255,240,200,${a})`)
+    g.addColorStop(0.4, `rgba(255,${Math.round(110 + 90 * a)},40,${a * 0.8})`)
+    g.addColorStop(1, 'rgba(255,60,0,0)')
+    ctx.fillStyle = g
     ctx.beginPath()
     ctx.arc(sx(p.x), sy(p.y), r, 0, Math.PI * 2)
     ctx.fill()
   }
+  ctx.globalCompositeOperation = 'source-over'
 
   if (game.phase !== 'crashed') drawCar(ctx, game, sx(car.x), sy(car.y), S)
+  ctx.restore()
 }
 
+// Steel truss ramp curving up toward the sky like ")"
+function drawRamp(ctx, sx, sy, S) {
+  const posts = []
+  for (let x = RUNWAY + 5; x < RAMP_TOP_X; x += 5) posts.push(x)
+  posts.push(RAMP_TOP_X)
+
+  ctx.strokeStyle = '#8b95a3'
+  ctx.lineWidth = Math.max(1, 0.18 * S)
+  ctx.beginPath()
+  for (let i = 0; i < posts.length; i++) {
+    const x = posts[i]
+    const top = x === RAMP_TOP_X ? RAMP_TOP_Y : rampHeightAt(x)
+    ctx.moveTo(sx(x), sy(0))
+    ctx.lineTo(sx(x), sy(top))
+    if (i > 0) {
+      const px = posts[i - 1]
+      ctx.moveTo(sx(px), sy(0))
+      ctx.lineTo(sx(x), sy(top * 0.92))
+    }
+  }
+  ctx.stroke()
+
+  // Concrete footing
+  ctx.fillStyle = '#9ca3af'
+  ctx.fillRect(sx(RUNWAY), sy(0) - Math.max(2, 0.5 * S), (RAMP_TOP_X - RUNWAY) * S, Math.max(2, 0.5 * S))
+
+  // Deck
+  const deck = (offset) => {
+    ctx.beginPath()
+    for (let i = 0; i <= 50; i++) {
+      const phi = (RAMP_END * i) / 50
+      const x = sx(RUNWAY + (RAMP_R - offset) * Math.sin(phi))
+      const y = sy(RAMP_R - (RAMP_R - offset) * Math.cos(phi))
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    }
+  }
+  deck(-0.45)
+  ctx.strokeStyle = '#2b2f36'
+  ctx.lineWidth = Math.max(4, 0.9 * S)
+  ctx.stroke()
+  deck(0)
+  ctx.strokeStyle = '#facc15'
+  ctx.lineWidth = Math.max(1, 0.12 * S)
+  ctx.setLineDash([Math.max(4, 1.2 * S), Math.max(4, 1.2 * S)])
+  ctx.stroke()
+  ctx.setLineDash([])
+}
+
+// Side profile in the spirit of the new Roadster: long low nose, glass canopy set back, short tail
 function drawCar(ctx, game, x, y, S) {
   const car = game.car
-  // Draw at least ~34px long so it stays readable when zoomed out
-  const vis = Math.max(1, 34 / (CAR_L * S))
+  // Draw at least ~44px long so it stays readable when zoomed out
+  const vis = Math.max(1, 44 / (CAR_L * S))
   ctx.save()
   ctx.translate(x, y)
   ctx.scale(S * vis, -S * vis)
   ctx.rotate(car.angle)
 
   // Thruster flames
-  if (game.phase === 'flight' && game.input.thrust) {
-    for (const off of [-0.8, 0.8]) {
-      const len = 1.2 + Math.random() * 0.8
-      ctx.fillStyle = '#ffb703'
+  const thrusting = game.phase === 'flight' && game.input && game.input.thrust
+  if (thrusting) {
+    ctx.globalCompositeOperation = 'lighter'
+    for (const off of [-0.85, 0.85]) {
+      const len = 1.4 + Math.random() * 0.9
+      const g = ctx.createLinearGradient(0, 0.1, 0, 0.1 - len)
+      g.addColorStop(0, 'rgba(255,250,220,1)')
+      g.addColorStop(0.3, 'rgba(255,190,60,0.95)')
+      g.addColorStop(1, 'rgba(255,80,0,0)')
+      ctx.fillStyle = g
       ctx.beginPath()
-      ctx.moveTo(off - 0.28, 0.12)
-      ctx.lineTo(off + 0.28, 0.12)
-      ctx.lineTo(off, 0.12 - len)
-      ctx.closePath()
-      ctx.fill()
-      ctx.fillStyle = '#fff3b0'
-      ctx.beginPath()
-      ctx.moveTo(off - 0.13, 0.12)
-      ctx.lineTo(off + 0.13, 0.12)
-      ctx.lineTo(off, 0.12 - len * 0.5)
+      ctx.moveTo(off - 0.22, 0.1)
+      ctx.quadraticCurveTo(off - 0.18, 0.1 - len * 0.5, off, 0.1 - len)
+      ctx.quadraticCurveTo(off + 0.18, 0.1 - len * 0.5, off + 0.22, 0.1)
       ctx.closePath()
       ctx.fill()
     }
+    ctx.globalCompositeOperation = 'source-over'
   }
 
   // Body
-  ctx.fillStyle = '#d62828'
+  const paint = ctx.createLinearGradient(0, 1.15, 0, 0.2)
+  paint.addColorStop(0, '#f05252')
+  paint.addColorStop(0.45, '#c8102e')
+  paint.addColorStop(1, '#6e0a14')
+  ctx.fillStyle = paint
   ctx.beginPath()
-  ctx.moveTo(-2.2, 0.3)
-  ctx.lineTo(-2.25, 0.82)
-  ctx.lineTo(-1.4, 0.95)
-  ctx.lineTo(-0.75, 1.28)
-  ctx.lineTo(0.25, 1.28)
-  ctx.lineTo(0.95, 0.95)
-  ctx.lineTo(2.25, 0.62)
-  ctx.lineTo(2.25, 0.32)
+  ctx.moveTo(2.1, 0.24)
+  ctx.bezierCurveTo(2.3, 0.26, 2.34, 0.42, 2.26, 0.5)
+  ctx.bezierCurveTo(1.7, 0.66, 1.05, 0.74, 0.6, 0.82)
+  ctx.bezierCurveTo(0.2, 1.0, -0.1, 1.06, -0.4, 1.06)
+  ctx.bezierCurveTo(-1.05, 1.05, -1.75, 0.92, -2.18, 0.82)
+  ctx.lineTo(-2.27, 0.84)
+  ctx.bezierCurveTo(-2.32, 0.62, -2.28, 0.38, -2.18, 0.28)
+  ctx.quadraticCurveTo(-2.1, 0.22, -1.95, 0.22)
   ctx.closePath()
   ctx.fill()
-  // Windows
-  ctx.fillStyle = '#1e293b'
+
+  // Glass canopy
+  const glass = ctx.createLinearGradient(-1, 1.12, 0.4, 0.88)
+  glass.addColorStop(0, '#0f172a')
+  glass.addColorStop(0.6, '#1e293b')
+  glass.addColorStop(1, '#334155')
+  ctx.fillStyle = glass
   ctx.beginPath()
-  ctx.moveTo(-0.62, 1.0)
-  ctx.lineTo(-0.52, 1.2)
-  ctx.lineTo(0.2, 1.2)
-  ctx.lineTo(0.75, 0.98)
+  ctx.moveTo(0.5, 0.83)
+  ctx.bezierCurveTo(0.15, 0.98, -0.1, 1.02, -0.4, 1.02)
+  ctx.bezierCurveTo(-0.85, 1.01, -1.2, 0.95, -1.42, 0.88)
+  ctx.lineTo(-1.25, 0.81)
+  ctx.lineTo(0.32, 0.79)
   ctx.closePath()
   ctx.fill()
-  // Lights
-  ctx.fillStyle = '#fef3c7'
-  ctx.fillRect(2.0, 0.5, 0.25, 0.08)
-  ctx.fillStyle = '#7f1d1d'
-  ctx.fillRect(-2.25, 0.62, 0.15, 0.1)
-  // Thruster pods
-  ctx.fillStyle = '#6b7280'
-  ctx.fillRect(-1.05, 0.12, 0.5, 0.2)
-  ctx.fillRect(0.55, 0.12, 0.5, 0.2)
-  // Wheels
-  for (const wx of [-1.45, 1.45]) {
-    ctx.fillStyle = '#111'
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'
+  ctx.lineWidth = 0.035
+  ctx.beginPath()
+  ctx.moveTo(0.28, 0.9)
+  ctx.quadraticCurveTo(-0.1, 0.99, -0.5, 0.98)
+  ctx.stroke()
+
+  // Shoulder highlight and dark sill
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)'
+  ctx.lineWidth = 0.03
+  ctx.beginPath()
+  ctx.moveTo(2.1, 0.5)
+  ctx.bezierCurveTo(1, 0.64, -0.8, 0.76, -2.15, 0.74)
+  ctx.stroke()
+  ctx.fillStyle = '#1a1c20'
+  ctx.beginPath()
+  ctx.moveTo(1.55, 0.24)
+  ctx.lineTo(-1.55, 0.24)
+  ctx.lineTo(-1.5, 0.33)
+  ctx.lineTo(1.5, 0.33)
+  ctx.closePath()
+  ctx.fill()
+
+  // Slim light bar up front, full-width tail light at the back
+  ctx.lineCap = 'round'
+  ctx.strokeStyle = '#f8fafc'
+  ctx.lineWidth = 0.06
+  ctx.beginPath()
+  ctx.moveTo(1.98, 0.55)
+  ctx.lineTo(2.22, 0.48)
+  ctx.stroke()
+  ctx.strokeStyle = '#ff2d2d'
+  ctx.beginPath()
+  ctx.moveTo(-2.27, 0.76)
+  ctx.lineTo(-2.17, 0.76)
+  ctx.stroke()
+  ctx.lineCap = 'butt'
+
+  // Wheel wells, wheels, and thruster nozzles
+  const spin = -car.x / WHEEL_R
+  for (const wx of [-1.42, 1.42]) {
+    ctx.fillStyle = '#0b0c0e'
     ctx.beginPath()
-    ctx.arc(wx, 0.33, 0.33, 0, Math.PI * 2)
+    ctx.arc(wx, WHEEL_R, WHEEL_R + 0.07, 0, Math.PI)
     ctx.fill()
-    ctx.fillStyle = '#9ca3af'
+
+    ctx.fillStyle = '#121316'
     ctx.beginPath()
-    ctx.arc(wx, 0.33, 0.14, 0, Math.PI * 2)
+    ctx.arc(wx, WHEEL_R, WHEEL_R, 0, Math.PI * 2)
     ctx.fill()
+    const rim = ctx.createRadialGradient(wx, WHEEL_R + 0.08, 0.02, wx, WHEEL_R, 0.26)
+    rim.addColorStop(0, '#e5e7eb')
+    rim.addColorStop(1, '#6b7280')
+    ctx.fillStyle = rim
+    ctx.beginPath()
+    ctx.arc(wx, WHEEL_R, 0.25, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = '#c8102e'
+    ctx.beginPath()
+    ctx.arc(wx, WHEEL_R, 0.21, 0.35, 1.0)
+    ctx.lineTo(wx, WHEEL_R)
+    ctx.fill()
+    ctx.strokeStyle = '#374151'
+    ctx.lineWidth = 0.04
+    ctx.beginPath()
+    for (let i = 0; i < 5; i++) {
+      const a = spin + (i * Math.PI * 2) / 5
+      ctx.moveTo(wx + Math.cos(a) * 0.06, WHEEL_R + Math.sin(a) * 0.06)
+      ctx.lineTo(wx + Math.cos(a) * 0.23, WHEEL_R + Math.sin(a) * 0.23)
+    }
+    ctx.stroke()
+    ctx.fillStyle = '#1f2937'
+    ctx.beginPath()
+    ctx.arc(wx, WHEEL_R, 0.05, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  for (const off of [-0.85, 0.85]) {
+    ctx.fillStyle = thrusting ? '#fbbf24' : '#4b5563'
+    ctx.fillRect(off - 0.16, 0.12, 0.32, 0.1)
   }
   ctx.restore()
 }
@@ -402,52 +660,133 @@ function drawHud(ctx, game, W, H) {
   const onTrack = game.phase === 'runway' || game.phase === 'ramp'
   const speed = onTrack ? game.speed : Math.hypot(car.vx, car.vy)
   const descent = -car.vy
-  const tilt = Math.abs(wrapAngle(car.angle))
-  const darkSky = car.y > 110
+  const tilt = wrapAngle(car.angle)
+  const flying = game.phase === 'flight'
+  const good = '#4ade80', bad = '#f87171'
 
-  ctx.textAlign = 'left'
-  ctx.font = '600 14px Switzer, sans-serif'
-  ctx.fillStyle = darkSky ? '#f1f5f9' : '#1f2937'
-  const lines = [
-    `Speed  ${Math.round(speed * MPH)} mph`,
-    `Altitude  ${Math.round(Math.max(0, car.y) * FT)} ft`,
-  ]
-  if (game.zeroSixty !== null) lines.push(`0–60  ${game.zeroSixty.toFixed(2)}s`)
-  lines.forEach((l, i) => ctx.fillText(l, 12, 22 + i * 19))
+  // Instrument panel
+  const panelH = flying ? 150 : 96
+  ctx.fillStyle = 'rgba(15,17,21,0.62)'
+  rrect(ctx, 12, 12, 150, panelH, 10)
+  ctx.fill()
+  const readout = (label, value, unit, y, color) => {
+    ctx.textAlign = 'left'
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'
+    ctx.font = `600 10px ${FONT}`
+    ctx.fillText(label, 24, y)
+    ctx.fillStyle = color || '#f8fafc'
+    ctx.font = `700 22px ${FONT}`
+    ctx.fillText(value, 24, y + 22)
+    const w = ctx.measureText(value).width
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'
+    ctx.font = `600 11px ${FONT}`
+    ctx.fillText(unit, 28 + w, y + 22)
+  }
+  readout('SPEED', String(Math.round(speed * MPH)), 'mph', 32)
+  readout('ALTITUDE', String(Math.round(Math.max(0, car.y) * FT)), 'ft', 76)
+  if (flying) {
+    const safe = descent <= SAFE_VY
+    readout('DESCENT', String(Math.max(0, Math.round(descent * MPH))), 'mph', 120, safe ? good : bad)
+    // Descent bar with the safe zone marked
+    const bx = 90, by = 130, bw = 60, bh = 6, max = 25
+    ctx.fillStyle = 'rgba(255,255,255,0.15)'
+    rrect(ctx, bx, by, bw, bh, 3)
+    ctx.fill()
+    ctx.fillStyle = 'rgba(74,222,128,0.35)'
+    rrect(ctx, bx, by, (bw * SAFE_VY) / max, bh, 3)
+    ctx.fill()
+    ctx.fillStyle = safe ? good : bad
+    rrect(ctx, bx, by, Math.max(2, (bw * Math.min(max, Math.max(0, descent))) / max), bh, 3)
+    ctx.fill()
 
-  if (game.phase === 'flight') {
-    const safeDescent = descent <= SAFE_VY
-    const safeTilt = tilt <= SAFE_TILT
-    ctx.fillStyle = safeDescent ? (darkSky ? '#4ade80' : '#16a34a') : (darkSky ? '#f87171' : '#dc2626')
-    ctx.fillText(`Descent  ${Math.max(0, Math.round(descent * MPH))} mph`, 12, 22 + lines.length * 19)
-    ctx.fillStyle = safeTilt ? (darkSky ? '#4ade80' : '#16a34a') : (darkSky ? '#f87171' : '#dc2626')
-    ctx.fillText(`Tilt  ${Math.round((tilt * 180) / Math.PI)}°`, 12, 22 + (lines.length + 1) * 19)
+    // Attitude dial
+    const cx = W - 46, cy = 50, r = 30
+    const level = Math.abs(tilt) <= SAFE_TILT
+    ctx.fillStyle = 'rgba(15,17,21,0.62)'
+    ctx.beginPath()
+    ctx.arc(cx, cy, r + 8, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(74,222,128,0.6)'
+    ctx.lineWidth = 4
+    for (const base of [0, Math.PI]) {
+      ctx.beginPath()
+      ctx.arc(cx, cy, r, base - SAFE_TILT, base + SAFE_TILT)
+      ctx.stroke()
+    }
+    ctx.strokeStyle = level ? good : bad
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.moveTo(cx - Math.cos(tilt) * (r - 6), cy + Math.sin(tilt) * (r - 6))
+    ctx.lineTo(cx + Math.cos(tilt) * (r - 6), cy - Math.sin(tilt) * (r - 6))
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(cx, cy)
+    ctx.lineTo(cx - Math.sin(tilt) * 12, cy - Math.cos(tilt) * 12)
+    ctx.stroke()
+    ctx.textAlign = 'center'
+    ctx.fillStyle = level ? good : bad
+    ctx.font = `700 12px ${FONT}`
+    ctx.fillText(`${Math.round((Math.abs(tilt) * 180) / Math.PI)}°`, cx, cy + r + 22)
 
     // Ground is off screen: point at it
-    if (H - (0 - game.cam.bottom) * game.cam.scale > H) {
-      ctx.textAlign = 'center'
-      ctx.fillStyle = '#f1f5f9'
-      ctx.fillText(`▼ ground ${Math.round(car.y * FT)} ft`, W / 2, H - 12)
+    if (game.cam.bottom > 0) {
+      ctx.fillStyle = 'rgba(15,17,21,0.62)'
+      rrect(ctx, W / 2 - 70, H - 36, 140, 26, 13)
+      ctx.fill()
+      ctx.fillStyle = '#f8fafc'
+      ctx.font = `600 12px ${FONT}`
+      ctx.fillText(`▼ ground ${Math.round(car.y * FT)} ft`, W / 2, H - 18)
     }
   }
 
-  ctx.textAlign = 'center'
+  if (game.zeroSixty !== null) {
+    const y = 12 + panelH + 8
+    ctx.fillStyle = 'rgba(200,16,46,0.85)'
+    rrect(ctx, 12, y, 150, 26, 13)
+    ctx.fill()
+    ctx.fillStyle = '#fff'
+    ctx.textAlign = 'center'
+    ctx.font = `700 12px ${FONT}`
+    ctx.fillText(`0–60 MPH  ${game.zeroSixty.toFixed(2)}s`, 87, y + 17)
+  }
+
+  // Launch lights
+  const showLights = game.phase === 'countdown' || (game.phase === 'runway' && game.t < 0.5)
+  if (showLights) {
+    const elapsed = COUNTDOWN - game.countdown
+    const lw = 116
+    ctx.fillStyle = 'rgba(15,17,21,0.75)'
+    rrect(ctx, W / 2 - lw / 2, 16, lw, 40, 20)
+    ctx.fill()
+    for (let i = 0; i < 3; i++) {
+      const lit = game.phase === 'runway' ? 'go' : elapsed >= i * 0.5 ? 'amber' : 'off'
+      ctx.fillStyle = lit === 'go' ? '#22c55e' : lit === 'amber' ? '#f59e0b' : '#3f3f46'
+      ctx.beginPath()
+      ctx.arc(W / 2 - 34 + i * 34, 36, 11, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+
+  // Message card
   let msg = null
-  if (game.phase === 'ready') msg = ['Roadster Launch', 'Hit 60 in under a second, fly off the ramp, land it.']
-  else if (game.phase === 'crashed') msg = ['Crashed', game.reason]
+  if (game.phase === 'ready') msg = ['ROADSTER LAUNCH', 'Hit 60 in under a second, fly off the ramp, land it.']
+  else if (game.phase === 'crashed') msg = ['CRASHED', game.reason]
   else if (game.phase === 'landed') {
-    msg = ['Landed!', `${Math.round(game.touchdown.descent * MPH)} mph touchdown · ${Math.round((car.x - RAMP_TOP_X) * FT)} ft from the ramp · ${Math.round(game.maxAlt * FT)} ft high`]
+    msg = ['LANDED', `${Math.round(game.touchdown.descent * MPH)} mph touchdown · ${Math.round((car.x - RAMP_TOP_X) * FT)} ft from the ramp · ${Math.round(game.maxAlt * FT)} ft high`]
   }
   if (msg) {
-    ctx.fillStyle = 'rgba(255,255,255,0.85)'
-    const boxW = Math.min(W - 24, 460)
-    ctx.fillRect((W - boxW) / 2, H * 0.18, boxW, 70)
-    ctx.fillStyle = game.phase === 'crashed' ? '#b91c1c' : '#1f2937'
-    ctx.font = '700 22px Switzer, sans-serif'
-    ctx.fillText(msg[0], W / 2, H * 0.18 + 30)
-    ctx.fillStyle = '#374151'
-    ctx.font = `${W < 420 ? 11 : 13}px Switzer, sans-serif`
-    ctx.fillText(msg[1], W / 2, H * 0.18 + 54)
+    const boxW = Math.min(W - 24, 480)
+    const top = Math.max(H * 0.2, 12 + panelH + 16)
+    ctx.fillStyle = 'rgba(15,17,21,0.78)'
+    rrect(ctx, (W - boxW) / 2, top, boxW, 78, 14)
+    ctx.fill()
+    ctx.textAlign = 'center'
+    ctx.fillStyle = game.phase === 'crashed' ? bad : game.phase === 'landed' ? good : '#f8fafc'
+    ctx.font = `800 24px ${FONT}`
+    ctx.fillText(msg[0], W / 2, top + 34)
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'
+    ctx.font = `500 ${W < 420 ? 11 : 13}px ${FONT}`
+    ctx.fillText(msg[1], W / 2, top + 58)
   }
 }
 
@@ -469,8 +808,7 @@ export default function RoadsterGame() {
   const start = () => {
     const game = gameRef.current
     if (game.phase === 'ready') {
-      game.phase = 'runway'
-      game.t = 0
+      startGame(game)
     } else if (game.phase === 'landed' || game.phase === 'crashed') {
       gameRef.current = newGame()
       gameRef.current.input = inputRef.current
@@ -564,7 +902,7 @@ export default function RoadsterGame() {
 
       <div className="mt-3">
         {phase === 'ready' || ended ? (
-          <button onClick={start} className={`${btn} w-full bg-[#d62828] text-white active:bg-red-800`}>
+          <button onClick={start} className={`${btn} w-full bg-[#c8102e] text-white active:bg-red-800`}>
             {phase === 'ready' ? 'GO' : 'Try again'}
           </button>
         ) : (
