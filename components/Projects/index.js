@@ -60,7 +60,7 @@ export default function Projects() {
           >
             <h2 className="text-xl font-semibold">Roadster Launch</h2>
           </Link>
-          <p className="text-sm text-gray-500">0–60 in under a second, off a ramp into the sky. Land it.</p>
+          <p className="text-sm text-ink-muted">0–60 in under a second, off a ramp into the sky. Land it.</p>
         </div>
       </div>
     </div>

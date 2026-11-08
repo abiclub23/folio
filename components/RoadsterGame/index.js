@@ -1,4 +1,5 @@
 // Roadster launch game: 0–60 in under a second, up a ramp to the sky, then thrusters to land
+import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 
 // Physics (meters, seconds, y points up)
@@ -25,7 +26,7 @@ const STEP = 1 / 120
 
 const MPH = 2.23694
 const FT = 3.28084
-const FONT = 'Switzer, sans-serif'
+const FONT = 'Barlow, system-ui, sans-serif'
 
 // Solid parts of the ramp: the curved deck and the tower behind it
 function hitsRamp(x, y) {
@@ -987,14 +988,11 @@ export default function RoadsterGame() {
     let W = 0, H = 0, dpr = 1
 
     const resize = () => {
-      const w = wrapRef.current.clientWidth
-      const h = Math.round(Math.min(w < 640 ? w * 1.15 : w * 0.56, window.innerHeight * 0.68))
+      W = wrapRef.current.clientWidth
+      H = wrapRef.current.clientHeight
       dpr = window.devicePixelRatio || 1
-      W = w
-      H = h
-      canvas.width = Math.round(w * dpr)
-      canvas.height = Math.round(h * dpr)
-      canvas.style.height = `${h}px`
+      canvas.width = Math.round(W * dpr)
+      canvas.height = Math.round(H * dpr)
     }
     resize()
     const ro = new ResizeObserver(resize)
@@ -1053,23 +1051,35 @@ export default function RoadsterGame() {
     onContextMenu: (e) => e.preventDefault(),
   })
 
-  const btn = 'select-none rounded border border-gray-950 py-4 text-lg font-semibold active:bg-gray-200 transition-colors'
+  const btn =
+    'select-none rounded-md border border-[#3a3f46] bg-[#23262b] py-[18px] font-barlow-condensed text-xl font-bold uppercase tracking-[0.08em] text-[#eceae4] active:bg-[#3a3f46]'
 
+  // One-screen app: title strip, game filling the middle, thumb controls on touch screens
   return (
-    <div ref={wrapRef} className="w-full select-none" style={{ touchAction: 'none' }}>
-      <canvas ref={canvasRef} className="block w-full rounded border border-gray-950" />
+    <div
+      className="fixed inset-0 flex select-none flex-col gap-2.5 overflow-hidden bg-[#17191c] px-4 py-3 font-barlow text-[#eceae4]"
+      style={{ touchAction: 'none' }}
+    >
+      <header className="mx-auto flex w-full max-w-[1100px] flex-wrap items-baseline justify-between gap-3">
+        <h1 className="font-barlow-condensed text-[1.6rem] font-bold uppercase tracking-[0.04em]">
+          <Link href="/projects" className="mr-3 align-middle text-base text-[#9aa0a8] hover:text-[#eceae4]" aria-label="Back to projects">←</Link>
+          Roadster <span className="text-[#d62828]">Launch</span>
+        </h1>
+        <div className="text-sm tabular-nums text-[#9aa0a8]">0–60 in 0.9s · land under 11 mph, within 15° of level</div>
+      </header>
 
-      <div className="mt-3">
-        {/* Touch controls for phones; keyboard users don't need them */}
-        <div className="hidden [@media(pointer:coarse)]:grid grid-cols-4 gap-2">
-          <button {...hold('left')} className={btn} aria-label="Tilt back">⟲</button>
-          <button {...hold('thrust')} className={`${btn} col-span-2`}>THRUST</button>
-          <button {...hold('right')} className={btn} aria-label="Tilt forward">⟳</button>
-        </div>
+      <div ref={wrapRef} className="relative mx-auto min-h-0 w-full max-w-[1100px] flex-1">
+        <canvas ref={canvasRef} className="block h-full w-full rounded-md border border-[#3a3f46]" aria-label="Roadster launch game" />
       </div>
 
-      <p className="text-sm text-gray-500 mt-3 [@media(pointer:coarse)]:hidden">
-        Keyboard: hold ↑ or W to drive and thrust, A/D or ←/→ to tilt. Land with descent under 11 mph and tilt under 15°.
+      {/* Touch controls for phones; keyboard users get the hint instead */}
+      <div className="mx-auto hidden w-full max-w-[1100px] grid-cols-[1fr_2fr_1fr] gap-2 [@media(pointer:coarse)]:grid">
+        <button {...hold('left')} className={btn} aria-label="Tilt back">⟲</button>
+        <button {...hold('thrust')} className={btn}>Thrust</button>
+        <button {...hold('right')} className={btn} aria-label="Tilt forward">⟳</button>
+      </div>
+      <p className="mx-auto w-full max-w-[1100px] text-[0.8rem] text-[#9aa0a8] [@media(pointer:coarse)]:hidden">
+        Keyboard: hold ↑ or W to drive and thrust, A/D or ←/→ to tilt.
       </p>
     </div>
   )

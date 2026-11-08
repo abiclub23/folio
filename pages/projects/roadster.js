@@ -8,15 +8,14 @@ export default function RoadsterPage() {
     <>
       <Head>
         <title>Roadster Launch | Abhi Tondepu</title>
-        <meta name="description" content="0–60 in under a second, up a ramp to the sky, then land it." />
+        <meta name="description" content="0–60 in under a second, up a ramp into the sky, then land it on thrusters." />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700&display=swap" />
       </Head>
-      <div>
-        <h1 className="text-4xl font-bold mb-4">Roadster Launch</h1>
-        <p className="text-lg text-gray-600 mb-6">
-          A Roadster hits 60 in under a second, flies off a ramp into the sky, and you have thrusters to bring it down. Land it without crashing.
-        </p>
-        <RoadsterGame />
-      </div>
+      <RoadsterGame />
     </>
   )
 }
+
+// Full-screen game: no site nav or footer
+RoadsterPage.bareLayout = true
