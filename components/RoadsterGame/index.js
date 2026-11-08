@@ -419,9 +419,9 @@ function render(ctx, game, W, H) {
 
     // Floodlights at the foot of the ramp
     for (const fx of [RUNWAY - 4, TOWER_X + TOWER_W + 3]) {
-      const lx = sx(fx), r = Math.max(30, 9 * S)
+      const lx = sx(fx), r = Math.max(14, 3.5 * S)
       const g = ctx.createRadialGradient(lx, gy, 0, lx, gy, r)
-      g.addColorStop(0, 'rgba(255,255,255,0.35)')
+      g.addColorStop(0, 'rgba(255,255,255,0.2)')
       g.addColorStop(1, 'rgba(255,255,255,0)')
       ctx.fillStyle = g
       ctx.fillRect(lx - r, gy - r, r * 2, r * 2)
