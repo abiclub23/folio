@@ -3,7 +3,7 @@
 // Reads game state, never changes it except for the camera.
 import {
   ARM_LEN, ARM_Y, BOOSTER_H, BOOSTER_W, CATCH_X, FT, MOUNT, MPH, OCEAN_X, PIN_Y, SAFE_TILT, SAFE_VY,
-  TOWER_H, TOWER_W, TOWER_X, cardReady, canRestart, catchGrade, pinPoint, slowMo,
+  RCS_Y, TOWER_H, TOWER_W, TOWER_X, cardReady, canRestart, catchGrade, pinPoint, rcsSide, slowMo,
 } from './physics'
 import { drawHills, drawParticles, hash, lerp, rrect } from '../GameKit/scene'
 
@@ -95,6 +95,7 @@ function drawWorld(ctx, game, input, v) {
   drawHills(ctx, W, H, v, S, gy, ['#4a2a4a', '#2c1a2e'])
   if (gy < H) drawShore(ctx, v, sx, gy, horizon, game.t)
   drawPad(ctx, sx, sy, S)
+  drawCrew(ctx, game, sx, sy, S)
   drawTower(ctx, sx, sy, S, game.t)
   drawArm(ctx, sx, sy, S, game, 'back')
   drawParticles(ctx, game.particles, sx, sy, S)
@@ -371,7 +372,110 @@ function drawBooster(ctx, game, input, x, y, S) {
   ctx.fillStyle = '#1a1016'
   ctx.fillRect(-w - 1.2, PIN_Y - 0.6, 1.2, 1.2)
   ctx.fillRect(w, PIN_Y - 0.6, 1.2, 1.2)
+
+  // Side thruster pods near the top, with a white jet from whichever side is firing
+  ctx.fillStyle = '#2e1f2a'
+  for (const s of [-1, 1]) ctx.fillRect(s > 0 ? w : -w - 0.6, RCS_Y - 0.8, 0.6, 1.6)
+  if (game.turn) {
+    const side = rcsSide(game.turn)
+    const len = 5 + Math.random() * 3
+    const x0 = side * (w + 0.6)
+    ctx.globalCompositeOperation = 'lighter'
+    const g = ctx.createLinearGradient(x0, 0, x0 + side * len, 0)
+    g.addColorStop(0, 'rgba(255,255,255,0.95)')
+    g.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = g
+    ctx.beginPath()
+    ctx.moveTo(x0, RCS_Y - 0.5)
+    ctx.lineTo(x0 + side * len, RCS_Y - 1.4)
+    ctx.lineTo(x0 + side * len, RCS_Y + 1.4)
+    ctx.lineTo(x0, RCS_Y + 0.5)
+    ctx.closePath()
+    ctx.fill()
+    ctx.globalCompositeOperation = 'source-over'
+  }
   ctx.restore()
+}
+
+// People on the ground, origin at the feet, ~1.8 m tall; drawn at least ~22px tall so they read when zoomed out.
+// Crew wear orange hi-vis with a reflective stripe and a white hard hat; spectators are dark silhouettes.
+function drawCrew(ctx, game, sx, sy, S) {
+  const vis = Math.max(1, 22 / (1.8 * S))
+  const cheering = game.phase === 'caught'
+  const running = game.phase === 'crashed'
+  for (const c of game.crew) {
+    const x = sx(c.x), y = sy(0)
+    if (x < -20 || x > ctx.canvas.width + 20) continue
+    const t = game.t * 8 + c.seed * 5
+    const hop = cheering ? Math.abs(Math.sin(t * 0.7)) * 0.5 : 0
+    const stride = running && c.vx ? Math.sin(t * 1.6) * 0.35 : 0
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(S * vis * c.face, -S * vis)
+    ctx.translate(0, hop)
+    ctx.lineCap = 'round'
+    const crew = c.role === 'crew'
+    const skin = '#2a1a22'
+    // Legs
+    ctx.strokeStyle = crew ? '#2d3340' : skin
+    ctx.lineWidth = 0.22
+    ctx.beginPath()
+    ctx.moveTo(-0.08, 0.85); ctx.lineTo(-0.12 - stride, 0)
+    ctx.moveTo(0.08, 0.85); ctx.lineTo(0.12 + stride, 0)
+    ctx.stroke()
+    // Body, with a reflective stripe on the crew's hi-vis vest
+    ctx.fillStyle = crew ? '#ff8a1f' : skin
+    ctx.fillRect(-0.2, 0.8, 0.4, 0.62)
+    if (crew) {
+      ctx.fillStyle = '#e8f0d0'
+      ctx.fillRect(-0.2, 1.02, 0.4, 0.07)
+    }
+    // Arms: up when cheering, pumping when running, holding a phone, tablet or wand otherwise
+    ctx.strokeStyle = crew ? '#ff8a1f' : skin
+    ctx.lineWidth = 0.14
+    ctx.beginPath()
+    if (cheering) {
+      const wave = Math.sin(t) * 0.12
+      ctx.moveTo(-0.17, 1.35); ctx.lineTo(-0.38 + wave, 1.95)
+      ctx.moveTo(0.17, 1.35); ctx.lineTo(0.38 - wave, 1.95)
+    } else if (running) {
+      ctx.moveTo(-0.17, 1.35); ctx.lineTo(-0.3 - stride, 0.95)
+      ctx.moveTo(0.17, 1.35); ctx.lineTo(0.3 + stride, 0.95)
+    } else if (c.phone || c.tablet || c.wand) {
+      ctx.moveTo(-0.17, 1.35); ctx.lineTo(-0.22, 0.9)
+      ctx.moveTo(0.17, 1.35); ctx.lineTo(0.4, 1.45)
+    } else {
+      ctx.moveTo(-0.17, 1.35); ctx.lineTo(-0.22, 0.9)
+      ctx.moveTo(0.17, 1.35); ctx.lineTo(0.22, 0.9)
+    }
+    ctx.stroke()
+    if (!cheering && !running) {
+      if (c.phone) {
+        ctx.fillStyle = '#9fd8ff'
+        ctx.fillRect(0.38, 1.42, 0.1, 0.17)
+      } else if (c.tablet) {
+        ctx.fillStyle = '#9fd8ff'
+        ctx.fillRect(0.36, 1.3, 0.22, 0.28)
+      } else if (c.wand) {
+        ctx.strokeStyle = '#ff4d3d'
+        ctx.lineWidth = 0.08
+        ctx.beginPath(); ctx.moveTo(0.4, 1.45); ctx.lineTo(0.62, 1.75); ctx.stroke()
+      }
+    }
+    // Head, with a white hard hat for the crew
+    ctx.fillStyle = skin
+    ctx.beginPath()
+    ctx.arc(0, 1.6, 0.15, 0, Math.PI * 2)
+    ctx.fill()
+    if (crew) {
+      ctx.fillStyle = '#f4f4f0'
+      ctx.beginPath()
+      ctx.arc(0, 1.65, 0.17, 0, Math.PI)
+      ctx.fill()
+      ctx.fillRect(-0.22, 1.63, 0.44, 0.04)
+    }
+    ctx.restore()
+  }
 }
 
 // ---------- Webcast overlay ----------

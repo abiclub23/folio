@@ -38,6 +38,8 @@ export function newGame() {
     booster: { x: -170, y: 430, vx: 8, vy: -40, angle: 0.04 },
     t: 0,
     endedAt: 0,
+    turn: 0,
+    crew: makeCrew(),
     maxSpeed: 0,
     contact: null,
     particles: [],
@@ -118,7 +120,9 @@ export function step(game, input, dt) {
 
   if (game.phase === 'flight') {
     const turn = (input.left ? 1 : 0) - (input.right ? 1 : 0)
+    game.turn = turn
     b.angle = wrapAngle(b.angle + turn * TURN_RATE * dt)
+    if (turn) sideJets(game, turn)
     const { ux, uy } = axes(b)
     if (input.thrust) {
       b.vx += ux * THRUST * dt
@@ -171,7 +175,53 @@ export function step(game, input, dt) {
     b.y = ARM_Y - PIN_Y - Math.sin(Math.min(k * 9, Math.PI)) * 0.6 * Math.exp(-k * 2)
   }
 
+  if (game.phase !== 'flight') game.turn = 0
+  stepCrew(game, dt)
   stepParticles(game, dt)
+}
+
+// Side thrusters near the top of the booster. Tilting left (turn > 0) fires the right-hand jet so the top is
+// pushed left, and the other way round. Returns the jet's local side (+1 right, -1 left) for drawing too.
+export const RCS_Y = BOOSTER_H - 9
+export const rcsSide = (turn) => (turn > 0 ? 1 : -1)
+function sideJets(game, turn) {
+  if (Math.random() < 0.4) return
+  const b = game.booster
+  const side = rcsSide(turn)
+  const [x, y] = toWorld(b, side * (BOOSTER_W / 2 + 0.3), RCS_Y)
+  const { rx, ry } = axes(b)
+  const s = 16 + Math.random() * 8
+  spawn(game, {
+    x, y,
+    vx: b.vx + rx * side * s + (Math.random() - 0.5) * 3,
+    vy: b.vy + ry * side * s + (Math.random() - 0.5) * 3,
+    g: -0.5, drag: 2.5, life: 0.5 + Math.random() * 0.4, max: 0.9, size: 1.6, kind: 'smoke',
+  })
+}
+
+// Ground crew in hi-vis by the tower and a few spectators out on the flats. They cheer on a catch and run on a crash.
+function makeCrew() {
+  const people = [
+    { x: 16, role: 'crew' }, { x: 19.5, role: 'crew', tablet: true }, { x: 23, role: 'crew' },
+    { x: 27, role: 'crew', wand: true }, { x: 31, role: 'crew' },
+    { x: -112, role: 'fan' }, { x: -109, role: 'fan', phone: true }, { x: -105, role: 'fan' },
+    { x: -101, role: 'fan', phone: true }, { x: -97.5, role: 'fan' },
+  ]
+  return people.map((p, i) => ({ ...p, home: p.x, face: p.role === 'crew' ? -1 : 1, seed: i * 1.37, vx: 0, hop: 0 }))
+}
+
+function stepCrew(game, dt) {
+  for (const c of game.crew) {
+    if (game.phase === 'crashed') {
+      // Run away from the wreck, then stop at a safe distance
+      const dir = Math.sign(c.x - game.booster.x) || 1
+      c.face = dir
+      c.vx = Math.abs(c.x - game.booster.x) < 140 ? dir * 6 : 0
+      c.x += c.vx * dt
+    } else if (game.phase === 'caught' || game.phase === 'landed') {
+      c.face = Math.sign(game.booster.x - c.x) || c.face
+    }
+  }
 }
 
 function caught(game) {
