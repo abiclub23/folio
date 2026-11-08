@@ -1,7 +1,7 @@
 // Roadster Launch drawing: camera, scene, car, driver and HUD on a 2D canvas. Reads game state, never changes it
 // except for the camera.
 import {
-  CAR_H, CAR_L, FT, JETS, MPH, RAMP_END, RAMP_R, SAFE_TILT, SAFE_VY, SPACE_ALT, TOWER_H, TOWER_W, WHEEL_R,
+  CAR_L, FT, JETS, MPH, RAMP_END, RAMP_R, SAFE_TILT, SAFE_VY, SPACE_ALT, TOWER_H, TOWER_W, WHEEL_R,
   canRestart, crashCardReady, jetDirs, landingGrade, slowMo, wrapAngle,
 } from './physics'
 
@@ -421,7 +421,7 @@ function drawRamp(ctx, track, sx, sy, S) {
   ctx.restore()
 }
 
-// Side profile of the new Roadster: faceted satin-silver wedge, bronze glass canopy, nose light bar
+// Side profile of the new Roadster: faceted white wedge, bronze glass canopy, nose light bar
 function drawCar(ctx, game, input, x, y, S) {
   const car = game.car
   // Draw at least ~64px long so it stays readable when zoomed out
@@ -581,7 +581,7 @@ function drawCar(ctx, game, input, x, y, S) {
   ctx.shadowBlur = 0
   ctx.lineCap = 'butt'
 
-  // Crisp outline so the silver reads against a bright sky
+  // Thin dark outline keeps the car's edges crisp against the scenery
   ctx.strokeStyle = 'rgba(30,32,38,0.55)'
   ctx.lineWidth = 0.025
   body()

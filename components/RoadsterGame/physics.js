@@ -9,7 +9,7 @@ export const TOWER_H = 2 * RAMP_R + 3
 const THRUST = 22
 const TURN_RATE = 3 // rad/s
 export const CAR_L = 4.5
-export const CAR_H = 1.2
+const CAR_H = 1.2
 export const WHEEL_R = 0.36
 export const SAFE_VY = 5 // max touchdown descent speed (m/s, ~11 mph)
 export const SAFE_TILT = (15 * Math.PI) / 180
@@ -87,7 +87,7 @@ export function pressThrust(game, runway) {
   return game
 }
 
-export function startGame(game) {
+function startGame(game) {
   game.phase = 'runway'
   game.t = 0
 }
