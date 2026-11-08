@@ -1,6 +1,7 @@
 // Layout component for the website
 import Navigation from '../Navigation'
 import { useRouter } from 'next/router'
+import { CONTACT_EMAIL } from '../../data/site'
 
 export default function Layout({ children }) {
   const router = useRouter()
@@ -16,14 +17,14 @@ export default function Layout({ children }) {
         </div>
       </main>
       
-      <footer className="border-t border-gray-950">
+      <footer className="border-t border-ink">
         <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center">
             <div className="text-sm">
               © {new Date().getFullYear()} Abhi Tondepu. All rights reserved.
             </div>
             <div className="flex space-x-6 mt-4 sm:mt-0 text-sm">
-              <a href="mailto:atondepu@gmail.com" className="hover:text-gray-600 transition-colors">
+              <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-olive hover:italic transition-colors">
                 <span className="ml-2">Contact Me</span>
               </a>
             </div>

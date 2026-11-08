@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import { CONTACT_EMAIL } from '../../data/site'
 
 export default function About() {
   return (
@@ -9,11 +10,11 @@ export default function About() {
       </Head>
 
       <div>
-        <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-800">About me</h1>
+        <h1 className="text-3xl md:text-4xl font-bold mb-8 text-ink">About me</h1>
         
         <div className="space-y-8">
           <section>
-            <p className="text-lg leading-relaxed text-gray-700">
+            <p className="text-lg leading-relaxed text-ink-soft">
             I'm a dad, engineer, and Manchester United fan who enjoys writing in my spare time. This site is where I share my thoughts and musings.
             For me finishing and sharing a post matters more than perfecting it, so please excuse the occasional rough edge in my writing. 
             <br />
@@ -22,10 +23,10 @@ export default function About() {
             </p>
           </section>
 
-          <section className="mt-12 pt-6 border-t border-gray-950">
-            <p className="text-lg text-gray-700">
+          <section className="mt-12 pt-6 border-t border-ink">
+            <p className="text-lg text-ink-soft">
             Thanks for stopping by, and I hope you find something here that resonates with you. Feel free to reach out if you want to say
-              <a href="mailto:atondepu@gmail.com" className="text-blue-600 hover:underline ml-1">
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-olive hover:italic ml-1">
                 hello
               </a>.
             </p>

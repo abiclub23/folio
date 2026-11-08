@@ -10,9 +10,7 @@ export default function Article({ content, title }) {
     <article>
       <div
         className="prose prose-lg prose-h2:text-2xl prose-h2:font-semibold prose-h2:mb-4 \
-                   prose-p:text-gray-800 prose-p:mb-4 \
-                   prose-ul:space-y-2 prose-li:text-gray-800 \
-                   marker:text-black prose-hr:border-black max-w-none"
+                   prose-p:mb-4 prose-ul:space-y-2 max-w-none"
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
     </article>

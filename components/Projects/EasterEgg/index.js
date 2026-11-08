@@ -90,7 +90,7 @@ export default function EasterEgg() {
   return (
     <div>
       <h1 className="text-4xl font-bold mb-6">Easter Egg</h1>
-      <div className="text-lg text-gray-600 mb-8 space-y-4">
+      <div className="text-lg text-ink-soft mb-8 space-y-4">
         <p>
           A fun hidden feature on my website inspired by the classic Konami Code from the legendary Contra video game series. It's a nostalgic nod to the gaming culture that shaped so many of us growing up.
         </p>
@@ -103,9 +103,9 @@ export default function EasterEgg() {
       <div className="space-y-8">
         
 
-        <section className="mt-12 pt-6 border-t border-gray-950">
+        <section className="mt-12 pt-6 border-t border-ink">
           <h2 className="text-2xl font-semibold mb-4">How to Activate</h2>
-          <p className="text-lg leading-relaxed text-gray-700 mb-4">
+          <p className="text-lg leading-relaxed text-ink-soft mb-4">
             On desktop: Enter the Konami Code on your keyboard: ↑↑↓↓←→←→BA
             <br />
             On mobile: Swipe in this pattern: ↑↑↓↓←→←→

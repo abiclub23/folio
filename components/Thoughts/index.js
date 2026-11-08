@@ -73,7 +73,7 @@ export default function Thoughts({ thoughts = [] }) {
       <div className={styles.headerSection}>
         <div>
           <h1 className="text-4xl font-bold mb-6">Thoughts</h1>
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-lg text-ink-soft mb-8">
             Random thoughts that don't warrant a full post. Don't really engage on X, so this is my place to share them.
           </p>
         </div>
@@ -120,10 +120,10 @@ export default function Thoughts({ thoughts = [] }) {
                 }}
                 aria-label={`Thought from ${thought.timestamp}`}
               >
-                <p className="text-gray-800 mb-2 leading-relaxed">
+                <p className="text-ink mb-2 leading-relaxed">
                   {thought.text}
                 </p>
-                <time className="text-gray-500" style={{ fontSize: '12px' }} dateTime={thought.timestamp}>
+                <time className="text-ink-muted" style={{ fontSize: '12px' }} dateTime={thought.timestamp}>
                   {thought.timestamp}
                 </time>
               </article>

@@ -27,7 +27,7 @@ export default function Navigation() {
   
   return (
     <>
-      <header className={`sticky top-0 z-50 transition-all duration-200 border-b border-gray-950 ${scrolled ? 'bg-kraft shadow-sm' : 'bg-kraft/90 backdrop-blur-sm'}`}>
+      <header className={`sticky top-0 z-50 transition-all duration-200 border-b border-ink ${scrolled ? 'bg-kraft shadow-sm' : 'bg-kraft/90 backdrop-blur-sm'}`}>
         <nav className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             {/* Logo */}
