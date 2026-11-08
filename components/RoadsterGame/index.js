@@ -509,11 +509,11 @@ function drawRamp(ctx, sx, sy, S) {
   ctx.setLineDash([])
 }
 
-// Side profile in the spirit of the new Roadster: long low nose, glass canopy set back, short tail
+// Side profile of the new Roadster: faceted satin-silver wedge, bronze glass canopy, nose light bar
 function drawCar(ctx, game, x, y, S) {
   const car = game.car
-  // Draw at least ~44px long so it stays readable when zoomed out
-  const vis = Math.max(1, 44 / (CAR_L * S))
+  // Draw at least ~64px long so it stays readable when zoomed out
+  const vis = Math.max(1, 64 / (CAR_L * S))
   ctx.save()
   ctx.translate(x, y)
   ctx.scale(S * vis, -S * vis)
@@ -540,77 +540,130 @@ function drawCar(ctx, game, x, y, S) {
     ctx.globalCompositeOperation = 'source-over'
   }
 
-  // Body
-  const paint = ctx.createLinearGradient(0, 1.15, 0, 0.2)
-  paint.addColorStop(0, '#f05252')
-  paint.addColorStop(0.45, '#c8102e')
-  paint.addColorStop(1, '#6e0a14')
+  // Body outline: sharp nose, glass arc over the cabin, flat rear deck, cut-off tail
+  const body = () => {
+    ctx.beginPath()
+    ctx.moveTo(2.18, 0.24)
+    ctx.lineTo(2.35, 0.41)
+    ctx.lineTo(2.3, 0.49)
+    ctx.lineTo(1.35, 0.69)
+    ctx.bezierCurveTo(0.85, 0.92, 0.35, 1.06, -0.15, 1.07)
+    ctx.bezierCurveTo(-0.65, 1.07, -1.05, 1.0, -1.35, 0.94)
+    ctx.lineTo(-2.22, 0.83)
+    ctx.lineTo(-2.29, 0.77)
+    ctx.lineTo(-2.27, 0.36)
+    ctx.lineTo(-2.12, 0.24)
+    ctx.closePath()
+  }
+  const paint = ctx.createLinearGradient(0, 1.05, 0, 0.25)
+  paint.addColorStop(0, '#ffffff')
+  paint.addColorStop(0.55, '#e6e8ec')
+  paint.addColorStop(1, '#a9aeb7')
   ctx.fillStyle = paint
-  ctx.beginPath()
-  ctx.moveTo(2.1, 0.24)
-  ctx.bezierCurveTo(2.3, 0.26, 2.34, 0.42, 2.26, 0.5)
-  ctx.bezierCurveTo(1.7, 0.66, 1.05, 0.74, 0.6, 0.82)
-  ctx.bezierCurveTo(0.2, 1.0, -0.1, 1.06, -0.4, 1.06)
-  ctx.bezierCurveTo(-1.05, 1.05, -1.75, 0.92, -2.18, 0.82)
-  ctx.lineTo(-2.27, 0.84)
-  ctx.bezierCurveTo(-2.32, 0.62, -2.28, 0.38, -2.18, 0.28)
-  ctx.quadraticCurveTo(-2.1, 0.22, -1.95, 0.22)
-  ctx.closePath()
+  body()
   ctx.fill()
 
-  // Glass canopy
-  const glass = ctx.createLinearGradient(-1, 1.12, 0.4, 0.88)
-  glass.addColorStop(0, '#0f172a')
-  glass.addColorStop(0.6, '#1e293b')
-  glass.addColorStop(1, '#334155')
+  // Lower facet: a crease runs from the nose tip back along the flank, darker below it
+  ctx.save()
+  body()
+  ctx.clip()
+  ctx.fillStyle = 'rgba(70,76,88,0.2)'
+  ctx.beginPath()
+  ctx.moveTo(2.35, 0.41)
+  ctx.lineTo(1.05, 0.5)
+  ctx.lineTo(-2.3, 0.56)
+  ctx.lineTo(-2.3, 0.2)
+  ctx.lineTo(2.35, 0.2)
+  ctx.closePath()
+  ctx.fill()
+  // Angled facet behind the front wheel
+  ctx.fillStyle = 'rgba(255,255,255,0.18)'
+  ctx.beginPath()
+  ctx.moveTo(1.05, 0.5)
+  ctx.lineTo(0.72, 0.78)
+  ctx.lineTo(1.35, 0.69)
+  ctx.closePath()
+  ctx.fill()
+  ctx.restore()
+
+  // Bronze-tinted glass canopy
+  const glass = ctx.createLinearGradient(1.2, 0.7, -1.2, 1.0)
+  glass.addColorStop(0, '#4a3b30')
+  glass.addColorStop(0.5, '#2b231e')
+  glass.addColorStop(1, '#3a2f27')
   ctx.fillStyle = glass
   ctx.beginPath()
-  ctx.moveTo(0.5, 0.83)
-  ctx.bezierCurveTo(0.15, 0.98, -0.1, 1.02, -0.4, 1.02)
-  ctx.bezierCurveTo(-0.85, 1.01, -1.2, 0.95, -1.42, 0.88)
-  ctx.lineTo(-1.25, 0.81)
-  ctx.lineTo(0.32, 0.79)
+  ctx.moveTo(1.3, 0.7)
+  ctx.bezierCurveTo(0.83, 0.9, 0.35, 1.03, -0.15, 1.04)
+  ctx.bezierCurveTo(-0.62, 1.04, -1.0, 0.98, -1.28, 0.92)
+  ctx.lineTo(-1.12, 0.84)
+  ctx.lineTo(0.72, 0.78)
   ctx.closePath()
   ctx.fill()
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)'
+  // Glass reflection and B-pillar
+  ctx.strokeStyle = 'rgba(255,235,210,0.28)'
   ctx.lineWidth = 0.035
   ctx.beginPath()
-  ctx.moveTo(0.28, 0.9)
-  ctx.quadraticCurveTo(-0.1, 0.99, -0.5, 0.98)
+  ctx.moveTo(1.05, 0.81)
+  ctx.quadraticCurveTo(0.4, 1.0, -0.4, 1.0)
+  ctx.stroke()
+  ctx.strokeStyle = '#d6d9de'
+  ctx.lineWidth = 0.04
+  ctx.beginPath()
+  ctx.moveTo(-0.55, 0.82)
+  ctx.lineTo(-0.66, 1.03)
   ctx.stroke()
 
-  // Shoulder highlight and dark sill
-  ctx.strokeStyle = 'rgba(255,255,255,0.28)'
-  ctx.lineWidth = 0.03
+  // Panel seams
+  ctx.strokeStyle = 'rgba(60,64,72,0.45)'
+  ctx.lineWidth = 0.018
   ctx.beginPath()
-  ctx.moveTo(2.1, 0.5)
-  ctx.bezierCurveTo(1, 0.64, -0.8, 0.76, -2.15, 0.74)
+  ctx.moveTo(0.72, 0.78)
+  ctx.lineTo(0.8, 0.36)
+  ctx.moveTo(-1.12, 0.84)
+  ctx.lineTo(-1.08, 0.36)
   ctx.stroke()
-  ctx.fillStyle = '#1a1c20'
+
+  // Black lower skirt and front splitter
+  ctx.fillStyle = '#16171a'
   ctx.beginPath()
-  ctx.moveTo(1.55, 0.24)
-  ctx.lineTo(-1.55, 0.24)
-  ctx.lineTo(-1.5, 0.33)
-  ctx.lineTo(1.5, 0.33)
+  ctx.moveTo(2.18, 0.24)
+  ctx.lineTo(2.33, 0.39)
+  ctx.lineTo(2.0, 0.37)
+  ctx.lineTo(1.9, 0.3)
+  ctx.lineTo(-1.9, 0.3)
+  ctx.lineTo(-2.0, 0.37)
+  ctx.lineTo(-2.27, 0.38)
+  ctx.lineTo(-2.12, 0.24)
   ctx.closePath()
   ctx.fill()
 
-  // Slim light bar up front, full-width tail light at the back
+  // Light bar across the nose, thin tail light at the back
   ctx.lineCap = 'round'
-  ctx.strokeStyle = '#f8fafc'
-  ctx.lineWidth = 0.06
+  ctx.shadowColor = 'rgba(255,255,255,0.9)'
+  ctx.shadowBlur = 8
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = 0.05
   ctx.beginPath()
-  ctx.moveTo(1.98, 0.55)
-  ctx.lineTo(2.22, 0.48)
+  ctx.moveTo(2.34, 0.42)
+  ctx.lineTo(2.02, 0.45)
   ctx.stroke()
-  ctx.strokeStyle = '#ff2d2d'
+  ctx.shadowColor = 'rgba(255,40,40,0.9)'
+  ctx.strokeStyle = '#ff3b3b'
   ctx.beginPath()
-  ctx.moveTo(-2.27, 0.76)
-  ctx.lineTo(-2.17, 0.76)
+  ctx.moveTo(-2.28, 0.74)
+  ctx.lineTo(-2.27, 0.62)
   ctx.stroke()
+  ctx.shadowBlur = 0
   ctx.lineCap = 'butt'
 
-  // Wheel wells, wheels, and thruster nozzles
+  // Crisp outline so the silver reads against a bright sky
+  ctx.strokeStyle = 'rgba(30,32,38,0.55)'
+  ctx.lineWidth = 0.025
+  body()
+  ctx.stroke()
+
+  // Wheels: dark aero discs with six star spokes
   const spin = -car.x / WHEEL_R
   for (const wx of [-1.42, 1.42]) {
     ctx.fillStyle = '#0b0c0e'
@@ -618,34 +671,30 @@ function drawCar(ctx, game, x, y, S) {
     ctx.arc(wx, WHEEL_R, WHEEL_R + 0.07, 0, Math.PI)
     ctx.fill()
 
-    ctx.fillStyle = '#121316'
+    ctx.fillStyle = '#141518'
     ctx.beginPath()
     ctx.arc(wx, WHEEL_R, WHEEL_R, 0, Math.PI * 2)
     ctx.fill()
-    const rim = ctx.createRadialGradient(wx, WHEEL_R + 0.08, 0.02, wx, WHEEL_R, 0.26)
-    rim.addColorStop(0, '#e5e7eb')
-    rim.addColorStop(1, '#6b7280')
-    ctx.fillStyle = rim
+    ctx.fillStyle = '#25272c'
     ctx.beginPath()
-    ctx.arc(wx, WHEEL_R, 0.25, 0, Math.PI * 2)
+    ctx.arc(wx, WHEEL_R, 0.27, 0, Math.PI * 2)
     ctx.fill()
-    ctx.fillStyle = '#c8102e'
-    ctx.beginPath()
-    ctx.arc(wx, WHEEL_R, 0.21, 0.35, 1.0)
-    ctx.lineTo(wx, WHEEL_R)
-    ctx.fill()
-    ctx.strokeStyle = '#374151'
-    ctx.lineWidth = 0.04
-    ctx.beginPath()
-    for (let i = 0; i < 5; i++) {
-      const a = spin + (i * Math.PI * 2) / 5
-      ctx.moveTo(wx + Math.cos(a) * 0.06, WHEEL_R + Math.sin(a) * 0.06)
-      ctx.lineTo(wx + Math.cos(a) * 0.23, WHEEL_R + Math.sin(a) * 0.23)
-    }
+    ctx.strokeStyle = '#6b7079'
+    ctx.lineWidth = 0.025
     ctx.stroke()
-    ctx.fillStyle = '#1f2937'
+    for (let i = 0; i < 6; i++) {
+      const a = spin + (i * Math.PI * 2) / 6
+      ctx.fillStyle = i % 2 ? '#8d929b' : '#5f646d'
+      ctx.beginPath()
+      ctx.moveTo(wx + Math.cos(a - 0.35) * 0.06, WHEEL_R + Math.sin(a - 0.35) * 0.06)
+      ctx.lineTo(wx + Math.cos(a - 0.04) * 0.26, WHEEL_R + Math.sin(a - 0.04) * 0.26)
+      ctx.lineTo(wx + Math.cos(a + 0.04) * 0.26, WHEEL_R + Math.sin(a + 0.04) * 0.26)
+      ctx.closePath()
+      ctx.fill()
+    }
+    ctx.fillStyle = '#d1d5db'
     ctx.beginPath()
-    ctx.arc(wx, WHEEL_R, 0.05, 0, Math.PI * 2)
+    ctx.arc(wx, WHEEL_R, 0.045, 0, Math.PI * 2)
     ctx.fill()
   }
   for (const off of [-0.85, 0.85]) {
