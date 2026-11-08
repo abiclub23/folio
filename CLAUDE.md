@@ -20,7 +20,8 @@ Personal website for Abhi Tondepu ([abhi-tondepu.com](https://abhi-tondepu.com/)
 - **Hover pattern**: `hover:text-custom-green hover:italic` + smooth transition
 - **Layout**: `max-w-5xl` container, `px-4 sm:px-6 lg:px-8` padding
 - **Home page** (`/`): no navigation bar — Layout hides nav when `pathname === '/'`
-- **Full-screen pages**: set `Page.bareLayout = true` to skip the site nav and footer (used by `/projects/dublin-parks` and `/projects/roadster`)
+- **Full-screen pages**: set `Page.bareLayout = true` to skip the site nav and footer (used by `/projects/dublin-parks`, `/projects/roadster` and `/projects/super-heavy`)
+- **Canvas games**: `components/GameKit/` holds the shared page shell, HUD, scenery and sound; each game (`RoadsterGame/`, `SuperHeavyGame/`) adds its own `physics.js`, `draw.js` and `sound.js`
 - **No TypeScript, no SSR (`getServerSideProps`), no new CSS Module files**
 
 ## Adding Content

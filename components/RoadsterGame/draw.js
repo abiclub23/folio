@@ -4,22 +4,10 @@ import {
   CAR_L, FT, JETS, MPH, RAMP_END, RAMP_R, SAFE_TILT, SAFE_VY, SPACE_ALT, TOWER_H, TOWER_W, WHEEL_R,
   canRestart, crashCardReady, jetDirs, landingGrade, slowMo, wrapAngle,
 } from './physics'
-
-const FONT = 'Barlow, system-ui, sans-serif'
-
-// Deterministic scenery
-function hash(i) {
-  const r = Math.sin(i * 12.9898) * 43758.5453
-  return r - Math.floor(r)
-}
-const STARS = Array.from({ length: 110 }, (_, i) => ({ x: hash(i + 7), y: hash(i + 300), r: 0.6 + hash(i + 600) * 1.2 }))
-
-function lerp(a, b, t) { return a + (b - a) * t }
-function rrect(ctx, x, y, w, h, r) {
-  ctx.beginPath()
-  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r)
-  else ctx.rect(x, y, w, h)
-}
+import { BAD, GOOD, drawAttitude, drawBadge, drawCard, drawGroundArrow, drawInstruments, drawToast } from '../GameKit/hud'
+import {
+  FONT, drawGroundFill, drawHills, drawLetterbox, drawNightSky, drawParticles, drawStreaks, lerp, rrect,
+} from '../GameKit/scene'
 
 export function updateCamera(game, W, H, dt) {
   // After a crash, follow the ejected driver
@@ -50,38 +38,6 @@ export function updateCamera(game, W, H, dt) {
   return cam
 }
 
-// White exhaust glow, drawn once and reused for every thrust particle
-let glow = null
-function glowSprite() {
-  if (glow) return glow
-  glow = document.createElement('canvas')
-  glow.width = glow.height = 64
-  const g = glow.getContext('2d')
-  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32)
-  grad.addColorStop(0, 'rgba(255,255,255,1)')
-  grad.addColorStop(0.45, 'rgba(235,238,244,0.6)')
-  grad.addColorStop(1, 'rgba(220,224,232,0)')
-  g.fillStyle = grad
-  g.fillRect(0, 0, 64, 64)
-  return glow
-}
-
-// Rolling mountain silhouette in screen space, scrolled by parallax offset
-function drawRange(ctx, W, base, offset, amp, color, seed) {
-  if (base - amp > ctx.canvas.height) return
-  ctx.fillStyle = color
-  ctx.beginPath()
-  ctx.moveTo(0, base + 2)
-  for (let x = 0; x <= W + 8; x += 8) {
-    const u = x + offset
-    const n = Math.sin(u * 0.004 + seed) * 0.45 + Math.sin(u * 0.011 + seed * 2.1) * 0.3 + Math.sin(u * 0.027 + seed * 3.7) * 0.15
-    ctx.lineTo(x, base - amp * (0.55 + n * 0.5))
-  }
-  ctx.lineTo(W, base + 2)
-  ctx.closePath()
-  ctx.fill()
-}
-
 export function render(ctx, game, W, H, input) {
   const { runway, towerX } = game.track
   const cam = game.cam
@@ -98,58 +54,14 @@ export function render(ctx, game, W, H, input) {
 
   // Night sky, like the demo; it fades to pure black on the way to space
   const space = Math.min(1, Math.max(0, (car.y - 120) / (SPACE_ALT - 120)))
-  const fade = (hex) => {
-    const n = parseInt(hex.slice(1), 16)
-    const k = 1 - space
-    return `rgb(${Math.round((n >> 16) * k)},${Math.round(((n >> 8) & 255) * k)},${Math.round((n & 255) * k)})`
-  }
-  const sky = ctx.createLinearGradient(0, 0, 0, H)
-  sky.addColorStop(0, fade('#04060b'))
-  sky.addColorStop(0.75, fade('#0b1020'))
-  sky.addColorStop(1, fade('#1a2133'))
-  ctx.fillStyle = sky
-  ctx.fillRect(-20, -20, W + 40, H + 40)
-
-  ctx.fillStyle = `rgba(255,255,255,${0.75 + space * 0.25})`
-  for (const s of STARS) {
-    const x = (((s.x * W - cam.left * S * 0.02) % W) + W) % W
-    ctx.beginPath()
-    ctx.arc(x, s.y * H * 0.85, s.r * (0.8 + space * 0.5), 0, Math.PI * 2)
-    ctx.fill()
-  }
-
-  // Earth's blue edge curving up from below, up in space
-  if (space > 0) {
-    const R = Math.max(W, H) * 2.2
-    const cx = W / 2, cy = H + R - H * 0.18 * space
-    const limb = ctx.createRadialGradient(cx, cy, R - 40, cx, cy, R + 30)
-    limb.addColorStop(0, `rgba(30,90,200,${0.9 * space})`)
-    limb.addColorStop(0.55, `rgba(120,190,255,${0.8 * space})`)
-    limb.addColorStop(1, 'rgba(120,190,255,0)')
-    ctx.fillStyle = limb
-    ctx.beginPath()
-    ctx.arc(cx, cy, R + 30, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = `rgba(14,40,90,${space})`
-    ctx.beginPath()
-    ctx.arc(cx, cy, R - 30, 0, Math.PI * 2)
-    ctx.fill()
-  }
+  drawNightSky(ctx, W, H, cam, S, space)
 
   const gy = sy(0)
-  const horizon = gy > H ? H + (gy - H) * 0.3 : gy
-
-  // Distant hills in silhouette
-  drawRange(ctx, W, horizon, cam.left * S * 0.06, H * 0.2, '#0e1420', 1.3)
-  drawRange(ctx, W, horizon, cam.left * S * 0.16, H * 0.1, '#0a0e16', 4.2)
+  drawHills(ctx, W, H, cam, S, gy)
 
   // Ground
   if (gy < H) {
-    const ground = ctx.createLinearGradient(0, gy, 0, H)
-    ground.addColorStop(0, '#15171c')
-    ground.addColorStop(1, '#07080a')
-    ctx.fillStyle = ground
-    ctx.fillRect(-20, gy, W + 40, H - gy + 20)
+    drawGroundFill(ctx, W, H, gy)
 
     // Runway with dashed center line and a checkered start line
     const band = Math.max(4, 1.4 * S)
@@ -225,70 +137,15 @@ export function render(ctx, game, W, H, input) {
   const speed = game.phase === 'runway' || game.phase === 'ramp' ? game.speed : Math.hypot(car.vx, car.vy)
   if (speed > 30 && game.phase !== 'crashed') {
     const dir = game.phase === 'runway' ? 0 : game.phase === 'ramp' ? car.angle : Math.atan2(car.vy, car.vx)
-    const a = Math.min(0.35, (speed - 30) / 100)
-    const len = Math.min(120, speed * 1.5)
-    ctx.strokeStyle = `rgba(255,255,255,${a})`
-    ctx.lineWidth = 1.5
-    for (let i = 0; i < 14; i++) {
-      const px = (hash(i) * W * 1.4 - ((game.t * speed * 9 + i * 97) % (W * 1.4)) + W * 1.4) % (W * 1.4) - W * 0.2
-      const py = hash(i + 50) * H
-      ctx.beginPath()
-      ctx.moveTo(px, py)
-      ctx.lineTo(px - Math.cos(dir) * len, py + Math.sin(dir) * len)
-      ctx.stroke()
-    }
+    drawStreaks(ctx, W, H, game.t, speed, dir)
   }
 
-  // Particles: solid ones first, then glowing ones added on top
-  for (const p of game.particles) {
-    if (p.kind === 'flame' || p.kind === 'fire') continue
-    const a = Math.max(0, p.life / p.max)
-    const r = Math.max(1.5, p.size * S)
-    if (p.kind === 'smoke' || p.kind === 'dust') {
-      ctx.fillStyle = p.kind === 'dust' ? `rgba(160,140,110,${a * 0.5})` : `rgba(238,240,244,${a * 0.45})`
-      ctx.beginPath()
-      ctx.arc(sx(p.x), sy(p.y), r * (2 - a), 0, Math.PI * 2)
-      ctx.fill()
-    } else {
-      ctx.globalAlpha = Math.min(1, a * 2)
-      ctx.fillStyle = p.color
-      ctx.fillRect(sx(p.x) - r / 2, sy(p.y) - r / 2, r, r * (p.kind === 'confetti' ? 0.6 : 1))
-      ctx.globalAlpha = 1
-    }
-  }
-  ctx.globalCompositeOperation = 'lighter'
-  for (const p of game.particles) {
-    if (p.kind !== 'flame' && p.kind !== 'fire') continue
-    const a = Math.max(0, p.life / p.max)
-    const r = Math.max(2, p.size * S * (p.kind === 'fire' ? 1.6 : 1))
-    if (p.kind === 'flame') {
-      // Thrust exhaust is the most common particle, so stamp a pre-drawn glow instead of building a gradient
-      ctx.globalAlpha = a
-      ctx.drawImage(glowSprite(), sx(p.x) - r, sy(p.y) - r, r * 2, r * 2)
-      ctx.globalAlpha = 1
-      continue
-    }
-    const g = ctx.createRadialGradient(sx(p.x), sy(p.y), 0, sx(p.x), sy(p.y), r)
-    g.addColorStop(0, `rgba(255,240,200,${a})`)
-    g.addColorStop(0.4, `rgba(255,${Math.round(110 + 90 * a)},40,${a * 0.8})`)
-    g.addColorStop(1, 'rgba(255,60,0,0)')
-    ctx.fillStyle = g
-    ctx.beginPath()
-    ctx.arc(sx(p.x), sy(p.y), r, 0, Math.PI * 2)
-    ctx.fill()
-  }
-  ctx.globalCompositeOperation = 'source-over'
+  drawParticles(ctx, game.particles, sx, sy, S)
 
   if (game.phase !== 'crashed') drawCar(ctx, game, input, sx(car.x), sy(car.y), S)
   ctx.restore()
 
-  // Letterbox bars while in slow motion
-  if (slowMo(game)) {
-    const bar = Math.round(H * 0.07)
-    ctx.fillStyle = 'rgba(0,0,0,0.85)'
-    ctx.fillRect(0, 0, W, bar)
-    ctx.fillRect(0, H - bar, W, bar)
-  }
+  if (slowMo(game)) drawLetterbox(ctx, W, H)
 
   if (game.driver) drawDriver(ctx, game.driver, sx(game.driver.x), sy(game.driver.y), S)
 }
@@ -672,168 +529,33 @@ function drawCar(ctx, game, input, x, y, S) {
 export function drawHud(ctx, game, W, H, { touch = false } = {}) {
   const car = game.car
   const onTrack = game.phase === 'runway' || game.phase === 'ramp'
-  const speed = onTrack ? Math.abs(game.speed) : Math.hypot(car.vx, car.vy)
-  const descent = -car.vy
-  const tilt = wrapAngle(car.angle)
   const flying = game.phase === 'flight'
-  const good = '#4ade80', bad = '#f87171'
-
-  // Instrument panel
-  const panelH = flying ? 150 : 96
-  ctx.fillStyle = 'rgba(15,17,21,0.62)'
-  rrect(ctx, 12, 12, 150, panelH, 10)
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(255,255,255,0.14)'
-  ctx.lineWidth = 1
-  ctx.stroke()
-  const readout = (label, value, unit, y, color) => {
-    ctx.textAlign = 'left'
-    ctx.fillStyle = 'rgba(255,255,255,0.6)'
-    ctx.font = `600 10px ${FONT}`
-    ctx.fillText(label, 24, y)
-    ctx.fillStyle = color || '#f8fafc'
-    ctx.font = `700 22px ${FONT}`
-    ctx.fillText(value, 24, y + 22)
-    const w = ctx.measureText(value).width
-    ctx.fillStyle = 'rgba(255,255,255,0.6)'
-    ctx.font = `600 11px ${FONT}`
-    ctx.fillText(unit, 28 + w, y + 22)
-  }
-  readout('SPEED', String(Math.round(speed * MPH)), 'mph', 32)
-  readout('ALTITUDE', String(Math.round(Math.max(0, car.y) * FT)), 'ft', 76)
+  const panelH = drawInstruments(ctx, {
+    speed: onTrack ? Math.abs(game.speed) : Math.hypot(car.vx, car.vy),
+    altitude: car.y,
+    descent: flying ? -car.vy : null,
+    safeDescent: SAFE_VY,
+  })
   if (flying) {
-    const safe = descent <= SAFE_VY
-    readout('DESCENT', String(Math.max(0, Math.round(descent * MPH))), 'mph', 120, safe ? good : bad)
-    // Descent bar with the safe zone marked
-    const bx = 90, by = 130, bw = 60, bh = 6, max = 25
-    ctx.fillStyle = 'rgba(255,255,255,0.15)'
-    rrect(ctx, bx, by, bw, bh, 3)
-    ctx.fill()
-    ctx.fillStyle = 'rgba(74,222,128,0.35)'
-    rrect(ctx, bx, by, (bw * SAFE_VY) / max, bh, 3)
-    ctx.fill()
-    ctx.fillStyle = safe ? good : bad
-    rrect(ctx, bx, by, Math.max(2, (bw * Math.min(max, Math.max(0, descent))) / max), bh, 3)
-    ctx.fill()
-
-    // Attitude dial
-    const cx = W - 46, cy = 50, r = 30
-    const level = Math.abs(tilt) <= SAFE_TILT
-    ctx.fillStyle = 'rgba(15,17,21,0.62)'
-    ctx.beginPath()
-    ctx.arc(cx, cy, r + 8, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.strokeStyle = 'rgba(255,255,255,0.14)'
-    ctx.lineWidth = 1
-    ctx.stroke()
-    ctx.strokeStyle = 'rgba(74,222,128,0.6)'
-    ctx.lineWidth = 4
-    for (const base of [0, Math.PI]) {
-      ctx.beginPath()
-      ctx.arc(cx, cy, r, base - SAFE_TILT, base + SAFE_TILT)
-      ctx.stroke()
-    }
-    ctx.strokeStyle = level ? good : bad
-    ctx.lineWidth = 3
-    ctx.beginPath()
-    ctx.moveTo(cx - Math.cos(tilt) * (r - 6), cy + Math.sin(tilt) * (r - 6))
-    ctx.lineTo(cx + Math.cos(tilt) * (r - 6), cy - Math.sin(tilt) * (r - 6))
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(cx, cy)
-    ctx.lineTo(cx - Math.sin(tilt) * 12, cy - Math.cos(tilt) * 12)
-    ctx.stroke()
-    ctx.textAlign = 'center'
-    ctx.fillStyle = level ? good : bad
-    ctx.font = `700 12px ${FONT}`
-    ctx.fillText(`${Math.round((Math.abs(tilt) * 180) / Math.PI)}°`, cx, cy + r + 22)
-
-    // Ground is off screen: point at it
-    if (game.cam.bottom > 0) {
-      ctx.fillStyle = 'rgba(15,17,21,0.62)'
-      rrect(ctx, W / 2 - 70, H - 36, 140, 26, 13)
-      ctx.fill()
-      ctx.fillStyle = '#f8fafc'
-      ctx.font = `600 12px ${FONT}`
-      ctx.fillText(`▼ ground ${Math.round(car.y * FT)} ft`, W / 2, H - 18)
-    }
+    drawAttitude(ctx, W, wrapAngle(car.angle), SAFE_TILT)
+    if (game.cam.bottom > 0) drawGroundArrow(ctx, W, H, car.y)
   }
-
-  if (game.zeroSixty !== null) {
-    const y = 12 + panelH + 8
-    ctx.fillStyle = 'rgba(200,16,46,0.85)'
-    rrect(ctx, 12, y, 150, 26, 13)
-    ctx.fill()
-    ctx.fillStyle = '#fff'
-    ctx.textAlign = 'center'
-    ctx.font = `700 12px ${FONT}`
-    ctx.fillText(`0–60 MPH  ${game.zeroSixty.toFixed(2)}s`, 87, y + 17)
-  }
+  if (game.zeroSixty !== null) drawBadge(ctx, 12 + panelH + 8, `0–60 MPH  ${game.zeroSixty.toFixed(2)}s`)
 
   // Easter egg banner, fades out after a few seconds
-  if (game.toast && game.t - game.toast.at < 4.5) {
-    const age = game.t - game.toast.at
-    const a = Math.min(1, age * 3, (4.5 - age) * 2)
-    ctx.globalAlpha = a
-    ctx.textAlign = 'center'
-    ctx.fillStyle = '#f8fafc'
-    ctx.font = `800 ${W < 520 ? 30 : 40}px ${FONT}`
-    ctx.fillText(game.toast.title, W / 2, H * 0.3)
-    ctx.fillStyle = 'rgba(255,255,255,0.8)'
-    ctx.font = `600 ${W < 520 ? 14 : 17}px ${FONT}`
-    ctx.fillText(game.toast.line, W / 2, H * 0.3 + 30)
-    ctx.globalAlpha = 1
-  }
+  drawToast(ctx, W, H, game.toast, game.t)
 
-  // Message card: title, main line, optional detail
   let msg = null
   if (game.phase === 'ready') msg = { title: 'ROADSTER LAUNCH', line: touch ? 'Hold Thrust to rev and go' : 'Hold ↑ or W to rev and go', color: '#f8fafc' }
-  else if (game.phase === 'crashed' && crashCardReady(game)) msg = { title: 'CRASHED', line: game.quip, detail: game.reason, color: bad }
+  else if (game.phase === 'crashed' && crashCardReady(game)) msg = { title: 'CRASHED', line: game.quip, detail: game.reason, color: BAD }
   else if (game.phase === 'landed') {
     const mph = game.touchdown.descent * MPH
     msg = {
       title: landingGrade(mph),
       line: `${mph.toFixed(1)} mph touchdown · ${Math.round(Math.abs(car.x - game.track.runway) * FT)} ft from the ramp · ${Math.round(game.maxAlt * FT)} ft high`,
-      color: good,
+      color: GOOD,
       detail: game.starman ? 'Went to space and back. Starman approves.' : undefined,
     }
   }
-  const again = canRestart(game)
-  if (msg) {
-    const small = W < 420
-    const boxW = Math.min(W - 24, 620)
-    const boxH = (small ? 96 : 112) + (msg.detail ? 22 : 0) + (again ? 26 : 0)
-    const top = Math.max(H / 2 - boxH / 2, 12 + panelH + 16)
-    ctx.fillStyle = 'rgba(15,17,21,0.82)'
-    rrect(ctx, (W - boxW) / 2, top, boxW, boxH, 14)
-    ctx.fill()
-    ctx.strokeStyle = 'rgba(255,255,255,0.14)'
-    ctx.lineWidth = 1
-    ctx.stroke()
-    ctx.textAlign = 'center'
-    ctx.fillStyle = msg.color
-    // Shrink the big lines to fit narrow screens
-    const fit = (text, weight, size, maxW) => {
-      let s = size
-      ctx.font = `${weight} ${s}px ${FONT}`
-      while (s > 12 && ctx.measureText(text).width > maxW) ctx.font = `${weight} ${--s}px ${FONT}`
-    }
-    fit(msg.title, 800, small ? 28 : 36, boxW - 28)
-    ctx.fillText(msg.title, W / 2, top + (small ? 40 : 48))
-    ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    fit(msg.line, 600, small ? 17 : 20, boxW - 28)
-    let y = top + (small ? 72 : 86)
-    ctx.fillText(msg.line, W / 2, y)
-    if (msg.detail) {
-      y += 24
-      ctx.fillStyle = 'rgba(255,255,255,0.55)'
-      ctx.font = `500 ${small ? 12 : 14}px ${FONT}`
-      ctx.fillText(msg.detail, W / 2, y)
-    }
-    if (again) {
-      ctx.fillStyle = 'rgba(255,255,255,0.5)'
-      ctx.font = `600 13px ${FONT}`
-      ctx.fillText(touch ? 'Tap Thrust to go again' : 'Press ↑ or W to go again', W / 2, y + 28)
-    }
-  }
+  if (msg) drawCard(ctx, W, H, msg, { again: canRestart(game), touch, minTop: 12 + panelH + 16 })
 }

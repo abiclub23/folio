@@ -62,6 +62,16 @@ export default function Projects() {
           </Link>
           <p className="text-sm text-ink-muted">0–60 in under a second, off a ramp into the sky. Land it.</p>
         </div>
+
+        <div className="block">
+          <Link
+            href="/projects/super-heavy"
+            className="hover:text-olive hover:italic"
+          >
+            <h2 className="text-xl font-semibold">Super Heavy Catch</h2>
+          </Link>
+          <p className="text-sm text-ink-muted">Fly the booster back to the tower and land it in the chopsticks.</p>
+        </div>
       </div>
     </div>
   )

@@ -1,5 +1,8 @@
 // Roadster Launch game rules: physics, phases and particles. No drawing here.
 // Units are meters and seconds, with y pointing up.
+import { FT, MPH, spawn, stepParticles, wrapAngle } from '../GameKit/physics'
+
+export { FT, MPH, wrapAngle }
 const G = 9.8
 const LAUNCH_ACCEL = 30 // m/s² → 0–60 mph in ~0.9s
 export const RAMP_R = 20 // radius of the ")" curve
@@ -20,8 +23,6 @@ export const SPACE_ALT = 305 // ~1,000 ft
 const ROLL_DRAG = 1.5 // slowing on the track when you're off the throttle
 export const STEP = 1 / 120
 
-export const MPH = 2.23694
-export const FT = 3.28084
 
 // Where the ramp sits depends on the runway length (longer on phones), so each game carries its own track
 function makeTrack(runway) {
@@ -39,10 +40,6 @@ function hitsRamp(track, x, y) {
   if (dx < 0) return false
   const d = Math.hypot(dx, dy)
   return d > RAMP_R - 0.3 && d < RAMP_R + 1.2 && Math.atan2(dx, dy) <= RAMP_END + 0.05
-}
-
-export function wrapAngle(a) {
-  return Math.atan2(Math.sin(a), Math.cos(a))
 }
 
 // The car's forward (fx, fy) and up (ux, uy) directions in the world
@@ -223,22 +220,7 @@ export function step(game, input, dt) {
 
   if (game.driver) stepDriver(game.driver, dt)
 
-  // Particles
-  for (const p of game.particles) {
-    p.vy -= p.g * dt
-    p.vx *= 1 - p.drag * dt
-    p.vy *= 1 - p.drag * dt
-    p.x += p.vx * dt
-    p.y += p.vy * dt
-    if (p.y < 0) { p.y = 0; p.vy *= -0.3; p.vx *= 0.7 }
-    p.life -= dt
-  }
-  game.particles = game.particles.filter((p) => p.life > 0)
-}
-
-// Particles: x/y position, vx/vy velocity, g gravity (negative floats up), drag, life/max seconds, size meters
-function spawn(game, p) {
-  game.particles.push({ drag: 0, ...p })
+  stepParticles(game, dt)
 }
 
 function emitThrust(game) {
