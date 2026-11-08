@@ -1060,14 +1060,15 @@ export default function RoadsterGame() {
       <canvas ref={canvasRef} className="block w-full rounded border border-gray-950" />
 
       <div className="mt-3">
-        <div className="grid grid-cols-4 gap-2">
+        {/* Touch controls for phones; keyboard users don't need them */}
+        <div className="hidden [@media(pointer:coarse)]:grid grid-cols-4 gap-2">
           <button {...hold('left')} className={btn} aria-label="Tilt back">⟲</button>
           <button {...hold('thrust')} className={`${btn} col-span-2`}>THRUST</button>
           <button {...hold('right')} className={btn} aria-label="Tilt forward">⟳</button>
         </div>
       </div>
 
-      <p className="text-sm text-gray-500 mt-3">
+      <p className="text-sm text-gray-500 mt-3 [@media(pointer:coarse)]:hidden">
         Keyboard: hold ↑ or W to drive and thrust, A/D or ←/→ to tilt. Land with descent under 11 mph and tilt under 15°.
       </p>
     </div>
