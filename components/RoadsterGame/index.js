@@ -1039,28 +1039,37 @@ export default function RoadsterGame() {
     }
   }, [])
 
-  const hold = (action) => ({
-    onPointerDown: (e) => {
-      e.preventDefault()
-      inputRef.current[action] = true
-      if (action === 'thrust') pressStart()
-    },
-    onPointerUp: () => { inputRef.current[action] = false },
-    onPointerLeave: () => { inputRef.current[action] = false },
-    onPointerCancel: () => { inputRef.current[action] = false },
-    onContextMenu: (e) => e.preventDefault(),
-  })
+  const hold = (action) => {
+    const release = (e) => {
+      inputRef.current[action] = false
+      delete e.currentTarget.dataset.on
+    }
+    return {
+      onPointerDown: (e) => {
+        e.preventDefault()
+        inputRef.current[action] = true
+        e.currentTarget.dataset.on = '1'
+        try { navigator.vibrate?.(8) } catch {}
+        if (action === 'thrust') pressStart()
+      },
+      onPointerUp: release,
+      onPointerLeave: release,
+      onPointerCancel: release,
+      onContextMenu: (e) => e.preventDefault(),
+    }
+  }
 
-  const btn =
-    'select-none rounded-md border border-[#3a3f46] bg-[#23262b] py-[18px] font-barlow-condensed text-xl font-bold uppercase tracking-[0.08em] text-[#eceae4] active:bg-[#3a3f46]'
+  const tiltBtn =
+    'flex select-none flex-col items-center justify-center gap-1 rounded-2xl border border-[#3a3f46] bg-gradient-to-b from-[#2a2e34] to-[#1d2025] py-3 text-[#eceae4] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:border-[#6b7280] data-[on=1]:from-[#353a42] data-[on=1]:to-[#2a2e34]'
+  const caption = 'font-barlow-condensed text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[#9aa0a8]'
 
   // One-screen app: title strip, game filling the middle, thumb controls on touch screens
   return (
     <div
-      className="fixed inset-0 flex select-none flex-col gap-2.5 overflow-hidden bg-[#17191c] px-4 py-3 font-barlow text-[#eceae4]"
-      style={{ touchAction: 'none' }}
+      className="fixed inset-0 flex select-none flex-col gap-2.5 overflow-hidden bg-[#17191c] px-4 pt-3 font-barlow text-[#eceae4]"
+      style={{ touchAction: 'none', paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
     >
-      <header className="mx-auto flex w-full max-w-[1100px] flex-wrap items-baseline justify-between gap-3">
+      <header className="flex w-full flex-wrap items-baseline justify-between gap-3">
         <h1 className="font-barlow-condensed text-[1.6rem] font-bold uppercase tracking-[0.04em]">
           <Link href="/projects" className="mr-3 align-middle text-base text-[#9aa0a8] hover:text-[#eceae4]" aria-label="Back to projects">←</Link>
           Roadster <span className="text-[#d62828]">Launch</span>
@@ -1068,17 +1077,37 @@ export default function RoadsterGame() {
         <div className="text-sm tabular-nums text-[#9aa0a8]">0–60 in 0.9s · land under 11 mph, within 15° of level</div>
       </header>
 
-      <div ref={wrapRef} className="relative mx-auto min-h-0 w-full max-w-[1100px] flex-1">
+      <div ref={wrapRef} className="relative min-h-0 w-full flex-1">
         <canvas ref={canvasRef} className="block h-full w-full rounded-md border border-[#3a3f46]" aria-label="Roadster launch game" />
       </div>
 
       {/* Touch controls for phones; keyboard users get the hint instead */}
-      <div className="mx-auto hidden w-full max-w-[1100px] grid-cols-[1fr_2fr_1fr] gap-2 [@media(pointer:coarse)]:grid">
-        <button {...hold('left')} className={btn} aria-label="Tilt back">⟲</button>
-        <button {...hold('thrust')} className={btn}>Thrust</button>
-        <button {...hold('right')} className={btn} aria-label="Tilt forward">⟳</button>
+      <div className="hidden w-full grid-cols-[1fr_1.6fr_1fr] gap-2.5 [@media(pointer:coarse)]:grid">
+        <button {...hold('left')} className={tiltBtn} aria-label="Tilt nose up">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <span className={caption}>Nose up</span>
+        </button>
+        <button
+          {...hold('thrust')}
+          className="flex select-none items-center justify-center gap-2 rounded-2xl border border-[#ff5a5a]/40 bg-gradient-to-b from-[#e5383b] to-[#a4161a] font-barlow-condensed text-[1.35rem] font-bold uppercase tracking-[0.1em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_6px_18px_rgba(164,22,26,0.35)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:from-[#ff4d4f] data-[on=1]:to-[#c81d25] data-[on=1]:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_28px_rgba(255,77,79,0.6)]"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+          </svg>
+          Thrust
+        </button>
+        <button {...hold('right')} className={tiltBtn} aria-label="Tilt nose down">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+          </svg>
+          <span className={caption}>Nose down</span>
+        </button>
       </div>
-      <p className="mx-auto w-full max-w-[1100px] text-[0.8rem] text-[#9aa0a8] [@media(pointer:coarse)]:hidden">
+      <p className="w-full text-[0.8rem] text-[#9aa0a8] [@media(pointer:coarse)]:hidden">
         Keyboard: hold ↑ or W to drive and thrust, A/D or ←/→ to tilt.
       </p>
     </div>
