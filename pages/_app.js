@@ -12,7 +12,7 @@ function MyApp({ Component, pageProps }) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
-      {/* Full-screen pages (like Dublin Parks) skip the site nav and footer */}
+      {/* Full-screen pages (like Dublin Parks and the Roadster game) skip the site nav and footer */}
       {Component.bareLayout ? (
         <Component {...pageProps} />
       ) : (
