@@ -10,7 +10,7 @@ export default function SuperHeavyPage() {
         <title>Super Heavy Catch | Abhi Tondepu</title>
         <meta name="description" content="Fly the Super Heavy booster back to the tower and catch it with the chopsticks." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700&display=swap" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700;800&family=Saira+Condensed:wght@600;700;800&display=swap" />
       </Head>
       <SuperHeavyGame />
     </>

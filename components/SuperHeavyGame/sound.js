@@ -1,4 +1,4 @@
-// Super Heavy sound mix: engine rumble and roar while firing, wind on the way down, one-shots on events
+// Super Heavy livestream sound: engine rumble and roar while firing, wind on the way down, applause on a catch
 import { Sound } from '../GameKit/sound'
 
 export function updateSound(game, input, slow) {
@@ -16,6 +16,7 @@ export function updateSound(game, input, slow) {
     if (game.phase === 'caught') {
       Sound.clang()
       Sound.chime()
+      Sound.applause()
     }
     if (game.phase === 'landed') {
       Sound.thud()

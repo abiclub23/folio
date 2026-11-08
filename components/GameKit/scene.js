@@ -89,12 +89,12 @@ export function drawNightSky(ctx, W, H, cam, S, space = 0) {
 }
 
 // Two layers of distant hills that scroll slower than the ground; gy is the ground's row on screen
-export function drawHills(ctx, W, H, cam, S, gy) {
+export function drawHills(ctx, W, H, cam, S, gy, colors = ['#0e1420', '#0a0e16']) {
   const horizon = gy > H ? H + (gy - H) * 0.3 : gy
 
   // Distant hills in silhouette
-  drawRange(ctx, W, horizon, cam.left * S * 0.06, H * 0.2, '#0e1420', 1.3)
-  drawRange(ctx, W, horizon, cam.left * S * 0.16, H * 0.1, '#0a0e16', 4.2)
+  drawRange(ctx, W, horizon, cam.left * S * 0.06, H * 0.2, colors[0], 1.3)
+  drawRange(ctx, W, horizon, cam.left * S * 0.16, H * 0.1, colors[1], 4.2)
 }
 
 // Dark ground from row gy to the bottom of the screen

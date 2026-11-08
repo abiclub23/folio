@@ -114,6 +114,7 @@ const groundAt = (x) => (x > MOUNT.x0 && x < MOUNT.x1 ? MOUNT.top : 0)
 export function step(game, input, dt) {
   const b = game.booster
   if (game.phase !== 'ready') game.t += dt
+  game.firing = game.phase === 'flight' && input.thrust
 
   if (game.phase === 'flight') {
     const turn = (input.left ? 1 : 0) - (input.right ? 1 : 0)

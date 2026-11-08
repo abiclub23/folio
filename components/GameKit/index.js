@@ -1,6 +1,7 @@
 // Shared full-screen page for the canvas games: header, canvas, game loop, keyboard and touch controls,
 // mute, and the phone layouts (rotate prompt upright, thumb buttons over the game sideways).
 //
+// theme: optional Tailwind classes to restyle the page (see DEFAULT_THEME)
 // engine: {
 //   STEP, step(game, input, dt), slowMo(game),
 //   newGame(view), pressThrust(game, view)       view = { phone } for screen-dependent setup
@@ -11,13 +12,35 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { Sound } from './sound'
 
+// Page look: Tailwind classes for each part. Games can override any of them; the defaults are Roadster's.
+const DEFAULT_THEME = {
+  page: 'bg-[#17191c] font-barlow text-[#eceae4]',
+  title: 'font-barlow-condensed text-[1.6rem] font-bold uppercase tracking-[0.04em]',
+  accent: 'text-[#d62828]',
+  muted: 'text-[#9aa0a8]',
+  link: 'text-[#9aa0a8] hover:text-[#eceae4]',
+  chip: 'rounded-md border border-[#3a3f46] bg-[#17191c]/60 text-[#eceae4] hover:bg-[#23262b]',
+  canvas: 'rounded-md border border-[#3a3f46]',
+  tiltBtn:
+    'flex select-none flex-col items-center justify-center gap-1 rounded-2xl border border-[#3a3f46] bg-gradient-to-b from-[#2a2e34] to-[#1d2025] py-3 text-[#eceae4] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:border-[#6b7280] data-[on=1]:from-[#353a42] data-[on=1]:to-[#2a2e34]',
+  thrustBtn:
+    'flex select-none items-center justify-center gap-2 border border-white/60 bg-gradient-to-b from-white to-[#dfe3e8] font-barlow-condensed font-bold uppercase tracking-[0.1em] text-[#17191c] shadow-[inset_0_-2px_0_rgba(0,0,0,0.08),0_6px_18px_rgba(0,0,0,0.35)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:from-white data-[on=1]:to-white data-[on=1]:shadow-[0_0_28px_rgba(255,255,255,0.55)]',
+  padBtn:
+    'flex select-none items-center justify-center rounded-full border border-white/25 bg-[#17191c]/55 text-[#eceae4] backdrop-blur-sm transition-transform duration-75 data-[on=1]:scale-[0.94] data-[on=1]:bg-white/25',
+  caption: 'font-barlow-condensed text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[#9aa0a8]',
+  rotateBg: 'bg-[#17191c]',
+  rotateTitle: 'font-barlow-condensed text-3xl font-bold uppercase tracking-[0.04em]',
+  rotateIcon: '#eceae4',
+}
+
 const KEYS = {
   thrust: [' ', 'w', 'W', 'ArrowUp'],
   left: ['a', 'A', 'ArrowLeft'],
   right: ['d', 'D', 'ArrowRight'],
 }
 
-export default function GameShell({ name, titleLead, titleAccent, spec, hint, labels, storageKey, engine }) {
+export default function GameShell({ name, titleLead, titleAccent, spec, hint, labels, storageKey, engine, theme: custom }) {
+  const theme = { ...DEFAULT_THEME, ...custom }
   const wrapRef = useRef(null)
   const canvasRef = useRef(null)
   const gameRef = useRef(null)
@@ -145,14 +168,7 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
     }
   }
 
-  const tiltBtn =
-    'flex select-none flex-col items-center justify-center gap-1 rounded-2xl border border-[#3a3f46] bg-gradient-to-b from-[#2a2e34] to-[#1d2025] py-3 text-[#eceae4] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:border-[#6b7280] data-[on=1]:from-[#353a42] data-[on=1]:to-[#2a2e34]'
-  const thrustBtn =
-    'flex select-none items-center justify-center gap-2 border border-white/60 bg-gradient-to-b from-white to-[#dfe3e8] font-barlow-condensed font-bold uppercase tracking-[0.1em] text-[#17191c] shadow-[inset_0_-2px_0_rgba(0,0,0,0.08),0_6px_18px_rgba(0,0,0,0.35)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:from-white data-[on=1]:to-white data-[on=1]:shadow-[0_0_28px_rgba(255,255,255,0.55)]'
-  // Round, see-through thumb buttons for phones held sideways
-  const padBtn =
-    'flex select-none items-center justify-center rounded-full border border-white/25 bg-[#17191c]/55 text-[#eceae4] backdrop-blur-sm transition-transform duration-75 data-[on=1]:scale-[0.94] data-[on=1]:bg-white/25'
-  const caption = 'font-barlow-condensed text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[#9aa0a8]'
+  const { tiltBtn, thrustBtn, padBtn, caption } = theme
   const phone = mode === 'phone-landscape'
 
   const icons = {
@@ -178,7 +194,7 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
   const muteButton = (
     <button
       onClick={() => { Sound.init(); toggleMute() }}
-      className="rounded-md border border-[#3a3f46] bg-[#17191c]/60 p-1.5 text-[#eceae4] hover:bg-[#23262b]"
+      className={`${theme.chip} p-1.5`}
       aria-label={muted ? 'Turn sound on' : 'Mute sound'}
       title={muted ? 'Sound off (M)' : 'Sound on (M)'}
     >
@@ -192,16 +208,16 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
   // One-screen app: title strip, game filling the middle, thumb controls on touch screens
   return (
     <div
-      className={`fixed inset-0 flex select-none flex-col overflow-hidden bg-[#17191c] font-barlow text-[#eceae4] ${phone ? '' : 'gap-2.5 px-4 pt-3'}`}
+      className={`fixed inset-0 flex select-none flex-col overflow-hidden ${theme.page} ${phone ? '' : 'gap-2.5 px-4 pt-3'}`}
       style={{ touchAction: 'none', paddingBottom: phone ? 0 : 'max(12px, env(safe-area-inset-bottom))' }}
     >
       {!phone && (
         <header className="flex w-full flex-wrap items-baseline justify-between gap-3">
-          <h1 className="font-barlow-condensed text-[1.6rem] font-bold uppercase tracking-[0.04em]">
-            <Link href="/projects" className="mr-3 align-middle text-base text-[#9aa0a8] hover:text-[#eceae4]" aria-label="Back to projects">←</Link>
-            {titleLead} <span className="text-[#d62828]">{titleAccent}</span>
+          <h1 className={theme.title}>
+            <Link href="/projects" className={`mr-3 align-middle text-base ${theme.link}`} aria-label="Back to projects">←</Link>
+            {titleLead} <span className={theme.accent}>{titleAccent}</span>
           </h1>
-          <div className="flex items-center gap-3 text-sm tabular-nums text-[#9aa0a8]">
+          <div className={`flex items-center gap-3 text-sm tabular-nums ${theme.muted}`}>
             <span>{spec}</span>
             {muteButton}
           </div>
@@ -211,14 +227,14 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
       <div ref={wrapRef} className="relative min-h-0 w-full flex-1">
         <canvas
           ref={canvasRef}
-          className={`block h-full w-full ${phone ? '' : 'rounded-md border border-[#3a3f46]'}`}
+          className={`block h-full w-full ${phone ? '' : theme.canvas}`}
           aria-label={`${name} game`}
         />
 
         {phone && (
           <>
             <div className="absolute left-1/2 top-2 flex -translate-x-1/2 items-center gap-2">
-              <Link href="/projects" className="rounded-md border border-[#3a3f46] bg-[#17191c]/60 px-2.5 py-1 text-[#eceae4]" aria-label="Back to projects">←</Link>
+              <Link href="/projects" className={`${theme.chip} px-2.5 py-1`} aria-label="Back to projects">←</Link>
               {muteButton}
             </div>
             <div
@@ -257,22 +273,22 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
         </div>
       )}
       {mode === 'default' && (
-        <p className="w-full text-[0.8rem] text-[#9aa0a8]">
+        <p className={`w-full text-[0.8rem] ${theme.muted}`}>
           {hint}
         </p>
       )}
 
       {mode === 'phone-portrait' && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[#17191c] px-8 text-center">
-          <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#eceae4" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="motion-safe:animate-turn-phone">
+        <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 px-8 text-center ${theme.rotateBg}`}>
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke={theme.rotateIcon} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="motion-safe:animate-turn-phone">
             <rect x="7" y="2" width="10" height="20" rx="2" />
             <path d="M11 18h2" />
           </svg>
-          <h2 className="font-barlow-condensed text-3xl font-bold uppercase tracking-[0.04em]">
-            Rotate your <span className="text-[#d62828]">phone</span>
+          <h2 className={theme.rotateTitle}>
+            Rotate your <span className={theme.accent}>phone</span>
           </h2>
-          <p className="text-[#9aa0a8]">{name} plays sideways, with the controls under your thumbs.</p>
-          <Link href="/projects" className="mt-2 text-sm text-[#9aa0a8] underline">Back to projects</Link>
+          <p className={theme.muted}>{name} plays sideways, with the controls under your thumbs.</p>
+          <Link href="/projects" className={`mt-2 text-sm underline ${theme.muted}`}>Back to projects</Link>
         </div>
       )}
     </div>

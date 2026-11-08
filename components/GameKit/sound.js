@@ -167,6 +167,57 @@ export const Sound = {
     })
     this.thud(0.6)
   },
+  // Crowd applause: band-passed noise with lots of quick random claps, swelling then fading over ~2.5s
+  applause() {
+    const c = this.ctx, t = c.currentTime
+    const src = c.createBufferSource()
+    src.buffer = this.noiseBuf
+    src.loop = true
+    const f = c.createBiquadFilter()
+    f.type = 'bandpass'
+    f.frequency.value = 1800
+    f.Q.value = 0.6
+    const g = c.createGain()
+    g.gain.setValueAtTime(0, t)
+    for (let i = 0; i < 90; i++) {
+      const at = t + i * 0.028
+      const swell = Math.sin((Math.PI * i) / 90)
+      g.gain.setValueAtTime(swell * (0.12 + Math.random() * 0.22), at)
+    }
+    g.gain.exponentialRampToValueAtTime(0.001, t + 2.6)
+    src.connect(f).connect(g).connect(this.nodes.master)
+    src.start(t)
+    src.stop(t + 2.7)
+  },
+  // Short arcade blip; type is the oscillator shape
+  beep(freq, dur = 0.08, level = 0.12, type = 'square') {
+    if (!this.nodes) return
+    const c = this.ctx, t = c.currentTime
+    const o = c.createOscillator()
+    o.type = type
+    o.frequency.value = freq
+    const g = c.createGain()
+    g.gain.setValueAtTime(level, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur)
+    o.connect(g).connect(this.nodes.master)
+    o.start(t)
+    o.stop(t + dur + 0.02)
+  },
+  // Falling square-wave zap for arcade crashes
+  zap() {
+    const c = this.ctx, t = c.currentTime
+    const o = c.createOscillator()
+    o.type = 'square'
+    o.frequency.setValueAtTime(900, t)
+    o.frequency.exponentialRampToValueAtTime(40, t + 0.9)
+    const g = c.createGain()
+    g.gain.setValueAtTime(0.16, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1)
+    o.connect(g).connect(this.nodes.master)
+    o.start(t)
+    o.stop(t + 1.05)
+    this.thud(0.7)
+  },
   chime() {
     const c = this.ctx, t = c.currentTime
     ;[660, 880, 1320].forEach((freq, i) => {
