@@ -35,7 +35,7 @@ const GROUND_TILT = (8 * Math.PI) / 180
 export function newGame() {
   return {
     phase: 'ready', // ready → flight → caught | landed | crashed
-    booster: { x: -240, y: 950, vx: 14, vy: -72, angle: 0.05 },
+    booster: { x: -170, y: 430, vx: 8, vy: -40, angle: 0.04 },
     t: 0,
     endedAt: 0,
     maxSpeed: 0,

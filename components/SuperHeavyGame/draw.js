@@ -18,26 +18,24 @@ const STRIP = 104 // height of the bottom telemetry strip
 export function updateCamera(game, W, H, dt) {
   const b = game.booster
   const slow = slowMo(game)
-  const top = b.y + BOOSTER_H
-  // Start close on the booster, then zoom out to keep it and the ground in view on the way down
-  const targetViewH = game.phase === 'ready' ? 200 : slow ? 80 : Math.min(380, Math.max(210, top * 1.15 + 30))
-  const cam = game.cam || { viewH: targetViewH, left: 0, bottom: 0 }
-  cam.viewH = lerp(cam.viewH, targetViewH, Math.min(1, dt * 3))
-  const scale = H / cam.viewH
-  const viewW = W / scale
-  // As the booster gets low, pull the tower into view too
-  const near = Math.min(1, Math.max(0, 1 - (b.y - 150) / 600))
-  const focusX = slow ? CATCH_X : game.phase === 'ready' ? b.x : lerp(b.x, (b.x + TOWER_X + TOWER_W / 2) / 2, near)
-  const targetLeft = focusX - viewW / 2
-  // Keep the ground above the telemetry strip when it's in view
-  const floor = -cam.viewH * (STRIP / H + 0.04)
-  const targetBottom = slow
-    ? ARM_Y - cam.viewH * 0.5
-    : game.phase === 'ready' ? b.y + BOOSTER_H / 2 - cam.viewH * 0.62
-    : top < cam.viewH * 0.75 ? floor : b.y + BOOSTER_H / 2 - cam.viewH * 0.5
+  // Frame the booster and the tower together so you always see where you're headed.
+  // The usable area sits between a top margin and the telemetry strip.
+  const topPad = 44, usableH = Math.max(80, H - STRIP - topPad)
+  const x0 = Math.min(b.x - 25, TOWER_X - ARM_LEN - 20)
+  const x1 = Math.max(b.x + 25, TOWER_X + TOWER_W + 25)
+  const y1 = Math.max(TOWER_H + 20, b.y + BOOSTER_H + 20)
+  // Slow motion zooms in on the chopsticks
+  const box = slow ? { x0: CATCH_X - 45, x1: CATCH_X + 45, y0: ARM_Y - 60, y1: ARM_Y + 45 } : { x0, x1, y0: 0, y1 }
+  const scaleTarget = Math.min(usableH / (box.y1 - box.y0), W / (box.x1 - box.x0))
+  const cam = game.cam || { scale: scaleTarget, left: 0, bottom: 0 }
+  cam.scale = game.cam ? lerp(cam.scale, scaleTarget, Math.min(1, dt * 3)) : scaleTarget
+  const S = cam.scale
+  const targetLeft = (box.x0 + box.x1) / 2 - W / S / 2
+  // Ground sits just above the telemetry strip; the box is centered in the space above it
+  const targetBottom = (box.y0 + box.y1) / 2 - (usableH / 2 + STRIP) / S
   cam.left = game.cam ? lerp(cam.left, targetLeft, Math.min(1, dt * 5)) : targetLeft
   cam.bottom = game.cam ? lerp(cam.bottom, targetBottom, Math.min(1, dt * 5)) : targetBottom
-  cam.scale = scale
+  cam.viewH = H / S
   game.cam = cam
   return cam
 }
@@ -102,6 +100,31 @@ function drawWorld(ctx, game, input, v) {
   drawParticles(ctx, game.particles, sx, sy, S)
   if (game.phase !== 'crashed') drawBooster(ctx, game, input, sx(game.booster.x), sy(game.booster.y), S)
   drawArm(ctx, sx, sy, S, game, 'front')
+  if ((game.phase === 'flight' && !slowMo(game)) || game.phase === 'ready') drawTargetMarker(ctx, sx(CATCH_X), sy(ARM_Y), game.t)
+}
+
+// Pulsing "CATCH HERE" chevron over the chopsticks so the goal is obvious from the first frame
+function drawTargetMarker(ctx, x, y, t) {
+  const bob = Math.sin(t * 4) * 3
+  const top = y - 26 + bob
+  ctx.save()
+  ctx.shadowColor = 'rgba(124,255,178,0.8)'
+  ctx.shadowBlur = 8
+  ctx.strokeStyle = GOOD
+  ctx.lineWidth = 2.5
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(x - 8, top - 8)
+  ctx.lineTo(x, top)
+  ctx.lineTo(x + 8, top - 8)
+  ctx.stroke()
+  ctx.shadowBlur = 0
+  ctx.fillStyle = GOOD
+  ctx.textAlign = 'center'
+  ctx.font = `700 11px ${COND}`
+  ctx.fillText('CATCH HERE', x, top - 14)
+  ctx.restore()
 }
 
 // Golden-hour sky anchored to the horizon, a low sun with a big glow, and long clouds lit from below
@@ -271,9 +294,11 @@ function drawArm(ctx, sx, sy, S, game, side) {
 function drawBooster(ctx, game, input, x, y, S) {
   const b = game.booster
   const w = BOOSTER_W / 2
+  // Draw at least ~70px tall so it stays readable when the camera is zoomed out
+  const vis = Math.max(1, 70 / (BOOSTER_H * S))
   ctx.save()
   ctx.translate(x, y)
-  ctx.scale(S, -S)
+  ctx.scale(S * vis, -S * vis)
   ctx.rotate(b.angle)
 
   if (game.phase === 'flight' && input.thrust) {
@@ -543,15 +568,16 @@ export function drawHud(ctx, game, W, H, { touch = false } = {}) {
       msg = { kicker: 'ANOMALY', title: 'CRASHED', line: game.quip, detail: game.reason, color: BAD }
     }
   }
-  if (msg) lowerThird(ctx, W, H, msg, canRestart(game) ? (touch ? 'Tap Thrust to go again' : 'Press ↑ or W to go again') : null)
+  // The start title sits at the top so it doesn't hide the tower; results sit low like a broadcast caption
+  if (msg) lowerThird(ctx, W, H, msg, canRestart(game) ? (touch ? 'Tap Thrust to go again' : 'Press ↑ or W to go again') : null, game.phase === 'ready')
 }
 
 // Broadcast lower-third above the telemetry strip: kicker, big title, line, optional detail and hint
-function lowerThird(ctx, W, H, msg, hint) {
+function lowerThird(ctx, W, H, msg, hint, atTop = false) {
   const w = Math.min(W - 24, 640)
   const rows = 2 + (msg.detail ? 1 : 0) + (hint ? 1 : 0)
   const h = 36 + rows * 22 + 12
-  const x = 0, y = H - STRIP - h - 14
+  const x = 0, y = atTop ? 44 : H - STRIP - h - 14
   const bg = ctx.createLinearGradient(x, 0, x + w, 0)
   bg.addColorStop(0, 'rgba(14,8,18,0.92)')
   bg.addColorStop(0.75, 'rgba(14,8,18,0.8)')

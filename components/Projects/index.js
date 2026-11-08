@@ -70,10 +70,7 @@ export default function Projects() {
           >
             <h2 className="text-xl font-semibold">Super Heavy Catch</h2>
           </Link>
-          <p className="text-sm text-ink-muted">
-            Fly the booster back to the tower and land it in the chopsticks.{' '}
-            <Link href="/projects/super-heavy-retro" className="underline hover:text-olive">Play the 1979 arcade version</Link>.
-          </p>
+          <p className="text-sm text-ink-muted">Fly the booster back to the tower and land it in the chopsticks.</p>
         </div>
       </div>
     </div>

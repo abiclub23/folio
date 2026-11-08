@@ -1,14 +1,10 @@
 // Super Heavy Catch: fly the booster back to the tower and land it in the chopsticks.
-// Two looks share the same rules (physics.js):
-//   SuperHeavyGame       sunset livestream (draw.js, sound.js)
-//   RetroSuperHeavyGame  1979 vector arcade (retroDraw.js, retroSound.js)
-// The page around each one (layout, controls, game loop) is the shared GameShell.
+// The rules live in physics.js, the sunset-livestream drawing in draw.js and the sound mix in sound.js;
+// the page around it (layout, controls, game loop) is the shared GameShell.
 import GameShell from '../GameKit'
 import { STEP, newGame, pressThrust, slowMo, step } from './physics'
 import * as livestream from './draw'
 import { updateSound } from './sound'
-import * as arcade from './retroDraw'
-import { updateSound as updateRetroSound } from './retroSound'
 
 const rules = { STEP, step, slowMo, newGame, pressThrust }
 const labels = { left: ['Tilt left', 'Tilt left'], right: ['Tilt right', 'Tilt right'] }
@@ -33,27 +29,7 @@ const SUNSET_THEME = {
   rotateIcon: '#f6ebe3',
 }
 
-const RETRO_THEME = {
-  page: 'bg-black font-vt text-[#39ff6a] text-lg',
-  title: 'font-pixel text-[0.95rem] uppercase leading-relaxed [text-shadow:0_0_8px_#39ff6a]',
-  accent: 'text-[#ffb000] [text-shadow:0_0_8px_#ffb000]',
-  muted: 'text-[#39ff6a]/70',
-  link: 'text-[#39ff6a]/70 hover:text-[#39ff6a]',
-  chip: 'rounded-none border border-[#39ff6a]/60 bg-black/60 text-[#39ff6a] hover:bg-[#39ff6a]/10',
-  canvas: 'border border-[#39ff6a]/40 shadow-[0_0_24px_rgba(57,255,106,0.15)]',
-  tiltBtn:
-    'flex select-none flex-col items-center justify-center gap-1 border-2 border-[#39ff6a] bg-black py-3 text-[#39ff6a] shadow-[0_0_10px_rgba(57,255,106,0.35)] data-[on=1]:bg-[#39ff6a]/20',
-  thrustBtn:
-    'flex select-none items-center justify-center gap-2 border-2 border-[#ffb000] bg-black font-pixel uppercase text-[#ffb000] shadow-[0_0_12px_rgba(255,176,0,0.45)] data-[on=1]:bg-[#ffb000]/25',
-  padBtn: 'flex select-none items-center justify-center rounded-full border-2 border-[#39ff6a] bg-black/60 text-[#39ff6a] data-[on=1]:bg-[#39ff6a]/25',
-  caption: 'font-pixel text-[0.55rem] uppercase text-[#39ff6a]',
-  rotateBg: 'bg-black',
-  rotateTitle: 'font-pixel text-base uppercase leading-relaxed text-[#39ff6a]',
-  rotateIcon: '#39ff6a',
-}
-
 const livestreamEngine = { ...rules, ...livestream, updateSound }
-const arcadeEngine = { ...rules, ...arcade, updateSound: updateRetroSound }
 
 export default function SuperHeavyGame() {
   return (
@@ -67,22 +43,6 @@ export default function SuperHeavyGame() {
       storageKey="super-heavy-muted"
       engine={livestreamEngine}
       theme={SUNSET_THEME}
-    />
-  )
-}
-
-export function RetroSuperHeavyGame() {
-  return (
-    <GameShell
-      name="Super Heavy Catch"
-      titleLead="Super Heavy"
-      titleAccent="Catch"
-      spec="CATCH IT UNDER 9 MPH, WITHIN 10 FT, 6° OF VERTICAL"
-      hint="KEYS: HOLD ↑ OR W TO FIRE, A/D OR ←/→ TO TILT, M TO MUTE"
-      labels={labels}
-      storageKey="super-heavy-muted"
-      engine={arcadeEngine}
-      theme={RETRO_THEME}
     />
   )
 }

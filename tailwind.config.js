@@ -35,8 +35,6 @@ module.exports = {
         'barlow-condensed': ['Barlow Condensed', 'Arial Narrow', 'system-ui', 'sans-serif'],
         'saira': ['Saira', 'system-ui', 'sans-serif'],
         'saira-condensed': ['Saira Condensed', 'Arial Narrow', 'system-ui', 'sans-serif'],
-        'pixel': ['"Press Start 2P"', 'ui-monospace', 'monospace'],
-        'vt': ['VT323', 'ui-monospace', 'monospace'],
       },
       // Replace the typography plugin's cool-gray defaults with the warm palette
       typography: {
