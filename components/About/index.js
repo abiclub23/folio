@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import { CONTACT_EMAIL } from '../../data/site'
 
 export default function About() {
   return (
@@ -25,7 +26,7 @@ export default function About() {
           <section className="mt-12 pt-6 border-t border-ink">
             <p className="text-lg text-ink-soft">
             Thanks for stopping by, and I hope you find something here that resonates with you. Feel free to reach out if you want to say
-              <a href="mailto:atondepu@gmail.com" className="text-blue-600 hover:underline ml-1">
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-olive hover:italic ml-1">
                 hello
               </a>.
             </p>

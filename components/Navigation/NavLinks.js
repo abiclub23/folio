@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { CONTACT_EMAIL } from '../../data/site'
 
 export default function NavLinks({ isMobile = false, onLinkClick = () => {} }) {
   const pathname = usePathname()
@@ -29,7 +30,7 @@ export default function NavLinks({ isMobile = false, onLinkClick = () => {} }) {
         ))}
         <div className="pt-4 mt-2 border-t border-ink">
           <a 
-            href="mailto:atondepu@gmail.com" 
+            href={`mailto:${CONTACT_EMAIL}`} 
             className="text-ink-soft hover:text-olive hover:italic"
             onClick={onLinkClick}
           >

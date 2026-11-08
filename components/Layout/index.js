@@ -1,6 +1,7 @@
 // Layout component for the website
 import Navigation from '../Navigation'
 import { useRouter } from 'next/router'
+import { CONTACT_EMAIL } from '../../data/site'
 
 export default function Layout({ children }) {
   const router = useRouter()
@@ -23,7 +24,7 @@ export default function Layout({ children }) {
               © {new Date().getFullYear()} Abhi Tondepu. All rights reserved.
             </div>
             <div className="flex space-x-6 mt-4 sm:mt-0 text-sm">
-              <a href="mailto:atondepu@gmail.com" className="hover:text-olive transition-colors">
+              <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-olive hover:italic transition-colors">
                 <span className="ml-2">Contact Me</span>
               </a>
             </div>

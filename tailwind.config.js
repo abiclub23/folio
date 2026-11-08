@@ -3,8 +3,8 @@ const colors = {
   kraft: '#D4BC96',
   ink: {
     DEFAULT: '#333333', // primary: headings, body
-    soft: '#443D33',    // secondary: intros, descriptions
-    muted: '#514839',   // tertiary: dates, timestamps, captions
+    soft: '#4A4237',    // secondary: intros, descriptions
+    muted: '#564B3B',   // tertiary: dates, timestamps, captions
   },
   olive: '#3D5C2E',
 };
@@ -37,8 +37,6 @@ module.exports = {
             '--tw-prose-quote-borders': colors.ink.muted,
             '--tw-prose-captions': colors.ink.muted,
             '--tw-prose-code': colors.ink.DEFAULT,
-            '--tw-prose-pre-code': colors.ink.DEFAULT,
-            '--tw-prose-pre-bg': 'transparent',
             '--tw-prose-th-borders': colors.ink.muted,
             '--tw-prose-td-borders': colors.ink.muted,
           },
