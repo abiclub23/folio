@@ -5,12 +5,23 @@ import { useEffect, useRef } from 'react'
 // Physics (meters, seconds, y points up)
 const G = 9.8
 const LAUNCH_ACCEL = 30 // m/s² → 0–60 mph in ~0.9s
-const RUNWAY = 40 // flat track before the ramp
 const RAMP_R = 20 // radius of the ")" curve
 const RAMP_END = (165 * Math.PI) / 180 // the curve bends back over the top; the car leaves upside down, heading back
-const RAMP_LIP_X = RUNWAY + RAMP_R * Math.sin(RAMP_END)
-const TOWER_X = RUNWAY + RAMP_R + 1.5 // lattice tower behind the curve
 const TOWER_W = 3.5
+// Track layout depends on runway length, which is longer on phones; set at the start of each run
+let RUNWAY = 40 // flat track before the ramp
+let RAMP_LIP_X = 0
+let TOWER_X = 0 // lattice tower behind the curve
+let nextRunway = 40
+function layoutTrack(runway) {
+  RUNWAY = runway
+  RAMP_LIP_X = RUNWAY + RAMP_R * Math.sin(RAMP_END)
+  TOWER_X = RUNWAY + RAMP_R + 1.5
+}
+// Called by the page when the screen size is known; takes effect on the next run
+function preferRunway(length) {
+  nextRunway = length
+}
 const TOWER_H = 2 * RAMP_R + 3
 const THRUST = 22
 const TURN_RATE = 3 // rad/s
@@ -55,6 +66,7 @@ function carCorners(car) {
 }
 
 function newGame() {
+  layoutTrack(nextRunway)
   return {
     phase: 'ready', // ready → runway ⇄ ramp → flight → rolling → landed | crashed
     car: { x: 4, y: 0, vx: 0, vy: 0, angle: 0 },
@@ -938,9 +950,10 @@ function drawHud(ctx, game, W, H) {
   const again = (game.phase === 'landed' || game.phase === 'crashed') && game.t - game.endedAt > 0.6
   if (msg) {
     const boxW = Math.min(W - 24, 480)
-    const top = Math.max(H * 0.2, 12 + panelH + 16)
+    const boxH = again ? 100 : 78
+    const top = Math.max(H / 2 - boxH / 2, 12 + panelH + 16)
     ctx.fillStyle = 'rgba(15,17,21,0.78)'
-    rrect(ctx, (W - boxW) / 2, top, boxW, again ? 100 : 78, 14)
+    rrect(ctx, (W - boxW) / 2, top, boxW, boxH, 14)
     ctx.fill()
     ctx.strokeStyle = 'rgba(255,255,255,0.14)'
     ctx.lineWidth = 1
@@ -981,8 +994,6 @@ export default function RoadsterGame() {
   }
 
   useEffect(() => {
-    gameRef.current = newGame()
-    gameRef.current.input = inputRef.current
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     let W = 0, H = 0, dpr = 1
@@ -993,8 +1004,12 @@ export default function RoadsterGame() {
       dpr = window.devicePixelRatio || 1
       canvas.width = Math.round(W * dpr)
       canvas.height = Math.round(H * dpr)
+      // Phones get a longer runway for more build-up before the ramp
+      preferRunway(W < 640 || window.matchMedia('(pointer: coarse)').matches ? 70 : 40)
     }
     resize()
+    gameRef.current = newGame()
+    gameRef.current.input = inputRef.current
     const ro = new ResizeObserver(resize)
     ro.observe(wrapRef.current)
 
