@@ -1092,7 +1092,7 @@ export default function RoadsterGame() {
         </button>
         <button
           {...hold('thrust')}
-          className="flex select-none items-center justify-center gap-2 rounded-2xl border border-[#ff5a5a]/40 bg-gradient-to-b from-[#e5383b] to-[#a4161a] font-barlow-condensed text-[1.35rem] font-bold uppercase tracking-[0.1em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_6px_18px_rgba(164,22,26,0.35)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:from-[#ff4d4f] data-[on=1]:to-[#c81d25] data-[on=1]:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_28px_rgba(255,77,79,0.6)]"
+          className="flex select-none items-center justify-center gap-2 rounded-2xl border border-white/60 bg-gradient-to-b from-white to-[#dfe3e8] font-barlow-condensed text-[1.35rem] font-bold uppercase tracking-[0.1em] text-[#17191c] shadow-[inset_0_-2px_0_rgba(0,0,0,0.08),0_6px_18px_rgba(0,0,0,0.35)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:from-white data-[on=1]:to-white data-[on=1]:shadow-[0_0_28px_rgba(255,255,255,0.55)]"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
