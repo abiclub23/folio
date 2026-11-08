@@ -17,6 +17,17 @@ module.exports = {
   theme: {
     extend: {
       colors,
+      // Roadster game: phone icon turning sideways on the rotate prompt
+      keyframes: {
+        'turn-phone': {
+          '0%, 25%': { transform: 'rotate(0deg)' },
+          '50%, 85%': { transform: 'rotate(90deg)' },
+          '100%': { transform: 'rotate(0deg)' },
+        },
+      },
+      animation: {
+        'turn-phone': 'turn-phone 2.4s ease-in-out infinite',
+      },
       fontFamily: {
         'switzer': ['Switzer', 'sans-serif'],
         'playwrite': ['Playwrite IT Moderna', 'cursive'],

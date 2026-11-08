@@ -32,6 +32,8 @@ const SAFE_VY = 5 // max touchdown descent speed (m/s, ~11 mph)
 const SAFE_TILT = (15 * Math.PI) / 180
 const ROLL_BRAKE = 14
 const AIR_DRAG = 0.02 // quadratic drag: bleeds off launch speed fast, terminal velocity ~22 m/s
+// Easter egg: thrust high enough and you reach "space", a nod to the Roadster SpaceX launched in 2018
+const SPACE_ALT = 305 // ~1,000 ft
 const ROLL_DRAG = 1.5 // slowing on the track when you're off the throttle
 const STEP = 1 / 120
 
@@ -187,6 +189,10 @@ function step(game, input, dt) {
     car.x += car.vx * dt
     car.y += car.vy * dt
     game.maxAlt = Math.max(game.maxAlt, car.y)
+    if (!game.starman && car.y > SPACE_ALT) {
+      game.starman = true
+      game.toast = { title: "DON'T PANIC", line: 'You made it to space. Starman would be proud.', at: game.t }
+    }
 
     const corners = carCorners(car)
     const hitRamp =
@@ -462,6 +468,8 @@ const Sound = {
       if (game.phase === 'landed') this.chime()
       this.lastPhase = game.phase
     }
+    if (game.starman && !this.playedStarman) this.fanfare()
+    this.playedStarman = !!game.starman
   },
   // Cartoon crash: a wobbling pitch drop over a low thump
   boing() {
@@ -498,6 +506,26 @@ const Sound = {
     src.connect(f).connect(g).connect(this.nodes.master)
     src.start(t)
     src.stop(t + 0.4)
+  },
+  // Rising synth arpeggio for reaching space
+  fanfare() {
+    const c = this.ctx, t = c.currentTime
+    ;[392, 523, 659, 784, 1047].forEach((freq, i) => {
+      const o = c.createOscillator()
+      o.type = 'square'
+      o.frequency.value = freq
+      const f = c.createBiquadFilter()
+      f.type = 'lowpass'
+      f.frequency.value = 2200
+      const g = c.createGain()
+      const at = t + i * 0.14
+      g.gain.setValueAtTime(0, at)
+      g.gain.linearRampToValueAtTime(0.08, at + 0.02)
+      g.gain.exponentialRampToValueAtTime(0.001, at + (i === 4 ? 1.2 : 0.4))
+      o.connect(f).connect(g).connect(this.nodes.master)
+      o.start(at)
+      o.stop(at + 1.3)
+    })
   },
   chime() {
     const c = this.ctx, t = c.currentTime
@@ -582,19 +610,43 @@ function render(ctx, game, W, H) {
     ctx.translate((Math.random() - 0.5) * 14 * k, (Math.random() - 0.5) * 14 * k)
   }
 
-  // Night sky, like the demo
+  // Night sky, like the demo; it fades to pure black on the way to space
+  const space = Math.min(1, Math.max(0, (car.y - 120) / (SPACE_ALT - 120)))
+  const fade = (hex) => {
+    const n = parseInt(hex.slice(1), 16)
+    const k = 1 - space
+    return `rgb(${Math.round((n >> 16) * k)},${Math.round(((n >> 8) & 255) * k)},${Math.round((n & 255) * k)})`
+  }
   const sky = ctx.createLinearGradient(0, 0, 0, H)
-  sky.addColorStop(0, '#04060b')
-  sky.addColorStop(0.75, '#0b1020')
-  sky.addColorStop(1, '#1a2133')
+  sky.addColorStop(0, fade('#04060b'))
+  sky.addColorStop(0.75, fade('#0b1020'))
+  sky.addColorStop(1, fade('#1a2133'))
   ctx.fillStyle = sky
   ctx.fillRect(-20, -20, W + 40, H + 40)
 
-  ctx.fillStyle = 'rgba(255,255,255,0.75)'
+  ctx.fillStyle = `rgba(255,255,255,${0.75 + space * 0.25})`
   for (const s of STARS) {
     const x = (((s.x * W - cam.left * S * 0.02) % W) + W) % W
     ctx.beginPath()
-    ctx.arc(x, s.y * H * 0.85, s.r * 0.8, 0, Math.PI * 2)
+    ctx.arc(x, s.y * H * 0.85, s.r * (0.8 + space * 0.5), 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  // Earth's blue edge curving up from below, up in space
+  if (space > 0) {
+    const R = Math.max(W, H) * 2.2
+    const cx = W / 2, cy = H + R - H * 0.18 * space
+    const limb = ctx.createRadialGradient(cx, cy, R - 40, cx, cy, R + 30)
+    limb.addColorStop(0, `rgba(30,90,200,${0.9 * space})`)
+    limb.addColorStop(0.55, `rgba(120,190,255,${0.8 * space})`)
+    limb.addColorStop(1, 'rgba(120,190,255,0)')
+    ctx.fillStyle = limb
+    ctx.beginPath()
+    ctx.arc(cx, cy, R + 30, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = `rgba(14,40,90,${space})`
+    ctx.beginPath()
+    ctx.arc(cx, cy, R - 30, 0, Math.PI * 2)
     ctx.fill()
   }
 
@@ -1129,6 +1181,8 @@ function drawCar(ctx, game, x, y, S) {
 }
 
 function drawHud(ctx, game, W, H) {
+  // Touch screens get button wording instead of keyboard keys
+  const touch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
   const car = game.car
   const onTrack = game.phase === 'runway' || game.phase === 'ramp'
   const speed = onTrack ? Math.abs(game.speed) : Math.hypot(car.vx, car.vy)
@@ -1229,9 +1283,24 @@ function drawHud(ctx, game, W, H) {
     ctx.fillText(`0–60 MPH  ${game.zeroSixty.toFixed(2)}s`, 87, y + 17)
   }
 
+  // Easter egg banner, fades out after a few seconds
+  if (game.toast && game.t - game.toast.at < 4.5) {
+    const age = game.t - game.toast.at
+    const a = Math.min(1, age * 3, (4.5 - age) * 2)
+    ctx.globalAlpha = a
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#f8fafc'
+    ctx.font = `800 ${W < 520 ? 30 : 40}px ${FONT}`
+    ctx.fillText(game.toast.title, W / 2, H * 0.3)
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'
+    ctx.font = `600 ${W < 520 ? 14 : 17}px ${FONT}`
+    ctx.fillText(game.toast.line, W / 2, H * 0.3 + 30)
+    ctx.globalAlpha = 1
+  }
+
   // Message card: title, main line, optional detail
   let msg = null
-  if (game.phase === 'ready') msg = { title: 'ROADSTER LAUNCH', line: W < 520 ? 'Hold Thrust to rev and go' : 'Hold ↑ or W to rev and go', color: '#f8fafc' }
+  if (game.phase === 'ready') msg = { title: 'ROADSTER LAUNCH', line: touch ? 'Hold Thrust to rev and go' : 'Hold ↑ or W to rev and go', color: '#f8fafc' }
   else if (game.phase === 'crashed' && crashCardReady(game)) msg = { title: 'CRASHED', line: game.quip, detail: game.reason, color: bad }
   else if (game.phase === 'landed') {
     const mph = game.touchdown.descent * MPH
@@ -1239,6 +1308,7 @@ function drawHud(ctx, game, W, H) {
       title: landingGrade(mph),
       line: `${mph.toFixed(1)} mph touchdown · ${Math.round(Math.abs(car.x - RUNWAY) * FT)} ft from the ramp · ${Math.round(game.maxAlt * FT)} ft high`,
       color: good,
+      detail: game.starman ? 'Went to space and back. Starman approves.' : undefined,
     }
   }
   const again = (game.phase === 'landed' || (game.phase === 'crashed' && crashCardReady(game))) && game.t - game.endedAt > 0.6
@@ -1276,7 +1346,7 @@ function drawHud(ctx, game, W, H) {
     if (again) {
       ctx.fillStyle = 'rgba(255,255,255,0.5)'
       ctx.font = `600 13px ${FONT}`
-      ctx.fillText(W < 520 ? 'Tap Thrust to go again' : 'Press ↑ or W to go again', W / 2, y + 28)
+      ctx.fillText(touch ? 'Tap Thrust to go again' : 'Press ↑ or W to go again', W / 2, y + 28)
     }
   }
 }
@@ -1295,6 +1365,21 @@ export default function RoadsterGame() {
   const gameRef = useRef(null)
   const inputRef = useRef({ thrust: false, left: false, right: false })
   const [muted, setMuted] = useState(false)
+  // 'phone-portrait' asks to rotate; 'phone-landscape' goes full screen with controls over the game
+  const [mode, setMode] = useState('default')
+
+  useEffect(() => {
+    const portrait = window.matchMedia('(pointer: coarse) and (orientation: portrait) and (max-width: 600px)')
+    const landscape = window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 600px)')
+    const update = () => setMode(portrait.matches ? 'phone-portrait' : landscape.matches ? 'phone-landscape' : 'default')
+    update()
+    portrait.addEventListener('change', update)
+    landscape.addEventListener('change', update)
+    return () => {
+      portrait.removeEventListener('change', update)
+      landscape.removeEventListener('change', update)
+    }
+  }, [])
 
   const toggleMute = () => {
     setMuted((m) => {
@@ -1405,72 +1490,135 @@ export default function RoadsterGame() {
 
   const tiltBtn =
     'flex select-none flex-col items-center justify-center gap-1 rounded-2xl border border-[#3a3f46] bg-gradient-to-b from-[#2a2e34] to-[#1d2025] py-3 text-[#eceae4] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:border-[#6b7280] data-[on=1]:from-[#353a42] data-[on=1]:to-[#2a2e34]'
+  const thrustBtn =
+    'flex select-none items-center justify-center gap-2 border border-white/60 bg-gradient-to-b from-white to-[#dfe3e8] font-barlow-condensed font-bold uppercase tracking-[0.1em] text-[#17191c] shadow-[inset_0_-2px_0_rgba(0,0,0,0.08),0_6px_18px_rgba(0,0,0,0.35)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:from-white data-[on=1]:to-white data-[on=1]:shadow-[0_0_28px_rgba(255,255,255,0.55)]'
+  // Round, see-through thumb buttons for phones held sideways
+  const padBtn =
+    'flex select-none items-center justify-center rounded-full border border-white/25 bg-[#17191c]/55 text-[#eceae4] backdrop-blur-sm transition-transform duration-75 data-[on=1]:scale-[0.94] data-[on=1]:bg-white/25'
   const caption = 'font-barlow-condensed text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[#9aa0a8]'
+  const phone = mode === 'phone-landscape'
+
+  const icons = {
+    up: (size) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+      </svg>
+    ),
+    down: (size) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+        <path d="M21 3v5h-5" />
+      </svg>
+    ),
+    flame: (size) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+      </svg>
+    ),
+  }
+
+  const muteButton = (
+    <button
+      onClick={() => { Sound.init(); toggleMute() }}
+      className="rounded-md border border-[#3a3f46] bg-[#17191c]/60 p-1.5 text-[#eceae4] hover:bg-[#23262b]"
+      aria-label={muted ? 'Turn sound on' : 'Mute sound'}
+      title={muted ? 'Sound off (M)' : 'Sound on (M)'}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M11 5 6 9H2v6h4l5 4z" />
+        {muted ? <path d="m22 9-6 6M16 9l6 6" /> : <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" />}
+      </svg>
+    </button>
+  )
 
   // One-screen app: title strip, game filling the middle, thumb controls on touch screens
   return (
     <div
-      className="fixed inset-0 flex select-none flex-col gap-2.5 overflow-hidden bg-[#17191c] px-4 pt-3 font-barlow text-[#eceae4]"
-      style={{ touchAction: 'none', paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+      className={`fixed inset-0 flex select-none flex-col overflow-hidden bg-[#17191c] font-barlow text-[#eceae4] ${phone ? '' : 'gap-2.5 px-4 pt-3'}`}
+      style={{ touchAction: 'none', paddingBottom: phone ? 0 : 'max(12px, env(safe-area-inset-bottom))' }}
     >
-      <header className="flex w-full flex-wrap items-baseline justify-between gap-3">
-        <h1 className="font-barlow-condensed text-[1.6rem] font-bold uppercase tracking-[0.04em]">
-          <Link href="/projects" className="mr-3 align-middle text-base text-[#9aa0a8] hover:text-[#eceae4]" aria-label="Back to projects">←</Link>
-          Roadster <span className="text-[#d62828]">Launch</span>
-        </h1>
-        <div className="flex items-center gap-3 text-sm tabular-nums text-[#9aa0a8]">
-          <span>0–60 in 0.9s · land under 11 mph, within 15° of level</span>
-          <button
-            onClick={() => { Sound.init(); toggleMute() }}
-            className="rounded-md border border-[#3a3f46] p-1.5 text-[#eceae4] hover:bg-[#23262b]"
-            aria-label={muted ? 'Turn sound on' : 'Mute sound'}
-            title={muted ? 'Sound off (M)' : 'Sound on (M)'}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M11 5 6 9H2v6h4l5 4z" />
-              {muted ? (
-                <path d="m22 9-6 6M16 9l6 6" />
-              ) : (
-                <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" />
-              )}
-            </svg>
-          </button>
-        </div>
-      </header>
+      {!phone && (
+        <header className="flex w-full flex-wrap items-baseline justify-between gap-3">
+          <h1 className="font-barlow-condensed text-[1.6rem] font-bold uppercase tracking-[0.04em]">
+            <Link href="/projects" className="mr-3 align-middle text-base text-[#9aa0a8] hover:text-[#eceae4]" aria-label="Back to projects">←</Link>
+            Roadster <span className="text-[#d62828]">Launch</span>
+          </h1>
+          <div className="flex items-center gap-3 text-sm tabular-nums text-[#9aa0a8]">
+            <span>0–60 in 0.9s · land under 11 mph, within 15° of level</span>
+            {muteButton}
+          </div>
+        </header>
+      )}
 
       <div ref={wrapRef} className="relative min-h-0 w-full flex-1">
-        <canvas ref={canvasRef} className="block h-full w-full rounded-md border border-[#3a3f46]" aria-label="Roadster launch game" />
+        <canvas
+          ref={canvasRef}
+          className={`block h-full w-full ${phone ? '' : 'rounded-md border border-[#3a3f46]'}`}
+          aria-label="Roadster launch game"
+        />
+
+        {phone && (
+          <>
+            <div className="absolute left-1/2 top-2 flex -translate-x-1/2 items-center gap-2">
+              <Link href="/projects" className="rounded-md border border-[#3a3f46] bg-[#17191c]/60 px-2.5 py-1 text-[#eceae4]" aria-label="Back to projects">←</Link>
+              {muteButton}
+            </div>
+            <div
+              className="absolute flex gap-3"
+              style={{ left: 'max(16px, env(safe-area-inset-left))', bottom: 'max(14px, env(safe-area-inset-bottom))' }}
+            >
+              <button {...hold('left')} className={`${padBtn} h-[72px] w-[72px]`} aria-label="Tilt nose up">{icons.up(28)}</button>
+              <button {...hold('right')} className={`${padBtn} h-[72px] w-[72px]`} aria-label="Tilt nose down">{icons.down(28)}</button>
+            </div>
+            <button
+              {...hold('thrust')}
+              className={`${thrustBtn} absolute h-[96px] w-[96px] flex-col gap-0.5 rounded-full text-[0.8rem]`}
+              style={{ right: 'max(16px, env(safe-area-inset-right))', bottom: 'max(14px, env(safe-area-inset-bottom))' }}
+            >
+              {icons.flame(30)}
+              Thrust
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Touch controls for phones; keyboard users get the hint instead */}
-      <div className="hidden w-full grid-cols-[1fr_1.6fr_1fr] gap-2.5 [@media(pointer:coarse)]:grid">
-        <button {...hold('left')} className={tiltBtn} aria-label="Tilt nose up">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
+      {!phone && (
+        <>
+          {/* Touch controls for tablets; keyboard users get the hint instead */}
+          <div className="hidden w-full grid-cols-[1fr_1.6fr_1fr] gap-2.5 [@media(pointer:coarse)]:grid">
+            <button {...hold('left')} className={tiltBtn} aria-label="Tilt nose up">
+              {icons.up(26)}
+              <span className={caption}>Nose up</span>
+            </button>
+            <button {...hold('thrust')} className={`${thrustBtn} rounded-2xl text-[1.35rem]`}>
+              {icons.flame(24)}
+              Thrust
+            </button>
+            <button {...hold('right')} className={tiltBtn} aria-label="Tilt nose down">
+              {icons.down(26)}
+              <span className={caption}>Nose down</span>
+            </button>
+          </div>
+          <p className="w-full text-[0.8rem] text-[#9aa0a8] [@media(pointer:coarse)]:hidden">
+            Keyboard: hold ↑ or W to drive and thrust, A/D or ←/→ to tilt, M to mute.
+          </p>
+        </>
+      )}
+
+      {mode === 'phone-portrait' && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[#17191c] px-8 text-center">
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#eceae4" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="motion-safe:animate-turn-phone">
+            <rect x="7" y="2" width="10" height="20" rx="2" />
+            <path d="M11 18h2" />
           </svg>
-          <span className={caption}>Nose up</span>
-        </button>
-        <button
-          {...hold('thrust')}
-          className="flex select-none items-center justify-center gap-2 rounded-2xl border border-white/60 bg-gradient-to-b from-white to-[#dfe3e8] font-barlow-condensed text-[1.35rem] font-bold uppercase tracking-[0.1em] text-[#17191c] shadow-[inset_0_-2px_0_rgba(0,0,0,0.08),0_6px_18px_rgba(0,0,0,0.35)] transition-transform duration-75 data-[on=1]:scale-[0.96] data-[on=1]:from-white data-[on=1]:to-white data-[on=1]:shadow-[0_0_28px_rgba(255,255,255,0.55)]"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-          </svg>
-          Thrust
-        </button>
-        <button {...hold('right')} className={tiltBtn} aria-label="Tilt nose down">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-            <path d="M21 3v5h-5" />
-          </svg>
-          <span className={caption}>Nose down</span>
-        </button>
-      </div>
-      <p className="w-full text-[0.8rem] text-[#9aa0a8] [@media(pointer:coarse)]:hidden">
-        Keyboard: hold ↑ or W to drive and thrust, A/D or ←/→ to tilt, M to mute.
-      </p>
+          <h2 className="font-barlow-condensed text-3xl font-bold uppercase tracking-[0.04em]">
+            Rotate your <span className="text-[#d62828]">phone</span>
+          </h2>
+          <p className="text-[#9aa0a8]">Roadster Launch plays sideways, with the controls under your thumbs.</p>
+          <Link href="/projects" className="mt-2 text-sm text-[#9aa0a8] underline">Back to projects</Link>
+        </div>
+      )}
     </div>
   )
 }
