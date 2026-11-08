@@ -1,6 +1,6 @@
 // Roadster launch game: 0–60 in under a second, up a ramp to the sky, then thrusters to land
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // Physics (meters, seconds, y points up)
 const G = 9.8
@@ -94,6 +94,37 @@ function startGame(game) {
   if (game.phase !== 'ready') return
   game.phase = 'runway'
   game.t = 0
+  say(game, 'Ludicrous mode: engaged')
+}
+
+// The driver's speech bubble; each line plays at most once per run
+function say(game, text, key = text) {
+  if (!game.said) game.said = {}
+  if (game.said[key]) return
+  game.said[key] = true
+  game.bubble = { text, until: game.t + 2.2 }
+}
+
+const CRASH_QUIPS = [
+  'Insurance has been notified.',
+  'Have you tried turning it off and on again?',
+  "That's one way to park.",
+  'The warranty does not cover this.',
+  'Ludicrous indeed.',
+  'Did anyone get that on video?',
+]
+
+// Touchdown grades, softest first
+function landingGrade(mph) {
+  if (mph <= 3) return 'BUTTER. ABSOLUTE BUTTER.'
+  if (mph <= 7) return 'PASSENGERS CLAPPED'
+  return 'TECHNICALLY A LANDING'
+}
+
+// Slow motion for the last few feet before touchdown
+function slowMo(game) {
+  const c = game.car
+  return game.phase === 'flight' && game.flightTime > 1 && c.vy < -1 && c.y < 7
 }
 
 // Deterministic scenery
@@ -119,10 +150,14 @@ function step(game, input, dt) {
 
   if (game.phase === 'runway') {
     car.x += game.speed * dt
-    if (game.zeroSixty === null && game.speed * MPH >= 60) game.zeroSixty = game.t
+    if (game.zeroSixty === null && game.speed * MPH >= 60) {
+      game.zeroSixty = game.t
+      say(game, `0–60 in ${game.t.toFixed(2)}s. Not bad.`, 'zero60')
+    }
     if (car.x >= RUNWAY) {
       game.phase = 'ramp'
       game.phi = (car.x - RUNWAY) / RAMP_R
+      say(game, 'Oh no. Oh YES.')
     }
   } else if (game.phase === 'ramp') {
     game.speed -= G * Math.sin(game.phi) * dt
@@ -135,8 +170,11 @@ function step(game, input, dt) {
       car.vx = game.speed * Math.cos(game.phi)
       car.vy = game.speed * Math.sin(game.phi)
       game.flightTime = 0
+      if (Math.abs(wrapAngle(game.phi)) > 2) say(game, 'I can see my house!')
+      else say(game, 'This is fine.')
     } else if (game.phi < 0) {
       // Rolled back down onto the runway
+      say(game, 'Needs more speed...')
       game.phase = 'runway'
       car.x = RUNWAY + game.phi * RAMP_R
       car.y = 0
@@ -157,6 +195,7 @@ function step(game, input, dt) {
       car.vx += -Math.sin(car.angle) * THRUST * dt
       car.vy += Math.cos(car.angle) * THRUST * dt
       emitThrust(game)
+      if (game.flightTime > 0.3) say(game, 'Jetpack: activate!')
     }
     car.vy -= G * dt
     const v = Math.hypot(car.vx, car.vy)
@@ -165,6 +204,7 @@ function step(game, input, dt) {
     car.x += car.vx * dt
     car.y += car.vy * dt
     game.maxAlt = Math.max(game.maxAlt, car.y)
+    if (-car.vy > 15 && car.y > 8) say(game, 'Brakes? BRAKES?!')
 
     const corners = carCorners(car)
     const hitRamp =
@@ -185,6 +225,8 @@ function step(game, input, dt) {
         car.y = 0
         car.vy = 0
         dust(game)
+        const mph = descent * MPH
+        game.bubble = { text: mph <= 3 ? 'Smooth.' : mph <= 7 ? 'Nailed it.' : 'Ow. My coffee.', until: game.t + 2.5 }
       }
     }
   } else if (game.phase === 'rolling') {
@@ -299,6 +341,8 @@ function crash(game, reason) {
   const car = game.car
   game.phase = 'crashed'
   game.reason = reason
+  game.quip = CRASH_QUIPS[Math.floor(Math.random() * CRASH_QUIPS.length)]
+  game.bubble = null
   game.endedAt = game.t
   for (let i = 0; i < 110; i++) {
     const a = Math.random() * Math.PI * 2
@@ -314,6 +358,149 @@ function crash(game, reason) {
   }
 }
 
+// ---------- Sound ----------
+
+// Synthesized with Web Audio, so there are no files to load. Starts on the first key press or tap.
+const Sound = {
+  ctx: null,
+  nodes: null,
+  muted: false,
+  lastPhase: null,
+  init() {
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended') this.ctx.resume()
+      return
+    }
+    const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)
+    if (!AC) return
+    const ctx = (this.ctx = new AC())
+    const master = ctx.createGain()
+    master.gain.value = this.muted ? 0 : 0.5
+    master.connect(ctx.destination)
+
+    // Electric motor: a low saw for body plus a sine whine that climbs with speed
+    const motor = ctx.createOscillator()
+    motor.type = 'sawtooth'
+    const motorF = ctx.createBiquadFilter()
+    motorF.type = 'lowpass'
+    motorF.frequency.value = 900
+    const motorG = ctx.createGain()
+    motorG.gain.value = 0
+    motor.connect(motorF).connect(motorG).connect(master)
+    motor.start()
+    const whine = ctx.createOscillator()
+    const whineG = ctx.createGain()
+    whineG.gain.value = 0
+    whine.connect(whineG).connect(master)
+    whine.start()
+
+    // Looping noise feeds the thrusters (band-passed) and wind (low-passed)
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate)
+    const data = buf.getChannelData(0)
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+    this.noiseBuf = buf
+    const noise = ctx.createBufferSource()
+    noise.buffer = buf
+    noise.loop = true
+    const thrF = ctx.createBiquadFilter()
+    thrF.type = 'bandpass'
+    thrF.frequency.value = 500
+    thrF.Q.value = 0.5
+    const thrG = ctx.createGain()
+    thrG.gain.value = 0
+    const windF = ctx.createBiquadFilter()
+    windF.type = 'lowpass'
+    windF.frequency.value = 300
+    const windG = ctx.createGain()
+    windG.gain.value = 0
+    noise.connect(thrF).connect(thrG).connect(master)
+    noise.connect(windF).connect(windG).connect(master)
+    noise.start()
+    this.nodes = { master, motor, motorG, whine, whineG, thrG, windF, windG }
+  },
+  ramp(param, value) {
+    param.setTargetAtTime(value, this.ctx.currentTime, 0.06)
+  },
+  setMuted(muted) {
+    this.muted = muted
+    if (this.nodes) this.ramp(this.nodes.master.gain, muted ? 0 : 0.5)
+  },
+  // Called every frame: continuous sounds follow the game, one-shots fire on phase changes
+  update(game, input, slow) {
+    if (!this.nodes) return
+    const n = this.nodes
+    const car = game.car
+    const onTrack = game.phase === 'runway' || game.phase === 'ramp'
+    const sp = onTrack ? Math.abs(game.speed) : 0
+    this.ramp(n.motor.frequency, 35 + sp * 4)
+    this.ramp(n.whine.frequency, 220 + sp * 32)
+    this.ramp(n.motorG.gain, onTrack ? (input.thrust ? 0.1 : 0.03) : 0)
+    this.ramp(n.whineG.gain, onTrack ? (input.thrust ? 0.045 : 0.012) : 0)
+    const flying = game.phase === 'flight'
+    this.ramp(n.thrG.gain, flying && input.thrust ? 0.55 : 0)
+    const v = flying ? Math.hypot(car.vx, car.vy) : 0
+    this.ramp(n.windG.gain, Math.min(0.3, v / 100) * (slow ? 0.4 : 1))
+    this.ramp(n.windF.frequency, 250 + v * 12)
+
+    if (game.phase !== this.lastPhase) {
+      if (game.phase === 'crashed') this.boing()
+      if (game.phase === 'rolling') this.thud()
+      if (game.phase === 'landed') this.chime()
+      this.lastPhase = game.phase
+    }
+  },
+  // Cartoon crash: a wobbling pitch drop over a low thump
+  boing() {
+    const c = this.ctx, t = c.currentTime, out = this.nodes.master
+    const o = c.createOscillator()
+    o.type = 'triangle'
+    o.frequency.setValueAtTime(560, t)
+    o.frequency.exponentialRampToValueAtTime(80, t + 0.7)
+    const lfo = c.createOscillator()
+    lfo.frequency.value = 16
+    const depth = c.createGain()
+    depth.gain.value = 45
+    lfo.connect(depth).connect(o.frequency)
+    const g = c.createGain()
+    g.gain.setValueAtTime(0.45, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.8)
+    o.connect(g).connect(out)
+    o.start(t)
+    lfo.start(t)
+    o.stop(t + 0.85)
+    lfo.stop(t + 0.85)
+    this.thud(0.9)
+  },
+  thud(level = 0.5) {
+    const c = this.ctx, t = c.currentTime
+    const src = c.createBufferSource()
+    src.buffer = this.noiseBuf
+    const f = c.createBiquadFilter()
+    f.type = 'lowpass'
+    f.frequency.value = 250
+    const g = c.createGain()
+    g.gain.setValueAtTime(level, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35)
+    src.connect(f).connect(g).connect(this.nodes.master)
+    src.start(t)
+    src.stop(t + 0.4)
+  },
+  chime() {
+    const c = this.ctx, t = c.currentTime
+    ;[660, 880, 1320].forEach((freq, i) => {
+      const o = c.createOscillator()
+      o.frequency.value = freq
+      const g = c.createGain()
+      g.gain.setValueAtTime(0, t + i * 0.1)
+      g.gain.linearRampToValueAtTime(0.18, t + i * 0.1 + 0.02)
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.5)
+      o.connect(g).connect(this.nodes.master)
+      o.start(t + i * 0.1)
+      o.stop(t + i * 0.1 + 0.55)
+    })
+  },
+}
+
 // ---------- Rendering ----------
 
 function lerp(a, b, t) { return a + (b - a) * t }
@@ -327,7 +514,12 @@ function updateCamera(game, W, H, dt) {
   const car = game.car
   const parked = game.phase === 'ready'
   const span = TOWER_X + TOWER_W + 10
-  const targetViewH = parked ? Math.max(TOWER_H * 1.35, (span * H) / W) : Math.min(170, Math.max(40, car.y * 1.3 + 25))
+  const slow = slowMo(game)
+  const targetViewH = parked
+    ? Math.max(TOWER_H * 1.35, (span * H) / W)
+    : slow
+      ? 20
+      : Math.min(170, Math.max(40, car.y * 1.3 + 25))
   const cam = game.cam || { viewH: targetViewH, left: 0, bottom: -6 }
   const k = Math.min(1, dt * 3)
   cam.viewH = lerp(cam.viewH, targetViewH, k)
@@ -335,7 +527,7 @@ function updateCamera(game, W, H, dt) {
   const viewW = W / scale
   // Keep more room ahead of the car once it is flying back the other way
   const backwards = car.vx < -1 && game.phase !== 'ramp'
-  const targetLeft = parked ? -4 : car.x - viewW * (backwards ? 0.62 : 0.35)
+  const targetLeft = parked ? -4 : car.x - viewW * (slow ? 0.5 : backwards ? 0.62 : 0.35)
   const targetBottom = car.y < cam.viewH * 0.6 ? -cam.viewH * 0.1 : car.y - cam.viewH * 0.6
   cam.left = game.cam ? lerp(cam.left, targetLeft, Math.min(1, dt * 6)) : targetLeft
   cam.bottom = game.cam ? lerp(cam.bottom, targetBottom, Math.min(1, dt * 6)) : targetBottom
@@ -533,6 +725,40 @@ function render(ctx, game, W, H) {
 
   if (game.phase !== 'crashed') drawCar(ctx, game, sx(car.x), sy(car.y), S)
   ctx.restore()
+
+  // Letterbox bars while in slow motion
+  if (slowMo(game)) {
+    const bar = Math.round(H * 0.07)
+    ctx.fillStyle = 'rgba(0,0,0,0.85)'
+    ctx.fillRect(0, 0, W, bar)
+    ctx.fillRect(0, H - bar, W, bar)
+  }
+
+  if (game.bubble && game.t < game.bubble.until && game.phase !== 'crashed') {
+    drawBubble(ctx, game.bubble.text, sx(car.x), sy(car.y) - Math.max(56, CAR_H * S * 1.8), W)
+  }
+}
+
+// Comic speech bubble with a tail pointing down at the car
+function drawBubble(ctx, text, x, y, W) {
+  ctx.font = `700 13px ${FONT}`
+  const w = ctx.measureText(text).width + 22
+  const h = 30
+  const bx = Math.min(W - w - 8, Math.max(8, x - w / 2))
+  const by = Math.max(8, y - h)
+  ctx.fillStyle = '#ffffff'
+  rrect(ctx, bx, by, w, h, 15)
+  ctx.fill()
+  const tx = Math.min(bx + w - 18, Math.max(bx + 18, x))
+  ctx.beginPath()
+  ctx.moveTo(tx - 7, by + h - 1)
+  ctx.lineTo(tx + 7, by + h - 1)
+  ctx.lineTo(tx, by + h + 9)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = '#17191c'
+  ctx.textAlign = 'center'
+  ctx.fillText(text, bx + w / 2, by + 20)
 }
 
 // White ")" ramp with a lattice tower behind it, like the demo
@@ -695,6 +921,18 @@ function drawCar(ctx, game, x, y, S) {
   ctx.lineTo(0.72, 0.78)
   ctx.closePath()
   ctx.fill()
+  // Driver: white helmet with a dark visor, looking forward
+  ctx.fillStyle = '#f5f6f8'
+  ctx.beginPath()
+  ctx.arc(-0.3, 0.9, 0.12, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = '#111318'
+  ctx.beginPath()
+  ctx.ellipse(-0.23, 0.9, 0.06, 0.07, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = '#d1d5db'
+  ctx.fillRect(-0.44, 0.78, 0.28, 0.05)
+
   // Glass reflection and B-pillar
   ctx.strokeStyle = 'rgba(255,235,210,0.28)'
   ctx.lineWidth = 0.035
@@ -940,35 +1178,48 @@ function drawHud(ctx, game, W, H) {
     ctx.fillText(`0–60 MPH  ${game.zeroSixty.toFixed(2)}s`, 87, y + 17)
   }
 
-  // Message card
+  // Message card: title, main line, optional detail
   let msg = null
-  if (game.phase === 'ready') msg = ['ROADSTER LAUNCH', W < 520 ? 'Hold Thrust to rev and go' : 'Hold ↑ or W to rev and go']
-  else if (game.phase === 'crashed') msg = ['CRASHED', game.reason]
+  if (game.phase === 'ready') msg = { title: 'ROADSTER LAUNCH', line: W < 520 ? 'Hold Thrust to rev and go' : 'Hold ↑ or W to rev and go', color: '#f8fafc' }
+  else if (game.phase === 'crashed') msg = { title: 'CRASHED', line: game.quip, detail: game.reason, color: bad }
   else if (game.phase === 'landed') {
-    msg = ['LANDED', `${Math.round(game.touchdown.descent * MPH)} mph touchdown · ${Math.round(Math.abs(car.x - RUNWAY) * FT)} ft from the ramp · ${Math.round(game.maxAlt * FT)} ft high`]
+    const mph = game.touchdown.descent * MPH
+    msg = {
+      title: landingGrade(mph),
+      line: `${mph.toFixed(1)} mph touchdown · ${Math.round(Math.abs(car.x - RUNWAY) * FT)} ft from the ramp · ${Math.round(game.maxAlt * FT)} ft high`,
+      color: good,
+    }
   }
   const again = (game.phase === 'landed' || game.phase === 'crashed') && game.t - game.endedAt > 0.6
   if (msg) {
+    const small = W < 420
     const boxW = Math.min(W - 24, 480)
-    const boxH = again ? 100 : 78
+    const boxH = 78 + (msg.detail ? 20 : 0) + (again ? 24 : 0)
     const top = Math.max(H / 2 - boxH / 2, 12 + panelH + 16)
-    ctx.fillStyle = 'rgba(15,17,21,0.78)'
+    ctx.fillStyle = 'rgba(15,17,21,0.82)'
     rrect(ctx, (W - boxW) / 2, top, boxW, boxH, 14)
     ctx.fill()
     ctx.strokeStyle = 'rgba(255,255,255,0.14)'
     ctx.lineWidth = 1
     ctx.stroke()
     ctx.textAlign = 'center'
-    ctx.fillStyle = game.phase === 'crashed' ? bad : game.phase === 'landed' ? good : '#f8fafc'
-    ctx.font = `800 24px ${FONT}`
-    ctx.fillText(msg[0], W / 2, top + 34)
-    ctx.fillStyle = 'rgba(255,255,255,0.8)'
-    ctx.font = `500 ${W < 420 ? 11 : 13}px ${FONT}`
-    ctx.fillText(msg[1], W / 2, top + 58)
-    if (again) {
+    ctx.fillStyle = msg.color
+    ctx.font = `800 ${small ? 20 : 24}px ${FONT}`
+    ctx.fillText(msg.title, W / 2, top + 34)
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    ctx.font = `500 ${small ? 11 : 13}px ${FONT}`
+    ctx.fillText(msg.line, W / 2, top + 58)
+    let y = top + 58
+    if (msg.detail) {
+      y += 20
       ctx.fillStyle = 'rgba(255,255,255,0.55)'
+      ctx.font = `500 ${small ? 11 : 12}px ${FONT}`
+      ctx.fillText(msg.detail, W / 2, y)
+    }
+    if (again) {
+      ctx.fillStyle = 'rgba(255,255,255,0.5)'
       ctx.font = `600 12px ${FONT}`
-      ctx.fillText(W < 520 ? 'Tap Thrust to go again' : 'Press ↑ or W to go again', W / 2, top + 84)
+      ctx.fillText(W < 520 ? 'Tap Thrust to go again' : 'Press ↑ or W to go again', W / 2, y + 26)
     }
   }
 }
@@ -986,6 +1237,15 @@ export default function RoadsterGame() {
   const canvasRef = useRef(null)
   const gameRef = useRef(null)
   const inputRef = useRef({ thrust: false, left: false, right: false })
+  const [muted, setMuted] = useState(false)
+
+  const toggleMute = () => {
+    setMuted((m) => {
+      Sound.setMuted(!m)
+      try { localStorage.setItem('roadster-muted', !m ? '1' : '0') } catch {}
+      return !m
+    })
+  }
 
   const pressStart = () => {
     const next = pressThrust(gameRef.current)
@@ -994,6 +1254,11 @@ export default function RoadsterGame() {
   }
 
   useEffect(() => {
+    let savedMute = false
+    try { savedMute = localStorage.getItem('roadster-muted') === '1' } catch {}
+    setMuted(savedMute)
+    Sound.setMuted(savedMute)
+
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     let W = 0, H = 0, dpr = 1
@@ -1021,7 +1286,9 @@ export default function RoadsterGame() {
           handled = true
         }
       }
+      if (down) Sound.init()
       if (down && !e.repeat && KEYS.thrust.includes(e.key)) pressStart()
+      if (down && !e.repeat && (e.key === 'm' || e.key === 'M')) toggleMute()
       if (handled) e.preventDefault()
     }
     const down = onKey(true), up = onKey(false)
@@ -1032,12 +1299,14 @@ export default function RoadsterGame() {
     const loop = (now) => {
       const frame = Math.min(0.05, (now - last) / 1000)
       last = now
-      acc += frame
       const game = gameRef.current
+      const slow = slowMo(game)
+      acc += frame * (slow ? 0.3 : 1)
       while (acc >= STEP) {
         step(game, inputRef.current, STEP)
         acc -= STEP
       }
+      Sound.update(game, inputRef.current, slow)
       updateCamera(game, W, H, frame)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       render(ctx, game, W, H)
@@ -1051,6 +1320,8 @@ export default function RoadsterGame() {
       ro.disconnect()
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
+      if (Sound.ctx) Sound.ctx.close()
+      Sound.ctx = Sound.nodes = Sound.lastPhase = null
     }
   }, [])
 
@@ -1064,6 +1335,7 @@ export default function RoadsterGame() {
         e.preventDefault()
         inputRef.current[action] = true
         e.currentTarget.dataset.on = '1'
+        Sound.init()
         try { navigator.vibrate?.(8) } catch {}
         if (action === 'thrust') pressStart()
       },
@@ -1089,7 +1361,24 @@ export default function RoadsterGame() {
           <Link href="/projects" className="mr-3 align-middle text-base text-[#9aa0a8] hover:text-[#eceae4]" aria-label="Back to projects">←</Link>
           Roadster <span className="text-[#d62828]">Launch</span>
         </h1>
-        <div className="text-sm tabular-nums text-[#9aa0a8]">0–60 in 0.9s · land under 11 mph, within 15° of level</div>
+        <div className="flex items-center gap-3 text-sm tabular-nums text-[#9aa0a8]">
+          <span>0–60 in 0.9s · land under 11 mph, within 15° of level</span>
+          <button
+            onClick={() => { Sound.init(); toggleMute() }}
+            className="rounded-md border border-[#3a3f46] p-1.5 text-[#eceae4] hover:bg-[#23262b]"
+            aria-label={muted ? 'Turn sound on' : 'Mute sound'}
+            title={muted ? 'Sound off (M)' : 'Sound on (M)'}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M11 5 6 9H2v6h4l5 4z" />
+              {muted ? (
+                <path d="m22 9-6 6M16 9l6 6" />
+              ) : (
+                <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" />
+              )}
+            </svg>
+          </button>
+        </div>
       </header>
 
       <div ref={wrapRef} className="relative min-h-0 w-full flex-1">
@@ -1123,7 +1412,7 @@ export default function RoadsterGame() {
         </button>
       </div>
       <p className="w-full text-[0.8rem] text-[#9aa0a8] [@media(pointer:coarse)]:hidden">
-        Keyboard: hold ↑ or W to drive and thrust, A/D or ←/→ to tilt.
+        Keyboard: hold ↑ or W to drive and thrust, A/D or ←/→ to tilt, M to mute.
       </p>
     </div>
   )
