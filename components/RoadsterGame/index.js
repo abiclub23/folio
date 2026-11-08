@@ -1,5 +1,5 @@
 // Roadster launch game: 0–60 in under a second, up a ramp to the sky, then thrusters to land
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 // Physics (meters, seconds, y points up)
 const G = 9.8
@@ -20,7 +20,7 @@ const SAFE_VY = 5 // max touchdown descent speed (m/s, ~11 mph)
 const SAFE_TILT = (15 * Math.PI) / 180
 const ROLL_BRAKE = 14
 const AIR_DRAG = 0.02 // quadratic drag: bleeds off launch speed fast, terminal velocity ~22 m/s
-const COUNTDOWN = 1.5
+const ROLL_DRAG = 1.5 // slowing on the track when you're off the throttle
 const STEP = 1 / 120
 
 const MPH = 2.23694
@@ -55,12 +55,11 @@ function carCorners(car) {
 
 function newGame() {
   return {
-    phase: 'ready', // ready → countdown → runway → ramp → flight → rolling → landed | crashed
+    phase: 'ready', // ready → runway ⇄ ramp → flight → rolling → landed | crashed
     car: { x: 4, y: 0, vx: 0, vy: 0, angle: 0 },
     speed: 0,
     phi: 0,
     t: 0,
-    countdown: COUNTDOWN,
     zeroSixty: null,
     flightTime: 0,
     maxAlt: 0,
@@ -80,8 +79,8 @@ function pressThrust(game) {
 
 function startGame(game) {
   if (game.phase !== 'ready') return
-  game.phase = 'countdown'
-  game.countdown = COUNTDOWN
+  game.phase = 'runway'
+  game.t = 0
 }
 
 // Deterministic scenery
@@ -95,16 +94,17 @@ function step(game, input, dt) {
   const car = game.car
   game.t += dt
 
-  if (game.phase === 'countdown') {
-    game.countdown -= dt
-    tireSmoke(game, 0.6) // revving on the line
-    if (game.countdown <= 0) {
-      game.phase = 'runway'
-      game.t = 0
+  if (game.phase === 'runway' || game.phase === 'ramp') {
+    // The car only drives while you hold thrust; otherwise it coasts
+    if (input.thrust) {
+      game.speed += LAUNCH_ACCEL * dt
+      tireSmoke(game)
+    } else {
+      game.speed -= Math.sign(game.speed) * Math.min(Math.abs(game.speed), ROLL_DRAG * dt)
     }
-  } else if (game.phase === 'runway') {
-    game.speed += LAUNCH_ACCEL * dt
-    tireSmoke(game, 1)
+  }
+
+  if (game.phase === 'runway') {
     car.x += game.speed * dt
     if (game.zeroSixty === null && game.speed * MPH >= 60) game.zeroSixty = game.t
     if (car.x >= RUNWAY) {
@@ -114,16 +114,27 @@ function step(game, input, dt) {
   } else if (game.phase === 'ramp') {
     game.speed -= G * Math.sin(game.phi) * dt
     game.phi += (game.speed * dt) / RAMP_R
-    if (game.phi >= RAMP_END) {
-      game.phi = RAMP_END
+    // Too slow near the top: the car drops off the curve
+    const tooSlow = game.phi > Math.PI / 2 && (game.speed * game.speed) / RAMP_R < -G * Math.cos(game.phi)
+    if (game.phi >= RAMP_END || tooSlow) {
+      game.phi = Math.min(game.phi, RAMP_END)
       game.phase = 'flight'
-      car.vx = game.speed * Math.cos(RAMP_END)
-      car.vy = game.speed * Math.sin(RAMP_END)
+      car.vx = game.speed * Math.cos(game.phi)
+      car.vy = game.speed * Math.sin(game.phi)
       game.flightTime = 0
+    } else if (game.phi < 0) {
+      // Rolled back down onto the runway
+      game.phase = 'runway'
+      car.x = RUNWAY + game.phi * RAMP_R
+      car.y = 0
+      car.angle = 0
+      game.phi = 0
     }
-    car.x = RUNWAY + RAMP_R * Math.sin(game.phi)
-    car.y = RAMP_R * (1 - Math.cos(game.phi))
-    car.angle = game.phi
+    if (game.phase !== 'runway') {
+      car.x = RUNWAY + RAMP_R * Math.sin(game.phi)
+      car.y = RAMP_R * (1 - Math.cos(game.phi))
+      car.angle = game.phi
+    }
   } else if (game.phase === 'flight') {
     game.flightTime += dt
     const turn = (input.left ? 1 : 0) - (input.right ? 1 : 0)
@@ -213,14 +224,14 @@ function emitThrust(game) {
   }
 }
 
-// White tire smoke billowing from the rear wheel while revving and launching
-function tireSmoke(game, rate) {
-  if (Math.random() > rate * 0.5) return
+// A light puff of tire smoke from the rear wheel, mostly while it spins up from low speed
+function tireSmoke(game) {
+  if (game.phase !== 'runway' || Math.random() > 0.25 * Math.max(0, 1 - game.speed / 30)) return
   const car = game.car
   game.particles.push({
-    x: car.x - 1.6 + (Math.random() - 0.5) * 0.4, y: 0.3,
-    vx: -3 - Math.random() * 6 - game.speed * 0.15, vy: 0.5 + Math.random() * 1.5,
-    g: -0.6, drag: 1.2, life: 1.2 + Math.random() * 1.2, max: 2.4, size: 0.9 + Math.random() * 0.6, kind: 'smoke',
+    x: car.x - 1.5, y: 0.25,
+    vx: -2 - Math.random() * 3, vy: 0.3 + Math.random() * 0.8,
+    g: -0.4, drag: 1.5, life: 0.6 + Math.random() * 0.5, max: 1.1, size: 0.45 + Math.random() * 0.3, kind: 'smoke',
   })
 }
 
@@ -301,7 +312,7 @@ function rrect(ctx, x, y, w, h, r) {
 
 function updateCamera(game, W, H, dt) {
   const car = game.car
-  const parked = game.phase === 'ready' || game.phase === 'countdown'
+  const parked = game.phase === 'ready'
   const span = TOWER_X + TOWER_W + 10
   const targetViewH = parked ? Math.max(TOWER_H * 1.35, (span * H) / W) : Math.min(170, Math.max(40, car.y * 1.3 + 25))
   const cam = game.cam || { viewH: targetViewH, left: 0, bottom: -6 }
@@ -818,7 +829,7 @@ function drawCar(ctx, game, x, y, S) {
 function drawHud(ctx, game, W, H) {
   const car = game.car
   const onTrack = game.phase === 'runway' || game.phase === 'ramp'
-  const speed = onTrack ? game.speed : Math.hypot(car.vx, car.vy)
+  const speed = onTrack ? Math.abs(game.speed) : Math.hypot(car.vx, car.vy)
   const descent = -car.vy
   const tilt = wrapAngle(car.angle)
   const flying = game.phase === 'flight'
@@ -916,26 +927,9 @@ function drawHud(ctx, game, W, H) {
     ctx.fillText(`0–60 MPH  ${game.zeroSixty.toFixed(2)}s`, 87, y + 17)
   }
 
-  // Launch lights
-  const showLights = game.phase === 'countdown' || (game.phase === 'runway' && game.t < 0.5)
-  if (showLights) {
-    const elapsed = COUNTDOWN - game.countdown
-    const lw = 116
-    ctx.fillStyle = 'rgba(15,17,21,0.75)'
-    rrect(ctx, W / 2 - lw / 2, 16, lw, 40, 20)
-    ctx.fill()
-    for (let i = 0; i < 3; i++) {
-      const lit = game.phase === 'runway' ? 'go' : elapsed >= i * 0.5 ? 'amber' : 'off'
-      ctx.fillStyle = lit === 'go' ? '#22c55e' : lit === 'amber' ? '#f59e0b' : '#3f3f46'
-      ctx.beginPath()
-      ctx.arc(W / 2 - 34 + i * 34, 36, 11, 0, Math.PI * 2)
-      ctx.fill()
-    }
-  }
-
   // Message card
   let msg = null
-  if (game.phase === 'ready') msg = ['ROADSTER LAUNCH', W < 520 ? 'Tap Thrust to launch' : 'Press ↑ or W to launch']
+  if (game.phase === 'ready') msg = ['ROADSTER LAUNCH', W < 520 ? 'Hold Thrust to rev and go' : 'Hold ↑ or W to rev and go']
   else if (game.phase === 'crashed') msg = ['CRASHED', game.reason]
   else if (game.phase === 'landed') {
     msg = ['LANDED', `${Math.round(game.touchdown.descent * MPH)} mph touchdown · ${Math.round(Math.abs(car.x - RUNWAY) * FT)} ft from the ramp · ${Math.round(game.maxAlt * FT)} ft high`]
@@ -978,7 +972,6 @@ export default function RoadsterGame() {
   const canvasRef = useRef(null)
   const gameRef = useRef(null)
   const inputRef = useRef({ thrust: false, left: false, right: false })
-  const [phase, setPhase] = useState('ready')
 
   const pressStart = () => {
     const next = pressThrust(gameRef.current)
@@ -1036,7 +1029,6 @@ export default function RoadsterGame() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       render(ctx, game, W, H)
       drawHud(ctx, game, W, H)
-      setPhase((p) => (p === game.phase ? p : game.phase))
       raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop)
@@ -1070,13 +1062,13 @@ export default function RoadsterGame() {
       <div className="mt-3">
         <div className="grid grid-cols-4 gap-2">
           <button {...hold('left')} className={btn} aria-label="Tilt back">⟲</button>
-          <button {...hold('thrust')} className={`${btn} col-span-2`}>{phase === 'ready' ? 'LAUNCH' : 'THRUST'}</button>
+          <button {...hold('thrust')} className={`${btn} col-span-2`}>THRUST</button>
           <button {...hold('right')} className={btn} aria-label="Tilt forward">⟳</button>
         </div>
       </div>
 
       <p className="text-sm text-gray-500 mt-3">
-        Keyboard: ↑ or W to launch and thrust, A/D or ←/→ to tilt. Land with descent under 11 mph and tilt under 15°.
+        Keyboard: hold ↑ or W to drive and thrust, A/D or ←/→ to tilt. Land with descent under 11 mph and tilt under 15°.
       </p>
     </div>
   )
