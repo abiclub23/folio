@@ -127,6 +127,21 @@ export function drawParticles(ctx, particles, sx, sy, S) {
   for (const p of particles) {
     if (p.kind === 'flame' || p.kind === 'fire') continue
     const a = Math.max(0, p.life / p.max)
+    if (p.kind === 'spark') {
+      // Firework sparks: a bright dot with a soft colored halo, fading out
+      const x = sx(p.x), y = sy(p.y), r = Math.max(1.2, p.size * S)
+      ctx.globalAlpha = Math.min(1, a * 1.5) * 0.35
+      ctx.fillStyle = p.color
+      ctx.beginPath()
+      ctx.arc(x, y, r * 2.4, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.globalAlpha = Math.min(1, a * 1.5)
+      ctx.beginPath()
+      ctx.arc(x, y, r, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.globalAlpha = 1
+      continue
+    }
     const r = Math.max(1.5, p.size * S)
     if (p.kind === 'smoke' || p.kind === 'dust' || p.kind === 'soot') {
       ctx.fillStyle = p.kind === 'dust' ? `rgba(160,140,110,${a * 0.5})` : p.kind === 'soot' ? `rgba(70,66,64,${a * 0.6})` : `rgba(238,240,244,${a * 0.45})`

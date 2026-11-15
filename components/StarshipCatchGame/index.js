@@ -37,7 +37,7 @@ export default function StarshipCatchGame() {
       name="Starship Catch"
       titleLead="Starship"
       titleAccent="Catch"
-      spec="Catch it under 8 mph, within 10 ft of center"
+      spec="Catch it under 15 mph, within 15 ft of center"
       hint="Keyboard: hold ↑ or W to light the engines and slow down, A/D or ←/→ to steer, M to mute."
       arrows
       labels={labels}

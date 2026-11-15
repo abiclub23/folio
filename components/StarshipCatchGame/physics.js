@@ -25,8 +25,9 @@ const FLIP_TIME = 1.6 // seconds to swing upright
 const FLIP_THRUST = 21
 const FULL_THRUST = 15
 const IDLE_THRUST = 6.5
-const SIDE_ACCEL = 5 // m/s² sideways from engine gimbal and thrusters
-const SIDE_DRAG = 0.7 // per second, so sideways speed tops out near 7 m/s
+// Gentle and well damped: sideways speed builds over a second or so and stops soon after you let go
+const SIDE_ACCEL = 3.6 // m/s² sideways from engine gimbal and thrusters
+const SIDE_DRAG = 1.1 // per second, so sideways speed tops out near 3.3 m/s (7 mph)
 
 // Tower and pad: x = 0 is the tower's left face, the chopsticks reach left from it
 export const TOWER_X = 0
@@ -39,9 +40,9 @@ export const MOUNT = { x0: -24, x1: -2, top: 20 } // launch mount under the catc
 export const OCEAN_X = -250 // the Gulf starts left of here
 
 // What counts as a good catch
-const CATCH_TOL = 3 // meters either side of center (~10 ft)
-export const SAFE_VY = 3.5 // m/s, about 8 mph
-const SAFE_VX = 2
+const CATCH_TOL = 4.5 // meters either side of center (~15 ft)
+export const SAFE_VY = 6.7 // m/s, about 15 mph
+export const SAFE_VX = 3.5 // m/s, about 8 mph
 export const LIGHT_UP_Y = 260 // below this the HUD asks you to light the engines
 
 export function newGame() {
@@ -52,6 +53,7 @@ export function newGame() {
     endedAt: 0,
     side: 0, // -1 left, 0 none, 1 right: which way you're steering, for the thrusters and the lean
     armClose: 0, // 0 open → 1 closed around the ship
+    fireworks: [], // seconds after a catch when the next fireworks go off
     released: false, // thrust must be let go after the start press before it lights the engines
     crew: makeCrew(),
     contact: null,
@@ -93,8 +95,8 @@ const CRASH_QUIPS = [
 
 // Catch grades, softest first
 export function catchGrade(mph) {
-  if (mph <= 3) return "CHOPSTICKS. CHEF'S KISS."
-  if (mph <= 6) return 'MECHAZILLA APPROVES'
+  if (mph <= 5) return "CHOPSTICKS. CHEF'S KISS."
+  if (mph <= 10) return 'MECHAZILLA APPROVES'
   return 'CAUGHT. BARELY.'
 }
 
@@ -213,6 +215,11 @@ export function step(game, input, dt) {
     s.angle *= Math.max(0, 1 - dt * 4)
     s.x += (CATCH_X - s.x) * Math.min(1, dt * 3)
     s.y = ARM_Y - PIN_Y - Math.sin(Math.min(k * 9, Math.PI)) * 0.5 * Math.exp(-k * 2)
+    // Fireworks over the tower to celebrate
+    while (game.fireworks.length && k >= game.fireworks[0]) {
+      game.fireworks.shift()
+      firework(game)
+    }
   }
 
   stepCrew(game, dt)
@@ -265,7 +272,30 @@ function caught(game) {
   game.phase = 'caught'
   game.endedAt = game.t
   game.armClose = 0
+  game.fireworks = [0.6, 1.0, 1.5, 1.9, 2.5, 3.0, 3.8, 4.4, 5.2]
   s.vx = s.vy = 0
+}
+
+// One firework burst somewhere above the tower: a ring of colored sparks that drift and fall
+function firework(game) {
+  const colors = [['#ff5a4f', '#ffb3a8'], ['#ffd25a', '#fff0b8'], ['#5ad1ff', '#c8f1ff'], ['#7cffb2', '#d6ffe8'], ['#f7f7f7', '#ffd8a8']]
+  const [c1, c2] = colors[Math.floor(Math.random() * colors.length)]
+  // Kept inside the frame the camera holds after a catch
+  const x = -75 + Math.random() * 115, y = 118 + Math.random() * 38
+  const n = 70
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2
+    const v = 10 + Math.random() * 18 // a full, round burst rather than a thin ring
+    spawn(game, {
+      x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+      g: 4, drag: 1.4, life: 1.4 + Math.random() * 0.6, max: 2, size: 0.9, kind: 'spark', color: i % 3 ? c1 : c2,
+    })
+  }
+}
+
+// Stars for the mission patch: 3 for a feather-light catch, 1 for a scrappy one
+export function catchStars(mph) {
+  return mph <= 5 ? 3 : mph <= 10 ? 2 : 1
 }
 
 function crash(game, reason, quip) {

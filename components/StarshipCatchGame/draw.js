@@ -3,7 +3,7 @@
 // Reads game state, never changes it except for the camera.
 import {
   ARM_LEN, ARM_Y, CATCH_X, FT, LIGHT_UP_Y, MOUNT, MPH, OCEAN_X, PIN_Y, RCS_Y, SAFE_VY, SHIP_H, SHIP_W,
-  TOWER_H, TOWER_W, TOWER_X, cardReady, canRestart, catchGrade, pinPoint, slowMo, stage,
+  SAFE_VX, TOWER_H, TOWER_W, TOWER_X, cardReady, canRestart, catchGrade, catchStars, pinPoint, slowMo, stage,
 } from './physics'
 import { drawParticles, hash, lerp, rrect } from '../GameKit/scene'
 
@@ -798,7 +798,7 @@ export function drawHud(ctx, game, W, H, { touch = false } = {}) {
     const size = thumbs ? 15 : 19
     const approach = phase === 'powered'
     readout(ctx, rx, top + 20, 'DESCENT', flying ? `${Math.max(0, Math.round(descent * MPH))} mph` : '—', !approach ? '#fff' : descent <= SAFE_VY ? GOOD : BAD, size)
-    readout(ctx, rx + 96 * gap, top + 20, 'SIDEWAYS', flying ? `${Math.round(Math.abs(s.vx) * MPH)} mph` : '—', !approach ? '#fff' : Math.abs(s.vx) <= 2 ? GOOD : BAD, size)
+    readout(ctx, rx + 96 * gap, top + 20, 'SIDEWAYS', flying ? `${Math.round(Math.abs(s.vx) * MPH)} mph` : '—', !approach ? '#fff' : Math.abs(s.vx) <= SAFE_VX ? GOOD : BAD, size)
     const lined = Math.abs(off) < 3
     readout(ctx, rx + 192 * gap, top + 20, 'TARGET', lined ? 'LINED UP' : `${off > 0 ? '←' : '→'} ${Math.round(Math.abs(off) * FT)} ft`, lined ? GOOD : '#fff', size)
   }
@@ -859,7 +859,7 @@ export function drawHud(ctx, game, W, H, { touch = false } = {}) {
     if (phase === 'caught') {
       const mph = c.descent * MPH
       msg = {
-        kicker: 'SHIP CATCH CONFIRMED',
+        kicker: 'SHIP CATCH CONFIRMED · MISSION PATCH EARNED',
         title: catchGrade(mph),
         line: `${mph.toFixed(1)} mph contact · ${Math.round(Math.abs(c.off) * FT)} ft off center`,
         color: GOOD,
@@ -876,8 +876,71 @@ export function drawHud(ctx, game, W, H, { touch = false } = {}) {
       msg = { kicker: 'ANOMALY', title: 'CRASHED', line: game.quip, detail: game.reason, color: BAD }
     }
   }
+  if (phase === 'caught') missionPatch(ctx, W, H, game, thumbs)
+
   // Low on the left like a broadcast caption, clear of the ship coming in from the top and the tower in the middle
   if (msg) lowerThird(ctx, W, H, msg, canRestart(game) ? (touch ? 'Tap Thrust to go again' : 'Press ↑ or W to go again') : null)
+}
+
+// Round mission patch that pops in after a catch: the ship held in the chopsticks, 1–3 stars, the grade
+function missionPatch(ctx, W, H, game, thumbs) {
+  const k = game.t - game.endedAt - 1.4
+  if (k < 0) return
+  const pop = Math.min(1, k * 4)
+  const scale = pop < 1 ? pop * 1.15 : 1 + Math.max(0, 0.15 - (k - 0.25) * 0.6)
+  const r = (W < 640 ? 46 : 60) * Math.max(0, scale)
+  const cx = W - (W < 640 ? 64 : 92) - (thumbs ? 120 : 0)
+  const cy = H - STRIP - (W < 640 ? 60 : 82)
+  const mph = game.contact.descent * MPH
+  const stars = catchStars(mph)
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate(-0.12)
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'
+  ctx.shadowBlur = 12
+  ctx.fillStyle = '#0f1a2e'
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.shadowBlur = 0
+  ctx.lineWidth = r * 0.09
+  ctx.strokeStyle = ORANGE
+  ctx.stroke()
+  ctx.lineWidth = r * 0.025
+  ctx.strokeStyle = '#f2efe9'
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.84, 0, Math.PI * 2)
+  ctx.stroke()
+  // Tower and arms on the right, the ship in between
+  const u = r / 60
+  ctx.fillStyle = '#5d6470'
+  ctx.fillRect(10 * u, -34 * u, 8 * u, 50 * u)
+  ctx.fillStyle = '#c9ccd2'
+  ctx.fillRect(-14 * u, -16 * u, 26 * u, 3 * u)
+  ctx.fillStyle = '#f2efe9'
+  ctx.beginPath()
+  ctx.moveTo(-6 * u, 16 * u)
+  ctx.lineTo(-6 * u, -24 * u)
+  ctx.quadraticCurveTo(-6 * u, -36 * u, -1 * u, -40 * u)
+  ctx.quadraticCurveTo(4 * u, -36 * u, 4 * u, -24 * u)
+  ctx.lineTo(4 * u, 16 * u)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = '#1b1c1f'
+  ctx.fillRect(0, -26 * u, 4 * u, 42 * u)
+  // Stars
+  ctx.font = `${Math.round(13 * u)}px ${FONT}`
+  ctx.textAlign = 'center'
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i < stars ? '#ffd25a' : 'rgba(255,255,255,0.18)'
+    ctx.fillText('★', (i - 1) * 15 * u, 32 * u)
+  }
+  ctx.fillStyle = '#fff'
+  ctx.font = `700 ${Math.round(9 * u)}px ${COND}`
+  ctx.fillText('SHIP CATCH', 0, -45 * u)
+  ctx.fillStyle = ORANGE
+  ctx.fillText(stars === 3 ? 'FLAWLESS' : stars === 2 ? 'NICE CATCH' : 'WE’LL TAKE IT', 0, 46 * u)
+  ctx.restore()
 }
 
 // Broadcast lower-third above the telemetry strip: kicker, big title, line, optional detail and hint
