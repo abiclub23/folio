@@ -6,6 +6,7 @@ import {
   SAFE_VX, TOWER_H, TOWER_W, TOWER_X, cardReady, canRestart, catchGrade, catchStars, pinPoint, slowMo, stage,
 } from './physics'
 import { drawParticles, hash, lerp, rrect } from '../GameKit/scene'
+import { drawPhysicalSky, sunOnScreen } from '../GameKit/sky'
 
 const FONT = 'Saira, system-ui, sans-serif'
 const COND = '"Saira Condensed", "Arial Narrow", system-ui, sans-serif'
@@ -134,7 +135,8 @@ function drawTargetMarker(ctx, x, y, t) {
   ctx.restore()
 }
 
-// Clear morning sky over the Gulf: deep blue overhead, hazy and warm at the horizon, a few thin clouds
+// Clear morning sky over the Gulf: deep blue overhead, hazy and warm at the horizon, a few thin clouds.
+// This painted version only shows where WebGL isn't available.
 const CLOUDS = Array.from({ length: 14 }, (_, i) => ({
   x: hash(i + 3) * 2.2 - 0.6,
   h: 0.08 + hash(i + 40) * 0.5,
@@ -144,6 +146,8 @@ const CLOUDS = Array.from({ length: 14 }, (_, i) => ({
 
 function drawSky(ctx, v, horizon, t) {
   const { W, H } = v
+  // Real light scattering on the GPU where WebGL is available; the painted gradient below is the fallback
+  if (drawPhysicalSky(ctx, W, H, horizon, t)) return
   const top = Math.min(horizon, H * 1.6) - H * 1.25
   const g = ctx.createLinearGradient(0, top, 0, Math.min(horizon, H * 1.6))
   g.addColorStop(0, SKY[0])
@@ -155,7 +159,7 @@ function drawSky(ctx, v, horizon, t) {
   ctx.fillRect(-30, -30, W + 60, H + 60)
 
   // Low sun over the sea on the left, with a wide soft glow
-  const sunX = W * 0.12, sunY = horizon - H * 0.14
+  const { x: sunX, y: sunY } = sunOnScreen(W, H, horizon)
   const glow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, H * 0.9)
   glow.addColorStop(0, 'rgba(255,236,200,0.75)')
   glow.addColorStop(0.15, 'rgba(255,214,170,0.35)')
@@ -267,7 +271,7 @@ function drawGround(ctx, v, sx, horizon, t) {
   ctx.lineWidth = 1.2
   for (let i = 0; i < 70; i++) {
     const d = hash(i + 9)
-    const x = W * 0.12 + (hash(i) - 0.5) * W * (0.02 + d * 0.22)
+    const x = sunOnScreen(W, H, horizon).x + (hash(i) - 0.5) * W * (0.02 + d * 0.22)
     const y = horizon + 1 + d * d * (H - horizon)
     if (x > ox - 4) continue
     const a = 0.25 + 0.6 * Math.abs(Math.sin(t * 2.2 + i * 1.7))
