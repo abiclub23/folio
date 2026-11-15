@@ -17,17 +17,17 @@ const BELLY_ANGLE = -Math.PI / 2 // lying flat, nose toward the tower, heat shie
 
 // Belly-flop: drag holds the fall to about 20 m/s and the flaps steer sideways
 const BELLY_DRAG = 0.0245 // quadratic, vertical
-const FLAP_ACCEL = 4 // m/s² sideways while steering
-const BELLY_SIDE_DRAG = 0.35 // per second
+const FLAP_ACCEL = 6.5 // m/s² sideways while steering
+const BELLY_SIDE_DRAG = 0.55 // per second, so the glide tops out near 12 m/s sideways
 
 // Flip and powered flight: full throttle beats gravity by ~5 m/s², idle still burns so the fall stays gentle
 const FLIP_TIME = 1.6 // seconds to swing upright
 const FLIP_THRUST = 21
-const FULL_THRUST = 15
+const FULL_THRUST = 17
 const IDLE_THRUST = 6.5
-// Gentle and well damped: sideways speed builds over a second or so and stops soon after you let go
-const SIDE_ACCEL = 3.6 // m/s² sideways from engine gimbal and thrusters
-const SIDE_DRAG = 1.1 // per second, so sideways speed tops out near 3.3 m/s (7 mph)
+// Responsive but damped: sideways speed picks up within about half a second and stops soon after you let go
+const SIDE_ACCEL = 7.5 // m/s² sideways from engine gimbal and thrusters
+const SIDE_DRAG = 1.5 // per second, so sideways speed tops out near 5 m/s (11 mph)
 
 // Tower and pad: x = 0 is the tower's left face, the chopsticks reach left from it
 export const TOWER_X = 0
