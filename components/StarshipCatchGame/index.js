@@ -6,10 +6,10 @@ import { STEP, newGame, pressThrust, slowMo, step } from './physics'
 import * as broadcast from './draw'
 import { updateSound } from './sound'
 
-const rules = { STEP, step, slowMo, newGame, pressThrust }
-const labels = { left: ['Left', 'Move left'], right: ['Right', 'Move right'] }
+export const rules = { STEP, step, slowMo, newGame, pressThrust }
+export const labels = { left: ['Left', 'Move left'], right: ['Right', 'Move right'] }
 
-const THEME = {
+export const THEME = {
   page: 'bg-[#120a16] font-saira text-[#f6ebe3]',
   title: 'font-saira-condensed text-[1.7rem] font-bold uppercase tracking-[0.06em]',
   accent: 'text-[#ff7a45]',

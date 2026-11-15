@@ -113,7 +113,7 @@ function drawWorld(ctx, game, input, v) {
 }
 
 // Pulsing "CATCH HERE" chevron over the chopsticks so the goal is obvious from the first frame
-function drawTargetMarker(ctx, x, y, t) {
+export function drawTargetMarker(ctx, x, y, t) {
   const bob = Math.sin(t * 4) * 3
   const top = y - 26 + bob
   ctx.save()
@@ -531,7 +531,7 @@ function drawShip(ctx, game, input, sx, sy, S) {
 
 // Camera finish: a touch of film grain and darker corners, so it reads like footage rather than a drawing
 let grain = null
-function filmFinish(ctx, W, H) {
+export function filmFinish(ctx, W, H) {
   if (!grain && typeof document !== 'undefined') {
     grain = document.createElement('canvas')
     grain.width = grain.height = 128
