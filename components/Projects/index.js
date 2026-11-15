@@ -70,10 +70,7 @@ export default function Projects() {
           >
             <h2 className="text-xl font-semibold">Starship Catch</h2>
           </Link>
-          <p className="text-sm text-ink-muted">
-            Bring the ship home like Flight 15: belly-flop, flip, and ease into the chopsticks.{' '}
-            <Link href="/projects/starship-catch-3d" className="underline hover:text-olive">Play it in 3D</Link>.
-          </p>
+          <p className="text-sm text-ink-muted">Bring the ship home like Flight 15: belly-flop, flip, and ease into the chopsticks.</p>
         </div>
       </div>
     </div>

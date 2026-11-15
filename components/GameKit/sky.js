@@ -32,7 +32,6 @@ uniform float uHorizon;  // horizon row, pixels from the top
 uniform float uFocal;    // pixels per unit tan(angle)
 uniform vec3 uSun;       // direction to the sun
 uniform float uTime;     // seconds, for cloud drift
-uniform float uYaw;      // small sideways pan, radians
 
 #define PI 3.141592
 #define RPLANET 6371e3
@@ -118,10 +117,7 @@ void main() {
   vec2 frag = vec2(gl_FragCoord.x, uSize.y - gl_FragCoord.y);
   float tx = (frag.x - uSize.x * 0.5) / uFocal;
   float ty = (uHorizon - frag.y) / uFocal;
-  vec3 rd = normalize(vec3(tx, ty, 1.0));
-  float cy = cos(uYaw), sy = sin(uYaw);
-  rd = vec3(rd.x * cy + rd.z * sy, rd.y, -rd.x * sy + rd.z * cy);
-  vec3 dir = rd;
+  vec3 dir = normalize(vec3(tx, ty, 1.0));
   dir.y = max(dir.y, 0.002); // below the horizon, show the horizon haze (the game draws the ground over it)
   dir = normalize(dir);
 
@@ -186,7 +182,7 @@ function setup() {
     gl.enableVertexAttribArray(loc)
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
     uni = {}
-    for (const n of ['uSize', 'uHorizon', 'uFocal', 'uSun', 'uTime', 'uYaw']) uni[n] = gl.getUniformLocation(prog, n)
+    for (const n of ['uSize', 'uHorizon', 'uFocal', 'uSun', 'uTime']) uni[n] = gl.getUniformLocation(prog, n)
   } catch (e) {
     gl = null
     failed = true
@@ -197,13 +193,15 @@ function setup() {
 
 // Draws the sky into ctx over a W×H area with the horizon at row `horizon`.
 // The sky is rendered at reduced resolution (it's all soft gradients) and scaled up.
-export function drawPhysicalSky(ctx, W, H, horizon, t, yaw = 0) {
+// The game draws two views a frame (main camera and tower cam), so the hidden canvas only ever grows and each view
+// uses its bottom-left corner: resizing it every frame would reallocate the GPU buffer twice a frame.
+export function drawPhysicalSky(ctx, W, H, horizon, t) {
   if (!setup()) return false
   const scale = W > 700 ? 0.4 : 0.5
   const w = Math.max(16, Math.round(W * scale)), h = Math.max(16, Math.round(H * scale))
-  if (canvas.width !== w || canvas.height !== h) {
-    canvas.width = w
-    canvas.height = h
+  if (canvas.width < w || canvas.height < h) {
+    canvas.width = Math.max(canvas.width, w)
+    canvas.height = Math.max(canvas.height, h)
   }
   gl.viewport(0, 0, w, h)
   const el = SUN.elevation, az = SUN.azimuth
@@ -212,8 +210,8 @@ export function drawPhysicalSky(ctx, W, H, horizon, t, yaw = 0) {
   gl.uniform1f(uni.uFocal, FOCAL * H * scale)
   gl.uniform3f(uni.uSun, Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az))
   gl.uniform1f(uni.uTime, t)
-  gl.uniform1f(uni.uYaw, yaw)
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-  ctx.drawImage(canvas, 0, 0, W, H)
+  // The viewport starts at the canvas's bottom-left, which is row (height - h) from the top
+  ctx.drawImage(canvas, 0, canvas.height - h, w, h, 0, 0, W, H)
   return true
 }

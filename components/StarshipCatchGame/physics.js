@@ -2,9 +2,9 @@
 // lights its engines and swings upright, then slows to a near hover and eases into the chopsticks.
 // No drawing here. Units are meters and seconds, with y pointing up. Speeds are scaled down from the real thing
 // so there is time to react.
-import { FT, MPH, spawn, stepParticles, wrapAngle } from '../GameKit/physics'
+import { FT, MPH, spawn, stepParticles } from '../GameKit/physics'
 
-export { FT, MPH, wrapAngle }
+export { FT, MPH }
 
 const G = 9.8
 export const STEP = 1 / 120
@@ -51,6 +51,8 @@ export function newGame() {
     ship: { x: -200, y: 340, vx: 7, vy: -18, angle: BELLY_ANGLE },
     t: 0,
     endedAt: 0,
+    flipAt: 0,
+    firing: false, // engines burning at full thrust (or flipping), for the plume and the HUD
     side: 0, // -1 left, 0 none, 1 right: which way you're steering, for the thrusters and the lean
     armClose: 0, // 0 open → 1 closed around the ship
     fireworks: [], // seconds after a catch when the next fireworks go off

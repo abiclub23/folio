@@ -1,6 +1,6 @@
 // Starship Catch drawing: a morning at Starbase as a broadcast camera would see it, with a webcast-style overlay
 // (LIVE clock, telemetry strip, flight timeline, tower cam, lower-third results).
-// Reads game state, never changes it except for the camera.
+// Reads game state and never changes it, except for the camera.
 import {
   ARM_LEN, ARM_Y, CATCH_X, FT, LIGHT_UP_Y, MOUNT, MPH, OCEAN_X, PIN_Y, RCS_Y, SAFE_VY, SHIP_H, SHIP_W,
   SAFE_VX, TOWER_H, TOWER_W, TOWER_X, cardReady, canRestart, catchGrade, catchStars, pinPoint, slowMo, stage,
@@ -101,7 +101,7 @@ function drawWorld(ctx, game, input, v) {
   drawDistantSite(ctx, v, horizon)
   drawGround(ctx, v, sx, horizon, game.t)
   drawPad(ctx, sx, sy, S)
-  drawCrew(ctx, game, sx, sy, S)
+  drawCrew(ctx, game, v.W, sx, sy, S)
   drawTower(ctx, sx, sy, S, game.t)
   drawArm(ctx, sx, sy, S, game, 'back')
   drawParticles(ctx, game.particles, sx, sy, S)
@@ -113,7 +113,7 @@ function drawWorld(ctx, game, input, v) {
 }
 
 // Pulsing "CATCH HERE" chevron over the chopsticks so the goal is obvious from the first frame
-export function drawTargetMarker(ctx, x, y, t) {
+function drawTargetMarker(ctx, x, y, t) {
   const bob = Math.sin(t * 4) * 3
   const top = y - 26 + bob
   ctx.save()
@@ -268,10 +268,11 @@ function drawGround(ctx, v, sx, horizon, t) {
   ctx.fillStyle = sea
   ctx.fillRect(-30, horizon, ox + 30, H - horizon + 30)
   // Glitter path under the sun
+  const sunX = sunOnScreen(W, H, horizon).x
   ctx.lineWidth = 1.2
   for (let i = 0; i < 70; i++) {
     const d = hash(i + 9)
-    const x = sunOnScreen(W, H, horizon).x + (hash(i) - 0.5) * W * (0.02 + d * 0.22)
+    const x = sunX + (hash(i) - 0.5) * W * (0.02 + d * 0.22)
     const y = horizon + 1 + d * d * (H - horizon)
     if (x > ox - 4) continue
     const a = 0.25 + 0.6 * Math.abs(Math.sin(t * 2.2 + i * 1.7))
@@ -531,7 +532,7 @@ function drawShip(ctx, game, input, sx, sy, S) {
 
 // Camera finish: a touch of film grain and darker corners, so it reads like footage rather than a drawing
 let grain = null
-export function filmFinish(ctx, W, H) {
+function filmFinish(ctx, W, H) {
   if (!grain && typeof document !== 'undefined') {
     grain = document.createElement('canvas')
     grain.width = grain.height = 128
@@ -561,13 +562,13 @@ export function filmFinish(ctx, W, H) {
 
 // People on the ground, origin at the feet, ~1.8 m tall; drawn at least ~22px tall so they read when zoomed out.
 // Crew wear orange hi-vis with a reflective stripe and a white hard hat; spectators wear everyday clothes.
-function drawCrew(ctx, game, sx, sy, S) {
+function drawCrew(ctx, game, W, sx, sy, S) {
   const vis = Math.max(1, 22 / (1.8 * S))
   const cheering = game.phase === 'caught'
   const running = game.phase === 'crashed'
   for (const c of game.crew) {
     const x = sx(c.x), y = sy(0)
-    if (x < -20 || x > ctx.canvas.width + 20) continue
+    if (x < -20 || x > W + 20) continue
     const t = game.t * 8 + c.seed * 5
     const hop = cheering ? Math.abs(Math.sin(t * 0.7)) * 0.5 : 0
     const stride = running && c.vx ? Math.sin(t * 1.6) * 0.35 : 0
@@ -734,7 +735,7 @@ function callout(ctx, W, y, text, sub, color, t) {
   ctx.restore()
 }
 
-export function drawHud(ctx, game, W, H, { touch = false } = {}) {
+export function drawHud(ctx, game, W, H, { touch = false, thumbs = false } = {}) {
   const s = game.ship
   const phase = game.phase
   const flying = phase === 'belly' || phase === 'flip' || phase === 'powered'
@@ -766,7 +767,7 @@ export function drawHud(ctx, game, W, H, { touch = false } = {}) {
     callout(ctx, W, H * 0.3, `LIGHT ENGINES — HOLD ${thrustKey}`, 'Flip upright and brake before the tower', AMBER, game.t)
   } else if (phase === 'belly' && game.t < 4) {
     callout(ctx, W, H * 0.3, touch ? 'STEER WITH ◀ ▶' : 'STEER WITH ← →', 'Glide toward the tower', '#fff', game.t)
-  } else if (phase === 'powered' && game.t - (game.flipAt || 0) < 4.5) {
+  } else if (phase === 'powered' && game.t - game.flipAt < 4.5) {
     callout(ctx, W, H * 0.3, 'EASE INTO THE ARMS', `Hold ${thrustKey} to slow · let go to sink · ◀ ▶ to line up`, '#fff', game.t)
   }
 
@@ -780,32 +781,34 @@ export function drawHud(ctx, game, W, H, { touch = false } = {}) {
   ctx.fillRect(0, top - 30, W, STRIP + 30)
   const cy = H - 44
   // On a phone held sideways the thumb buttons sit in the corners, so start the telemetry after them
-  const thumbs = touch && H < 520
   const ox = thumbs ? 184 : 0
   ctx.fillStyle = '#fff'
   ctx.textAlign = 'left'
   ctx.font = `700 11px ${COND}`
   ctx.fillText('STARSHIP', 16 + ox, top + 2)
-  const speed = Math.hypot(s.vx, s.vy)
-  gauge(ctx, 46 + ox, cy, 26, speed / 40, String(Math.round(speed * MPH)), 'MPH', 'SPEED')
-  const alt = Math.max(0, s.y)
-  gauge(ctx, 116 + ox, cy, 26, alt / 400, String(Math.round(alt * FT)), 'FT', 'ALTITUDE')
-  engines(ctx, 186 + ox, cy, game.firing)
+  // The dials need room; on small screens (and small phones held sideways) only the catch readouts are shown,
+  // since those are what you fly the approach by
+  const dials = W - ox - (thumbs ? 120 : 0) >= 440
+  if (dials) {
+    const speed = Math.hypot(s.vx, s.vy)
+    gauge(ctx, 46 + ox, cy, 26, speed / 40, String(Math.round(speed * MPH)), 'MPH', 'SPEED')
+    const alt = Math.max(0, s.y)
+    gauge(ctx, 116 + ox, cy, 26, alt / 400, String(Math.round(alt * FT)), 'FT', 'ALTITUDE')
+    engines(ctx, 186 + ox, cy, game.firing)
+  }
 
   // Catch readouts
   const off = px - CATCH_X
   const descent = -s.vy
-  const rx = 236 + ox
-  if (W - ox >= 420) {
-    // Smaller and closer together on phones held sideways, so they end before the Thrust button
-    const gap = thumbs ? 0.72 : 1
-    const size = thumbs ? 15 : 19
-    const approach = phase === 'powered'
-    readout(ctx, rx, top + 20, 'DESCENT', flying ? `${Math.max(0, Math.round(descent * MPH))} mph` : '—', !approach ? '#fff' : descent <= SAFE_VY ? GOOD : BAD, size)
-    readout(ctx, rx + 96 * gap, top + 20, 'SIDEWAYS', flying ? `${Math.round(Math.abs(s.vx) * MPH)} mph` : '—', !approach ? '#fff' : Math.abs(s.vx) <= SAFE_VX ? GOOD : BAD, size)
-    const lined = Math.abs(off) < 3
-    readout(ctx, rx + 192 * gap, top + 20, 'TARGET', lined ? 'LINED UP' : `${off > 0 ? '←' : '→'} ${Math.round(Math.abs(off) * FT)} ft`, lined ? GOOD : '#fff', size)
-  }
+  const rx = (dials ? 236 : 16) + ox
+  // Smaller and closer together on phones held sideways, so they end before the Thrust button
+  const gap = thumbs ? 0.72 : 1
+  const size = thumbs ? 15 : 19
+  const approach = phase === 'powered'
+  readout(ctx, rx, top + 20, 'DESCENT', flying ? `${Math.max(0, Math.round(descent * MPH))} mph` : '—', !approach ? '#fff' : descent <= SAFE_VY ? GOOD : BAD, size)
+  readout(ctx, rx + 96 * gap, top + 20, 'SIDEWAYS', flying ? `${Math.round(Math.abs(s.vx) * MPH)} mph` : '—', !approach ? '#fff' : Math.abs(s.vx) <= SAFE_VX ? GOOD : BAD, size)
+  const lined = Math.abs(off) < 3
+  readout(ctx, rx + 192 * gap, top + 20, 'TARGET', lined ? 'LINED UP' : `${off > 0 ? '←' : '→'} ${Math.round(Math.abs(off) * FT)} ft`, lined ? GOOD : '#fff', size)
 
   // Flight timeline on wide screens
   if (W >= 860 && !thumbs && (flying || phase === 'ready' || phase === 'caught')) {
@@ -948,11 +951,11 @@ function missionPatch(ctx, W, H, game, thumbs) {
 }
 
 // Broadcast lower-third above the telemetry strip: kicker, big title, line, optional detail and hint
-function lowerThird(ctx, W, H, msg, hint, atTop = false) {
+function lowerThird(ctx, W, H, msg, hint) {
   const w = Math.min(W - 24, 640)
   const rows = 2 + (msg.detail ? 1 : 0) + (hint ? 1 : 0)
   const h = 36 + rows * 22 + 12
-  const x = 0, y = atTop ? 44 : H - STRIP - h - 14
+  const x = 0, y = H - STRIP - h - 14
   const bg = ctx.createLinearGradient(x, 0, x + w, 0)
   bg.addColorStop(0, 'rgba(8,10,16,0.92)')
   bg.addColorStop(0.75, 'rgba(8,10,16,0.8)')

@@ -5,7 +5,8 @@
 // engine: {
 //   STEP, step(game, input, dt), slowMo(game),
 //   newGame(view), pressThrust(game, view)       view = { phone } for screen-dependent setup
-//   updateCamera(game, W, H, dt), render(ctx, game, W, H, input), drawHud(ctx, game, W, H, { touch }),
+//   updateCamera(game, W, H, dt), render(ctx, game, W, H, input),
+//   drawHud(ctx, game, W, H, { touch, thumbs })   thumbs: buttons drawn over the bottom corners of the game
 //   updateSound(game, input, slow)
 // }
 import Link from 'next/link'
@@ -47,6 +48,7 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
   const inputRef = useRef({ thrust: false, left: false, right: false })
   const viewRef = useRef({ phone: false })
   const touchRef = useRef(false)
+  const thumbsRef = useRef(false)
   const [muted, setMuted] = useState(false)
   // Layout: 'default' (keyboard), 'touch' (tablet, buttons under the game),
   // 'phone-portrait' (asks to rotate) or 'phone-landscape' (full screen, buttons over the game)
@@ -58,6 +60,7 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
     const landscape = window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 600px)')
     const update = () => {
       touchRef.current = touch.matches
+      thumbsRef.current = landscape.matches
       setMode(portrait.matches ? 'phone-portrait' : landscape.matches ? 'phone-landscape' : touch.matches ? 'touch' : 'default')
     }
     update()
@@ -133,7 +136,7 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
       engine.updateCamera(game, W, H, frame)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       engine.render(ctx, game, W, H, inputRef.current)
-      engine.drawHud(ctx, game, W, H, { touch: touchRef.current })
+      engine.drawHud(ctx, game, W, H, { touch: touchRef.current, thumbs: thumbsRef.current })
       raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop)
