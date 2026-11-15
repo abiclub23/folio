@@ -1,7 +1,7 @@
 // Shared full-screen page for the canvas games: header, canvas, game loop, keyboard and touch controls,
 // mute, and the phone layouts (rotate prompt upright, thumb buttons over the game sideways).
 //
-// theme: optional Tailwind classes to restyle the page (see DEFAULT_THEME)
+// theme: optional Tailwind classes to restyle the page (see DEFAULT_THEME); arrows: plain ← → on the side buttons
 // engine: {
 //   STEP, step(game, input, dt), slowMo(game),
 //   newGame(view), pressThrust(game, view)       view = { phone } for screen-dependent setup
@@ -39,7 +39,7 @@ const KEYS = {
   right: ['d', 'D', 'ArrowRight'],
 }
 
-export default function GameShell({ name, titleLead, titleAccent, spec, hint, labels, storageKey, engine, theme: custom }) {
+export default function GameShell({ name, titleLead, titleAccent, spec, hint, labels, storageKey, engine, theme: custom, arrows = false }) {
   const theme = { ...DEFAULT_THEME, ...custom }
   const wrapRef = useRef(null)
   const canvasRef = useRef(null)
@@ -171,6 +171,12 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
   const { tiltBtn, thrustBtn, padBtn, caption } = theme
   const phone = mode === 'phone-landscape'
 
+  // Left/right buttons show rotate arrows by default, or plain arrows for games that move sideways
+  const arrow = (dir) => (size) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={dir < 0 ? 'M19 12H5M11 6l-6 6 6 6' : 'M5 12h14M13 6l6 6-6 6'} />
+    </svg>
+  )
   const icons = {
     up: (size) => (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -190,6 +196,9 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
       </svg>
     ),
   }
+
+  const leftIcon = arrows ? arrow(-1) : icons.up
+  const rightIcon = arrows ? arrow(1) : icons.down
 
   const muteButton = (
     <button
@@ -241,8 +250,8 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
               className="absolute flex gap-3"
               style={{ left: 'max(16px, env(safe-area-inset-left))', bottom: 'max(14px, env(safe-area-inset-bottom))' }}
             >
-              <button {...hold('left')} className={`${padBtn} h-[72px] w-[72px]`} aria-label={labels.left[1]}>{icons.up(28)}</button>
-              <button {...hold('right')} className={`${padBtn} h-[72px] w-[72px]`} aria-label={labels.right[1]}>{icons.down(28)}</button>
+              <button {...hold('left')} className={`${padBtn} h-[72px] w-[72px]`} aria-label={labels.left[1]}>{leftIcon(28)}</button>
+              <button {...hold('right')} className={`${padBtn} h-[72px] w-[72px]`} aria-label={labels.right[1]}>{rightIcon(28)}</button>
             </div>
             <button
               {...hold('thrust')}
@@ -259,7 +268,7 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
       {mode === 'touch' && (
         <div className="grid w-full grid-cols-[1fr_1.6fr_1fr] gap-2.5">
           <button {...hold('left')} className={tiltBtn} aria-label={labels.left[1]}>
-            {icons.up(26)}
+            {leftIcon(26)}
             <span className={caption}>{labels.left[0]}</span>
           </button>
           <button {...hold('thrust')} className={`${thrustBtn} rounded-2xl text-[1.35rem]`}>
@@ -267,7 +276,7 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
             Thrust
           </button>
           <button {...hold('right')} className={tiltBtn} aria-label={labels.right[1]}>
-            {icons.down(26)}
+            {rightIcon(26)}
             <span className={caption}>{labels.right[0]}</span>
           </button>
         </div>

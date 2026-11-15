@@ -1,15 +1,15 @@
-// Super Heavy Catch: fly the booster back to the tower and land it in the chopsticks.
-// The rules live in physics.js, the sunset-livestream drawing in draw.js and the sound mix in sound.js;
+// Starship Catch: bring the ship back to the tower like Flight 15 did: belly-flop, flip, then ease into the arms.
+// The rules live in physics.js, the drawing in draw.js and the sound mix in sound.js;
 // the page around it (layout, controls, game loop) is the shared GameShell.
 import GameShell from '../GameKit'
 import { STEP, newGame, pressThrust, slowMo, step } from './physics'
-import * as livestream from './draw'
+import * as broadcast from './draw'
 import { updateSound } from './sound'
 
 const rules = { STEP, step, slowMo, newGame, pressThrust }
-const labels = { left: ['Tilt left', 'Tilt left'], right: ['Tilt right', 'Tilt right'] }
+const labels = { left: ['Left', 'Move left'], right: ['Right', 'Move right'] }
 
-const SUNSET_THEME = {
+const THEME = {
   page: 'bg-[#120a16] font-saira text-[#f6ebe3]',
   title: 'font-saira-condensed text-[1.7rem] font-bold uppercase tracking-[0.06em]',
   accent: 'text-[#ff7a45]',
@@ -29,20 +29,21 @@ const SUNSET_THEME = {
   rotateIcon: '#f6ebe3',
 }
 
-const livestreamEngine = { ...rules, ...livestream, updateSound }
+const engine = { ...rules, ...broadcast, updateSound }
 
-export default function SuperHeavyGame() {
+export default function StarshipCatchGame() {
   return (
     <GameShell
-      name="Super Heavy Catch"
-      titleLead="Super Heavy"
+      name="Starship Catch"
+      titleLead="Starship"
       titleAccent="Catch"
-      spec="Catch it under 9 mph, within 10 ft of center and 6° of vertical"
-      hint="Keyboard: hold ↑ or W to fire the engines, A/D or ←/→ to tilt, M to mute."
+      spec="Catch it under 8 mph, within 10 ft of center"
+      hint="Keyboard: hold ↑ or W to light the engines and slow down, A/D or ←/→ to steer, M to mute."
+      arrows
       labels={labels}
-      storageKey="super-heavy-muted"
-      engine={livestreamEngine}
-      theme={SUNSET_THEME}
+      storageKey="starship-catch-muted"
+      engine={engine}
+      theme={THEME}
     />
   )
 }

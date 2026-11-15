@@ -65,12 +65,12 @@ export default function Projects() {
 
         <div className="block">
           <Link
-            href="/projects/super-heavy"
+            href="/projects/starship-catch"
             className="hover:text-olive hover:italic"
           >
-            <h2 className="text-xl font-semibold">Super Heavy Catch</h2>
+            <h2 className="text-xl font-semibold">Starship Catch</h2>
           </Link>
-          <p className="text-sm text-ink-muted">Fly the booster back to the tower and land it in the chopsticks.</p>
+          <p className="text-sm text-ink-muted">Bring the ship home like Flight 15: belly-flop, flip, and ease into the chopsticks.</p>
         </div>
       </div>
     </div>
