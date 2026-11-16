@@ -1,12 +1,16 @@
 // Shared full-screen page for the canvas games: header, canvas, game loop, keyboard and touch controls,
-// mute, and the phone layouts (rotate prompt upright, thumb buttons over the game sideways).
+// mute, and the phone layouts (a control bar under the game upright, thumb buttons over the game sideways).
 //
 // theme: optional Tailwind classes to restyle the page (see DEFAULT_THEME); arrows: plain ← → on the side buttons
 // engine: {
 //   STEP, step(game, input, dt), slowMo(game),
 //   newGame(view), pressThrust(game, view)       view = { phone } for screen-dependent setup
-//   updateCamera(game, W, H, dt), render(ctx, game, W, H, input),
-//   drawHud(ctx, game, W, H, { touch, thumbs })   thumbs: buttons drawn over the bottom corners of the game
+//   updateCamera(game, W, H, dt), render(ctx, game, W, H, input, { top }),
+//   drawHud(ctx, game, W, H, { touch, insets })
+//     The HUD is drawn scaled down on short screens, so W and H there are in HUD units, not CSS pixels.
+//     insets = { left, right, bottom, top } in HUD units on phones, or null: left/right/bottom are the thumb
+//     buttons over the bottom corners (phone held sideways), top is the back and mute buttons in the top-right
+//     corner (phone upright), so things drawn there should sit lower. render gets the same top in CSS pixels.
 //   updateSound(game, input, slow)
 // }
 import Link from 'next/link'
@@ -29,10 +33,15 @@ const DEFAULT_THEME = {
   padBtn:
     'flex select-none items-center justify-center rounded-full border border-white/25 bg-[#17191c]/55 text-[#eceae4] backdrop-blur-sm transition-transform duration-75 data-[on=1]:scale-[0.94] data-[on=1]:bg-white/25',
   caption: 'font-barlow-condensed text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[#9aa0a8]',
-  rotateBg: 'bg-[#17191c]',
-  rotateTitle: 'font-barlow-condensed text-3xl font-bold uppercase tracking-[0.04em]',
-  rotateIcon: '#eceae4',
 }
+
+// Phone held sideways: the thumb buttons over the game's bottom corners, in CSS pixels (see the buttons below)
+const THUMBS = { left: 16 + 56 + 10 + 56 + 12, right: 16 + 76 + 12, bottom: 14 + 76 + 8 }
+// Phone upright: the back and mute buttons in the top-right corner
+const CHIPS_TOP = 8 + 32 + 8
+
+// The HUD was laid out for a laptop screen; on short screens (a phone held sideways) draw it smaller
+const hudScale = (H) => (H < 440 ? Math.max(0.72, H / 440) : 1)
 
 const KEYS = {
   thrust: [' ', 'w', 'W', 'ArrowUp'],
@@ -49,9 +58,10 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
   const viewRef = useRef({ phone: false })
   const touchRef = useRef(false)
   const thumbsRef = useRef(false)
+  const uprightRef = useRef(false)
   const [muted, setMuted] = useState(false)
   // Layout: 'default' (keyboard), 'touch' (tablet, buttons under the game),
-  // 'phone-portrait' (asks to rotate) or 'phone-landscape' (full screen, buttons over the game)
+  // 'phone-portrait' (full screen, control bar under the game) or 'phone-landscape' (full screen, buttons over the game)
   const [mode, setMode] = useState('default')
 
   useEffect(() => {
@@ -61,6 +71,7 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
     const update = () => {
       touchRef.current = touch.matches
       thumbsRef.current = landscape.matches
+      uprightRef.current = portrait.matches
       setMode(portrait.matches ? 'phone-portrait' : landscape.matches ? 'phone-landscape' : touch.matches ? 'touch' : 'default')
     }
     update()
@@ -135,8 +146,14 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
       engine.updateSound(game, inputRef.current, slow)
       engine.updateCamera(game, W, H, frame)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      engine.render(ctx, game, W, H, inputRef.current)
-      engine.drawHud(ctx, game, W, H, { touch: touchRef.current, thumbs: thumbsRef.current })
+      const top = uprightRef.current ? CHIPS_TOP : 0
+      engine.render(ctx, game, W, H, inputRef.current, { top })
+      const u = hudScale(H)
+      ctx.setTransform(dpr * u, 0, 0, dpr * u, 0, 0)
+      const insets = thumbsRef.current
+        ? { left: THUMBS.left / u, right: THUMBS.right / u, bottom: THUMBS.bottom / u, top: 0 }
+        : uprightRef.current ? { left: 0, right: 0, bottom: 0, top: top / u } : null
+      engine.drawHud(ctx, game, W / u, H / u, { touch: touchRef.current, insets })
       raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop)
@@ -172,7 +189,9 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
   }
 
   const { tiltBtn, thrustBtn, padBtn, caption } = theme
-  const phone = mode === 'phone-landscape'
+  // On phones the game fills the screen edge to edge: no title strip, small back and mute chips over the game
+  const phone = mode === 'phone-portrait' || mode === 'phone-landscape'
+  const sideways = mode === 'phone-landscape'
 
   // Left/right buttons show rotate arrows by default, or plain arrows for games that move sideways
   const arrow = (dir) => (size) => (
@@ -244,29 +263,53 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
         />
 
         {phone && (
+          // Top center when sideways; in the top-right corner when upright, where the screen is too narrow to
+          // fit them between the games' top-left readouts and top-right dials (see CHIPS_TOP)
+          <div
+            className={`absolute flex items-center gap-2 ${sideways ? 'left-1/2 -translate-x-1/2' : ''}`}
+            style={{ top: 8, ...(sideways ? {} : { right: 'max(8px, env(safe-area-inset-right))' }) }}
+          >
+            <Link href="/projects" className={`${theme.chip} px-2.5 py-1`} aria-label="Back to projects">←</Link>
+            {muteButton}
+          </div>
+        )}
+
+        {/* Sideways: thumb buttons over the bottom corners (sizes match THUMBS above) */}
+        {sideways && (
           <>
-            <div className="absolute left-1/2 top-2 flex -translate-x-1/2 items-center gap-2">
-              <Link href="/projects" className={`${theme.chip} px-2.5 py-1`} aria-label="Back to projects">←</Link>
-              {muteButton}
-            </div>
             <div
-              className="absolute flex gap-3"
+              className="absolute flex gap-2.5"
               style={{ left: 'max(16px, env(safe-area-inset-left))', bottom: 'max(14px, env(safe-area-inset-bottom))' }}
             >
-              <button {...hold('left')} className={`${padBtn} h-[72px] w-[72px]`} aria-label={labels.left[1]}>{leftIcon(28)}</button>
-              <button {...hold('right')} className={`${padBtn} h-[72px] w-[72px]`} aria-label={labels.right[1]}>{rightIcon(28)}</button>
+              <button {...hold('left')} className={`${padBtn} h-14 w-14`} aria-label={labels.left[1]}>{leftIcon(24)}</button>
+              <button {...hold('right')} className={`${padBtn} h-14 w-14`} aria-label={labels.right[1]}>{rightIcon(24)}</button>
             </div>
             <button
               {...hold('thrust')}
-              className={`${thrustBtn} absolute h-[96px] w-[96px] flex-col gap-0.5 rounded-full text-[0.8rem]`}
+              className={`${thrustBtn} absolute h-[76px] w-[76px] flex-col gap-0 rounded-full text-[0.68rem]`}
               style={{ right: 'max(16px, env(safe-area-inset-right))', bottom: 'max(14px, env(safe-area-inset-bottom))' }}
             >
-              {icons.flame(30)}
+              {icons.flame(22)}
               Thrust
             </button>
           </>
         )}
       </div>
+
+      {/* Upright: a slim control bar under the game, steering under the left thumb and thrust under the right */}
+      {mode === 'phone-portrait' && (
+        <div
+          className="flex w-full items-center gap-2.5 px-3 pt-2.5"
+          style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}
+        >
+          <button {...hold('left')} className={`${padBtn} h-14 w-14 shrink-0`} aria-label={labels.left[1]}>{leftIcon(24)}</button>
+          <button {...hold('right')} className={`${padBtn} h-14 w-14 shrink-0`} aria-label={labels.right[1]}>{rightIcon(24)}</button>
+          <button {...hold('thrust')} className={`${thrustBtn} h-14 flex-1 rounded-full text-base`}>
+            {icons.flame(20)}
+            Thrust
+          </button>
+        </div>
+      )}
 
       {mode === 'touch' && (
         <div className="grid w-full grid-cols-[1fr_1.6fr_1fr] gap-2.5">
@@ -288,20 +331,6 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
         <p className={`w-full text-[0.8rem] ${theme.muted}`}>
           {hint}
         </p>
-      )}
-
-      {mode === 'phone-portrait' && (
-        <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 px-8 text-center ${theme.rotateBg}`}>
-          <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke={theme.rotateIcon} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="motion-safe:animate-turn-phone">
-            <rect x="7" y="2" width="10" height="20" rx="2" />
-            <path d="M11 18h2" />
-          </svg>
-          <h2 className={theme.rotateTitle}>
-            Rotate your <span className={theme.accent}>phone</span>
-          </h2>
-          <p className={theme.muted}>{name} plays sideways, with the controls under your thumbs.</p>
-          <Link href="/projects" className={`mt-2 text-sm underline ${theme.muted}`}>Back to projects</Link>
-        </div>
       )}
     </div>
   )

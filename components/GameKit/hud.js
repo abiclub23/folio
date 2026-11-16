@@ -49,9 +49,9 @@ export function drawInstruments(ctx, { speed, altitude, descent = null, safeDesc
   return panelH
 }
 
-// Top-right attitude dial: the bar shows tilt, green arcs mark the safe range
-export function drawAttitude(ctx, W, tilt, safeTilt) {
-  const cx = W - 46, cy = 50, r = 30
+// Top-right attitude dial: the bar shows tilt, green arcs mark the safe range. top moves it down.
+export function drawAttitude(ctx, W, tilt, safeTilt, top = 0) {
+  const cx = W - 46, cy = 50 + top, r = 30
   const level = Math.abs(tilt) <= safeTilt
   ctx.fillStyle = 'rgba(15,17,21,0.62)'
   ctx.beginPath()
@@ -122,10 +122,11 @@ export function drawToast(ctx, W, H, toast, t) {
 }
 
 // Centered result card: msg = { title, line, detail?, color }. again adds the "go again" hint.
-// minTop keeps it below the instrument panel.
-export function drawCard(ctx, W, H, msg, { again = false, touch = false, minTop = 0 } = {}) {
+// minTop keeps it below the instrument panel; insets keeps it between thumb buttons over the bottom corners.
+export function drawCard(ctx, W, H, msg, { again = false, touch = false, minTop = 0, insets = null } = {}) {
   const small = W < 420
-  const boxW = Math.min(W - 24, 620)
+  const side = insets ? Math.max(12, insets.left, insets.right) : 12
+  const boxW = Math.min(W - 2 * side, 620)
   const boxH = (small ? 96 : 112) + (msg.detail ? 22 : 0) + (again ? 26 : 0)
   const top = Math.max(H / 2 - boxH / 2, minTop)
   ctx.fillStyle = 'rgba(15,17,21,0.82)'

@@ -51,7 +51,7 @@ export function updateCamera(game, W, H, dt) {
   return cam
 }
 
-export function render(ctx, game, W, H, input) {
+export function render(ctx, game, W, H, input, { top = 0 } = {}) {
   const cam = game.cam
   ctx.save()
   if (game.phase === 'crashed') {
@@ -63,8 +63,9 @@ export function render(ctx, game, W, H, input) {
 
   // Tower cam: a second camera locked on the chopsticks for the final approach
   if (game.phase === 'powered' || game.phase === 'caught') {
-    const w = Math.round(Math.min(W * 0.3, 300)), h = Math.round(w * 0.6)
-    const x = W - w - 12, y = 12
+    // Kept small enough on short screens (a phone held sideways) to leave the sky clear
+    const w = Math.round(Math.min(W * 0.3, 300, H * 0.42)), h = Math.round(w * 0.6)
+    const x = W - w - 12, y = 12 + top
     const viewH = 95, S = h / viewH
     ctx.save()
     rrect(ctx, x, y, w, h, 6)
@@ -735,7 +736,7 @@ function callout(ctx, W, y, text, sub, color, t) {
   ctx.restore()
 }
 
-export function drawHud(ctx, game, W, H, { touch = false, thumbs = false } = {}) {
+export function drawHud(ctx, game, W, H, { touch = false, insets = null } = {}) {
   const s = game.ship
   const phase = game.phase
   const flying = phase === 'belly' || phase === 'flip' || phase === 'powered'
@@ -755,9 +756,10 @@ export function drawHud(ctx, game, W, H, { touch = false, thumbs = false } = {})
   ctx.shadowBlur = 4
   ctx.fillText(clock(3912 + game.t), 68, 27)
   if (slowMo(game)) {
+    // Beside the clock, or under it on narrow screens where the back and mute buttons sit up top
     ctx.fillStyle = AMBER
     ctx.font = `700 12px ${COND}`
-    ctx.fillText('SLOW MOTION', 170, 27)
+    ctx.fillText('SLOW MOTION', W < 600 ? 12 : 170, W < 600 ? 50 : 27)
   }
   ctx.shadowBlur = 0
 
@@ -781,14 +783,16 @@ export function drawHud(ctx, game, W, H, { touch = false, thumbs = false } = {})
   ctx.fillRect(0, top - 30, W, STRIP + 30)
   const cy = H - 44
   // On a phone held sideways the thumb buttons sit in the corners, so start the telemetry after them
-  const ox = thumbs ? 184 : 0
+  const thumbs = !!insets && insets.left > 0
+  const ox = thumbs ? insets.left : 0
+  const reserve = thumbs ? insets.right : 0
   ctx.fillStyle = '#fff'
   ctx.textAlign = 'left'
   ctx.font = `700 11px ${COND}`
   ctx.fillText('STARSHIP', 16 + ox, top + 2)
   // The dials need room; on small screens (and small phones held sideways) only the catch readouts are shown,
   // since those are what you fly the approach by
-  const dials = W - ox - (thumbs ? 120 : 0) >= 440
+  const dials = !thumbs && W >= 440
   if (dials) {
     const speed = Math.hypot(s.vx, s.vy)
     gauge(ctx, 46 + ox, cy, 26, speed / 40, String(Math.round(speed * MPH)), 'MPH', 'SPEED')
@@ -801,14 +805,17 @@ export function drawHud(ctx, game, W, H, { touch = false, thumbs = false } = {})
   const off = px - CATCH_X
   const descent = -s.vy
   const rx = (dials ? 236 : 16) + ox
-  // Smaller and closer together on phones held sideways, so they end before the Thrust button
-  const gap = thumbs ? 0.72 : 1
-  const size = thumbs ? 15 : 19
+  // Without the dials the readouts sit in the middle of the strip
+  const ry = dials ? top + 20 : top + 30
+  // Smaller and closer together when space is tight, so they end before the Thrust button
+  const tight = rx + 300 > W - reserve
+  const gap = tight ? 0.72 : 1
+  const size = tight ? 15 : 19
   const approach = phase === 'powered'
-  readout(ctx, rx, top + 20, 'DESCENT', flying ? `${Math.max(0, Math.round(descent * MPH))} mph` : '—', !approach ? '#fff' : descent <= SAFE_VY ? GOOD : BAD, size)
-  readout(ctx, rx + 96 * gap, top + 20, 'SIDEWAYS', flying ? `${Math.round(Math.abs(s.vx) * MPH)} mph` : '—', !approach ? '#fff' : Math.abs(s.vx) <= SAFE_VX ? GOOD : BAD, size)
+  readout(ctx, rx, ry, 'DESCENT', flying ? `${Math.max(0, Math.round(descent * MPH))} mph` : '—', !approach ? '#fff' : descent <= SAFE_VY ? GOOD : BAD, size)
+  readout(ctx, rx + 96 * gap, ry, 'SIDEWAYS', flying ? `${Math.round(Math.abs(s.vx) * MPH)} mph` : '—', !approach ? '#fff' : Math.abs(s.vx) <= SAFE_VX ? GOOD : BAD, size)
   const lined = Math.abs(off) < 3
-  readout(ctx, rx + 192 * gap, top + 20, 'TARGET', lined ? 'LINED UP' : `${off > 0 ? '←' : '→'} ${Math.round(Math.abs(off) * FT)} ft`, lined ? GOOD : '#fff', size)
+  readout(ctx, rx + 192 * gap, ry, 'TARGET', lined ? 'LINED UP' : `${off > 0 ? '←' : '→'} ${Math.round(Math.abs(off) * FT)} ft`, lined ? GOOD : '#fff', size)
 
   // Flight timeline on wide screens
   if (W >= 860 && !thumbs && (flying || phase === 'ready' || phase === 'caught')) {
@@ -883,20 +890,20 @@ export function drawHud(ctx, game, W, H, { touch = false, thumbs = false } = {})
       msg = { kicker: 'ANOMALY', title: 'CRASHED', line: game.quip, detail: game.reason, color: BAD }
     }
   }
-  if (phase === 'caught') missionPatch(ctx, W, H, game, thumbs)
+  if (phase === 'caught') missionPatch(ctx, W, H, game, reserve)
 
   // Low on the left like a broadcast caption, clear of the ship coming in from the top and the tower in the middle
   if (msg) lowerThird(ctx, W, H, msg, canRestart(game) ? (touch ? 'Tap Thrust to go again' : 'Press ↑ or W to go again') : null)
 }
 
 // Round mission patch that pops in after a catch: the ship held in the chopsticks, 1–3 stars, the grade
-function missionPatch(ctx, W, H, game, thumbs) {
+function missionPatch(ctx, W, H, game, reserve) {
   const k = game.t - game.endedAt - 1.4
   if (k < 0) return
   const pop = Math.min(1, k * 4)
   const scale = pop < 1 ? pop * 1.15 : 1 + Math.max(0, 0.15 - (k - 0.25) * 0.6)
   const r = (W < 640 ? 46 : 60) * Math.max(0, scale)
-  const cx = W - (W < 640 ? 64 : 92) - (thumbs ? 120 : 0)
+  const cx = W - (W < 640 ? 64 : 92) - reserve
   const cy = H - STRIP - (W < 640 ? 60 : 82)
   const mph = game.contact.descent * MPH
   const stars = catchStars(mph)
@@ -951,41 +958,57 @@ function missionPatch(ctx, W, H, game, thumbs) {
 }
 
 // Broadcast lower-third above the telemetry strip: kicker, big title, line, optional detail and hint
+// Splits text into lines no wider than maxW in the current font
+function wrap(ctx, text, maxW) {
+  const lines = []
+  let line = ''
+  for (const word of text.split(' ')) {
+    const next = line ? `${line} ${word}` : word
+    if (line && ctx.measureText(next).width > maxW) {
+      lines.push(line)
+      line = word
+    } else line = next
+  }
+  if (line) lines.push(line)
+  return lines
+}
+
+// Broadcast lower-third above the telemetry strip: kicker, big title, then the line, detail and hint,
+// which wrap onto more lines on narrow screens instead of shrinking
 function lowerThird(ctx, W, H, msg, hint) {
   const w = Math.min(W - 24, 640)
-  const rows = 2 + (msg.detail ? 1 : 0) + (hint ? 1 : 0)
-  const h = 36 + rows * 22 + 12
+  const tx = 22, maxW = w - 44
+  const rows = []
+  const add = (text, font, color, lh) => {
+    ctx.font = font
+    for (const l of wrap(ctx, text, maxW)) rows.push({ l, font, color, lh })
+  }
+  add(msg.line, `600 16px ${FONT}`, 'rgba(255,255,255,0.92)', 21)
+  if (msg.detail) add(msg.detail, `500 13px ${FONT}`, 'rgba(255,255,255,0.6)', 18)
+  if (hint) add(hint, `600 12px ${FONT}`, 'rgba(255,255,255,0.5)', 18)
+  const h = 58 + rows.reduce((n, r) => n + r.lh, 0) + 12
   const x = 0, y = H - STRIP - h - 14
   const bg = ctx.createLinearGradient(x, 0, x + w, 0)
   bg.addColorStop(0, 'rgba(8,10,16,0.92)')
   bg.addColorStop(0.75, 'rgba(8,10,16,0.8)')
-  bg.addColorStop(1, 'rgba(8,10,16,0)')
+  // On narrow screens the text runs nearly to the edge, so keep the fade from going clear
+  bg.addColorStop(1, W < 600 ? 'rgba(8,10,16,0.6)' : 'rgba(8,10,16,0)')
   ctx.fillStyle = bg
   ctx.fillRect(x, y, w, h)
   ctx.fillStyle = ORANGE
   ctx.fillRect(x, y, 6, h)
-  const tx = 22, maxW = w - 60
   ctx.textAlign = 'left'
   ctx.fillStyle = ORANGE
-  ctx.font = `700 11px ${COND}`
+  fitFont(ctx, msg.kicker, 700, 11, COND, maxW)
   ctx.fillText(msg.kicker, tx, y + 20)
   ctx.fillStyle = msg.color
   fitFont(ctx, msg.title, 800, 30, COND, maxW)
   ctx.fillText(msg.title, tx, y + 50)
-  ctx.fillStyle = 'rgba(255,255,255,0.92)'
-  fitFont(ctx, msg.line, 600, 16, FONT, maxW)
-  let ly = y + 74
-  ctx.fillText(msg.line, tx, ly)
-  if (msg.detail) {
-    ly += 22
-    ctx.fillStyle = 'rgba(255,255,255,0.6)'
-    fitFont(ctx, msg.detail, 500, 13, FONT, maxW)
-    ctx.fillText(msg.detail, tx, ly)
-  }
-  if (hint) {
-    ly += 22
-    ctx.fillStyle = 'rgba(255,255,255,0.5)'
-    ctx.font = `600 12px ${FONT}`
-    ctx.fillText(hint, tx, ly)
+  let ly = y + 58
+  for (const r of rows) {
+    ly += r.lh
+    ctx.font = r.font
+    ctx.fillStyle = r.color
+    ctx.fillText(r.l, tx, ly - 4)
   }
 }
