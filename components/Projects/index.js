@@ -62,6 +62,16 @@ export default function Projects() {
           </Link>
           <p className="text-sm text-ink-muted">0–60 in under a second, off a ramp into the sky. Land it.</p>
         </div>
+
+        <div className="block">
+          <Link
+            href="/projects/starship-catch"
+            className="hover:text-olive hover:italic"
+          >
+            <h2 className="text-xl font-semibold">Starship Catch</h2>
+          </Link>
+          <p className="text-sm text-ink-muted">Bring the ship home like Flight 15: belly-flop, flip, and ease into the chopsticks.</p>
+        </div>
       </div>
     </div>
   )

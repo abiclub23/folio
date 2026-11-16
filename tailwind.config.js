@@ -33,6 +33,8 @@ module.exports = {
         'playwrite': ['Playwrite IT Moderna', 'cursive'],
         'barlow': ['Barlow', 'system-ui', 'sans-serif'],
         'barlow-condensed': ['Barlow Condensed', 'Arial Narrow', 'system-ui', 'sans-serif'],
+        'saira': ['Saira', 'system-ui', 'sans-serif'],
+        'saira-condensed': ['Saira Condensed', 'Arial Narrow', 'system-ui', 'sans-serif'],
       },
       // Replace the typography plugin's cool-gray defaults with the warm palette
       typography: {
