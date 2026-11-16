@@ -106,13 +106,17 @@ export function drawGroundFill(ctx, W, H, gy) {
   ctx.fillRect(-20, gy, W + 40, H - gy + 20)
 }
 
-// White streaks flying past at speed; dir is the direction of travel in radians
+// White streaks flying past at speed; dir is the direction of travel in radians.
+// Sized for a laptop screen; on a phone the same streaks would cover far more of the view, so there
+// they are fewer, shorter and fainter (unchanged on screens at least 560px in both directions).
 export function drawStreaks(ctx, W, H, t, speed, dir) {
-  const a = Math.min(0.35, (speed - 30) / 100)
-  const len = Math.min(120, speed * 1.5)
+  const k = Math.max(0.45, Math.min(1, Math.min(W, H) / 560))
+  const a = Math.min(0.35, (speed - 30) / 100) * k * k
+  const len = Math.min(120, speed * 1.5) * k
   ctx.strokeStyle = `rgba(255,255,255,${a})`
   ctx.lineWidth = 1.5
-  for (let i = 0; i < 14; i++) {
+  const n = Math.round(14 * k)
+  for (let i = 0; i < n; i++) {
     const px = (hash(i) * W * 1.4 - ((t * speed * 9 + i * 97) % (W * 1.4)) + W * 1.4) % (W * 1.4) - W * 0.2
     const py = hash(i + 50) * H
     ctx.beginPath()
