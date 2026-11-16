@@ -2,7 +2,7 @@
 category: Things I Like
 title: 2026
 date: 2026-01-10
-lastModified: 2026-11-07
+lastModified: 2026-11-16
 ---
 
 # Things I Like – 2026
@@ -28,4 +28,7 @@ lastModified: 2026-11-07
 19. Mystery spot
 20. Santa cruz lighthouse
 21. Park sunsets
+22. SF pier
+23. Great Wolf Lodge
+24. Beautiful fall colors
 
