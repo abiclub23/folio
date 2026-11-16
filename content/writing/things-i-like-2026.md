@@ -28,7 +28,7 @@ lastModified: 2026-11-16
 19. Mystery spot
 20. Santa cruz lighthouse
 21. Park sunsets
-22. Beautiful fall colors
+22. SF pier
 23. Great Wolf Lodge
-24. SF pier
+24. Beautiful fall colors
 
