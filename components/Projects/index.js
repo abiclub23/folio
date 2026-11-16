@@ -2,13 +2,31 @@ import Link from 'next/link'
 
 // `date` is free text so old projects can be fuzzy ("2016") and new ones exact ("Nov 2026").
 // Dates are when each project landed on the site (first merge), not later redos.
+// Newest first.
 const projects = [
   {
-    title: 'Breaking Bad Font Generator',
-    href: 'https://abiclub23.github.io/BreakingBadFont/index.html',
-    external: true,
-    date: '2016',
-    description: 'Generate names in the Breaking Bad style.',
+    title: 'Starship Catch',
+    href: '/projects/starship-catch',
+    date: 'Nov 2026',
+    description: 'Bring the ship home like Flight 15: belly-flop, flip, and ease into the chopsticks.',
+  },
+  {
+    title: 'Roadster Launch',
+    href: '/projects/roadster',
+    date: 'Nov 2026',
+    description: '0–60 in under a second, off a ramp into the sky. Land it.',
+  },
+  {
+    title: 'Dublin Parks, Kid Edition',
+    href: '/projects/dublin-parks',
+    date: 'Mar 2026',
+    description: 'A custom map of our neighborhood parks, named by the kids.',
+  },
+  {
+    title: 'A Fun Website Easter Egg',
+    href: '/projects/easter-egg',
+    date: 'May 2025',
+    description: 'Enter the Konami Code to discover a hidden surprise!',
   },
   {
     title: 'South Park CSS',
@@ -18,28 +36,11 @@ const projects = [
     description: 'South Park characters built entirely with CSS.',
   },
   {
-    title: 'A Fun Website Easter Egg',
-    href: '/projects/easter-egg',
-    date: 'May 2025',
-    description: 'Enter the Konami Code to discover a hidden surprise!',
-  },
-  {
-    title: 'Dublin Parks, Kid Edition',
-    href: '/projects/dublin-parks',
-    date: 'Mar 2026',
-    description: 'A custom map of our neighborhood parks, named by the kids.',
-  },
-  {
-    title: 'Roadster Launch',
-    href: '/projects/roadster',
-    date: 'Nov 2026',
-    description: '0–60 in under a second, off a ramp into the sky. Land it.',
-  },
-  {
-    title: 'Starship Catch',
-    href: '/projects/starship-catch',
-    date: 'Nov 2026',
-    description: 'Bring the ship home like Flight 15: belly-flop, flip, and ease into the chopsticks.',
+    title: 'Breaking Bad Font Generator',
+    href: 'https://abiclub23.github.io/BreakingBadFont/index.html',
+    external: true,
+    date: '2016',
+    description: 'Generate names in the Breaking Bad style.',
   },
 ]
 
