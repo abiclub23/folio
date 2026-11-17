@@ -7,6 +7,7 @@ import {
 } from './physics'
 import { drawParticles, hash, lerp, rrect } from '../GameKit/scene'
 import { drawPhysicalSky, sunOnScreen } from '../GameKit/sky'
+import { isCompact } from '../GameKit/hud'
 
 const FONT = 'Saira, system-ui, sans-serif'
 const COND = '"Saira Condensed", "Arial Narrow", system-ui, sans-serif'
@@ -15,6 +16,8 @@ const GOOD = '#7cffb2'
 const BAD = '#ff6b6b'
 const AMBER = '#ffc56b'
 const STRIP = 104 // height of the bottom telemetry strip
+// On short screens (a phone held sideways) the strip is a slim row of readouts between the thumb buttons
+const stripH = (H) => (isCompact(H) ? 50 : STRIP)
 
 // Morning light: the sun is low over the Gulf to the east (left), so everything is lit from the left
 const SKY = ['#1d3b6b', '#3f669c', '#87a5c4', '#cfd3d2', '#ecd2b0']
@@ -31,7 +34,8 @@ export function updateCamera(game, W, H, dt) {
   const slow = slowMo(game)
   // Frame the ship and the tower together so you always see where you're headed.
   // The usable area sits between a top margin and the telemetry strip.
-  const topPad = 44, usableH = Math.max(80, H - STRIP - topPad)
+  const strip = stripH(H)
+  const topPad = 44, usableH = Math.max(80, H - strip - topPad)
   const [cx, cy] = shipCenter(s)
   const x0 = Math.min(cx - 34, TOWER_X - ARM_LEN - 20)
   const x1 = Math.max(cx + 34, TOWER_X + TOWER_W + 30)
@@ -43,7 +47,7 @@ export function updateCamera(game, W, H, dt) {
   cam.scale = game.cam ? lerp(cam.scale, scaleTarget, Math.min(1, dt * 3)) : scaleTarget
   const S = cam.scale
   const targetLeft = (box.x0 + box.x1) / 2 - W / S / 2
-  const targetBottom = (box.y0 + box.y1) / 2 - (usableH / 2 + STRIP) / S
+  const targetBottom = (box.y0 + box.y1) / 2 - (usableH / 2 + strip) / S
   cam.left = game.cam ? lerp(cam.left, targetLeft, Math.min(1, dt * 5)) : targetLeft
   cam.bottom = game.cam ? lerp(cam.bottom, targetBottom, Math.min(1, dt * 5)) : targetBottom
   cam.viewH = H / S
@@ -711,27 +715,27 @@ function engines(ctx, cx, cy, firing) {
 function readout(ctx, x, y, label, value, color = '#fff', size = 19) {
   ctx.textAlign = 'left'
   ctx.fillStyle = 'rgba(255,255,255,0.6)'
-  ctx.font = `600 10px ${COND}`
+  ctx.font = `600 ${size < 19 ? 9 : 10}px ${COND}`
   ctx.fillText(label, x, y)
   ctx.fillStyle = color
   ctx.font = `700 ${size}px ${FONT}`
-  ctx.fillText(value, x, y + 22)
+  ctx.fillText(value, x, y + size + 3)
 }
 
-// Big centered call-out, e.g. the cue to light the engines
-function callout(ctx, W, y, text, sub, color, t) {
+// Big centered call-out, e.g. the cue to light the engines; smaller on short screens
+function callout(ctx, W, y, text, sub, color, t, compact = false) {
   ctx.save()
   ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 6)
   ctx.textAlign = 'center'
   ctx.shadowColor = 'rgba(0,0,0,0.7)'
   ctx.shadowBlur = 6
   ctx.fillStyle = color
-  fitFont(ctx, text, 800, 30, COND, W - 40)
+  fitFont(ctx, text, 800, compact ? 20 : 30, COND, W - 40)
   ctx.fillText(text, W / 2, y)
   if (sub) {
     ctx.fillStyle = '#fff'
-    fitFont(ctx, sub, 600, 14, FONT, W - 40)
-    ctx.fillText(sub, W / 2, y + 22)
+    fitFont(ctx, sub, 600, compact ? 12 : 14, FONT, W - 40)
+    ctx.fillText(sub, W / 2, y + (compact ? 17 : 22))
   }
   ctx.restore()
 }
@@ -741,6 +745,8 @@ export function drawHud(ctx, game, W, H, { touch = false, insets = null } = {}) 
   const phase = game.phase
   const flying = phase === 'belly' || phase === 'flip' || phase === 'powered'
   const [px, py] = pinPoint(s)
+  const compact = isCompact(H)
+  const strip = stripH(H)
 
   // LIVE badge and mission clock
   ctx.fillStyle = '#e3342f'
@@ -765,34 +771,37 @@ export function drawHud(ctx, game, W, H, { touch = false, insets = null } = {}) 
 
   // Cues for what to do next
   const thrustKey = touch ? 'THRUST' : '↑ OR W'
+  const cueY = H * (compact ? 0.28 : 0.3)
   if (phase === 'belly' && s.y < LIGHT_UP_Y) {
-    callout(ctx, W, H * 0.3, `LIGHT ENGINES — HOLD ${thrustKey}`, 'Flip upright and brake before the tower', AMBER, game.t)
+    callout(ctx, W, cueY, `LIGHT ENGINES — HOLD ${thrustKey}`, 'Flip upright and brake before the tower', AMBER, game.t, compact)
   } else if (phase === 'belly' && game.t < 4) {
-    callout(ctx, W, H * 0.3, touch ? 'STEER WITH ◀ ▶' : 'STEER WITH ← →', 'Glide toward the tower', '#fff', game.t)
+    callout(ctx, W, cueY, touch ? 'STEER WITH ◀ ▶' : 'STEER WITH ← →', 'Glide toward the tower', '#fff', game.t, compact)
   } else if (phase === 'powered' && game.t - game.flipAt < 4.5) {
-    callout(ctx, W, H * 0.3, 'EASE INTO THE ARMS', `Hold ${thrustKey} to slow · let go to sink · ◀ ▶ to line up`, '#fff', game.t)
+    callout(ctx, W, cueY, 'EASE INTO THE ARMS', `Hold ${thrustKey} to slow · let go to sink · ◀ ▶ to line up`, '#fff', game.t, compact)
   }
 
   // Telemetry strip
-  const top = H - STRIP
-  const fade = ctx.createLinearGradient(0, top - 30, 0, H)
+  const top = H - strip
+  const fade = ctx.createLinearGradient(0, top - (compact ? 16 : 30), 0, H)
   fade.addColorStop(0, 'rgba(8,10,16,0)')
   fade.addColorStop(0.35, 'rgba(8,10,16,0.72)')
   fade.addColorStop(1, 'rgba(8,10,16,0.9)')
   ctx.fillStyle = fade
-  ctx.fillRect(0, top - 30, W, STRIP + 30)
+  ctx.fillRect(0, top - (compact ? 16 : 30), W, strip + 30)
   const cy = H - 44
   // On a phone held sideways the thumb buttons sit in the corners, so start the telemetry after them
   const thumbs = !!insets && insets.left > 0
   const ox = thumbs ? insets.left : 0
   const reserve = thumbs ? insets.right : 0
-  ctx.fillStyle = '#fff'
-  ctx.textAlign = 'left'
-  ctx.font = `700 11px ${COND}`
-  ctx.fillText('STARSHIP', 16 + ox, top + 2)
+  if (!compact) {
+    ctx.fillStyle = '#fff'
+    ctx.textAlign = 'left'
+    ctx.font = `700 11px ${COND}`
+    ctx.fillText('STARSHIP', 16 + ox, top + 2)
+  }
   // The dials need room; on small screens (and small phones held sideways) only the catch readouts are shown,
   // since those are what you fly the approach by
-  const dials = !thumbs && W >= 440
+  const dials = !thumbs && !compact && W >= 440
   if (dials) {
     const speed = Math.hypot(s.vx, s.vy)
     gauge(ctx, 46 + ox, cy, 26, speed / 40, String(Math.round(speed * MPH)), 'MPH', 'SPEED')
@@ -804,13 +813,13 @@ export function drawHud(ctx, game, W, H, { touch = false, insets = null } = {}) 
   // Catch readouts
   const off = px - CATCH_X
   const descent = -s.vy
-  const rx = (dials ? 236 : 16) + ox
+  const rx = (dials ? 236 : compact ? 8 : 16) + ox
   // Without the dials the readouts sit in the middle of the strip
-  const ry = dials ? top + 20 : top + 30
+  const ry = compact ? top + 14 : dials ? top + 20 : top + 30
   // Smaller and closer together when space is tight, so they end before the Thrust button
-  const tight = rx + 300 > W - reserve
-  const gap = tight ? 0.72 : 1
-  const size = tight ? 15 : 19
+  const tight = compact || rx + 300 > W - reserve
+  const gap = tight ? 0.8 : 1
+  const size = compact ? 16 : tight ? 15 : 19
   const approach = phase === 'powered'
   readout(ctx, rx, ry, 'DESCENT', flying ? `${Math.max(0, Math.round(descent * MPH))} mph` : '—', !approach ? '#fff' : descent <= SAFE_VY ? GOOD : BAD, size)
   readout(ctx, rx + 96 * gap, ry, 'SIDEWAYS', flying ? `${Math.round(Math.abs(s.vx) * MPH)} mph` : '—', !approach ? '#fff' : Math.abs(s.vx) <= SAFE_VX ? GOOD : BAD, size)
@@ -902,9 +911,10 @@ function missionPatch(ctx, W, H, game, reserve) {
   if (k < 0) return
   const pop = Math.min(1, k * 4)
   const scale = pop < 1 ? pop * 1.15 : 1 + Math.max(0, 0.15 - (k - 0.25) * 0.6)
-  const r = (W < 640 ? 46 : 60) * Math.max(0, scale)
-  const cx = W - (W < 640 ? 64 : 92) - reserve
-  const cy = H - STRIP - (W < 640 ? 60 : 82)
+  const small = W < 640 || isCompact(H)
+  const r = (isCompact(H) ? 34 : small ? 46 : 60) * Math.max(0, scale)
+  const cx = W - (small ? 64 : 92) - reserve
+  const cy = H - stripH(H) - (isCompact(H) ? 44 : small ? 60 : 82)
   const mph = game.contact.descent * MPH
   const stars = catchStars(mph)
   ctx.save()
@@ -976,18 +986,21 @@ function wrap(ctx, text, maxW) {
 // Broadcast lower-third above the telemetry strip: kicker, big title, then the line, detail and hint,
 // which wrap onto more lines on narrow screens instead of shrinking
 function lowerThird(ctx, W, H, msg, hint) {
-  const w = Math.min(W - 24, 640)
-  const tx = 22, maxW = w - 44
+  // Short screens (a phone held sideways) get smaller type so the caption leaves the scene visible
+  const c = isCompact(H)
+  const w = Math.min(W - 24, c ? 440 : 640)
+  const tx = c ? 18 : 22, maxW = w - (c ? 36 : 44)
   const rows = []
   const add = (text, font, color, lh) => {
     ctx.font = font
     for (const l of wrap(ctx, text, maxW)) rows.push({ l, font, color, lh })
   }
-  add(msg.line, `600 16px ${FONT}`, 'rgba(255,255,255,0.92)', 21)
-  if (msg.detail) add(msg.detail, `500 13px ${FONT}`, 'rgba(255,255,255,0.6)', 18)
-  if (hint) add(hint, `600 12px ${FONT}`, 'rgba(255,255,255,0.5)', 18)
-  const h = 58 + rows.reduce((n, r) => n + r.lh, 0) + 12
-  const x = 0, y = H - STRIP - h - 14
+  add(msg.line, `600 ${c ? 13 : 16}px ${FONT}`, 'rgba(255,255,255,0.92)', c ? 17 : 21)
+  if (msg.detail) add(msg.detail, `500 ${c ? 11 : 13}px ${FONT}`, 'rgba(255,255,255,0.6)', c ? 15 : 18)
+  if (hint) add(hint, `600 ${c ? 11 : 12}px ${FONT}`, 'rgba(255,255,255,0.5)', c ? 15 : 18)
+  const head = c ? 42 : 58
+  const h = head + rows.reduce((n, r) => n + r.lh, 0) + (c ? 8 : 12)
+  const x = 0, y = H - stripH(H) - h - (c ? 8 : 14)
   const bg = ctx.createLinearGradient(x, 0, x + w, 0)
   bg.addColorStop(0, 'rgba(8,10,16,0.92)')
   bg.addColorStop(0.75, 'rgba(8,10,16,0.8)')
@@ -999,12 +1012,12 @@ function lowerThird(ctx, W, H, msg, hint) {
   ctx.fillRect(x, y, 6, h)
   ctx.textAlign = 'left'
   ctx.fillStyle = ORANGE
-  fitFont(ctx, msg.kicker, 700, 11, COND, maxW)
-  ctx.fillText(msg.kicker, tx, y + 20)
+  fitFont(ctx, msg.kicker, 700, c ? 9 : 11, COND, maxW)
+  ctx.fillText(msg.kicker, tx, y + (c ? 15 : 20))
   ctx.fillStyle = msg.color
-  fitFont(ctx, msg.title, 800, 30, COND, maxW)
-  ctx.fillText(msg.title, tx, y + 50)
-  let ly = y + 58
+  fitFont(ctx, msg.title, 800, c ? 21 : 30, COND, maxW)
+  ctx.fillText(msg.title, tx, y + (c ? 36 : 50))
+  let ly = y + head
   for (const r of rows) {
     ly += r.lh
     ctx.font = r.font

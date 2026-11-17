@@ -4,7 +4,7 @@ import {
   CAR_L, FT, JETS, MPH, RAMP_END, RAMP_R, SAFE_TILT, SAFE_VY, SPACE_ALT, TOWER_H, TOWER_W, WHEEL_R,
   canRestart, crashCardReady, jetDirs, landingGrade, slowMo, wrapAngle,
 } from './physics'
-import { BAD, GOOD, drawAttitude, drawBadge, drawCard, drawGroundArrow, drawInstruments, drawToast } from '../GameKit/hud'
+import { BAD, GOOD, drawAttitude, drawBadge, drawCard, drawGroundArrow, drawInstruments, drawToast, isCompact } from '../GameKit/hud'
 import {
   FONT, drawGroundFill, drawHills, drawLetterbox, drawNightSky, drawParticles, drawStreaks, lerp, rrect,
 } from '../GameKit/scene'
@@ -533,17 +533,19 @@ export function drawHud(ctx, game, W, H, { touch = false, insets = null } = {}) 
   const car = game.car
   const onTrack = game.phase === 'runway' || game.phase === 'ramp'
   const flying = game.phase === 'flight'
+  const compact = isCompact(H)
   const panelH = drawInstruments(ctx, {
     speed: onTrack ? Math.abs(game.speed) : Math.hypot(car.vx, car.vy),
     altitude: car.y,
     descent: flying ? -car.vy : null,
     safeDescent: SAFE_VY,
+    compact,
   })
   if (flying) {
-    drawAttitude(ctx, W, wrapAngle(car.angle), SAFE_TILT, insets ? insets.top : 0)
+    drawAttitude(ctx, W, wrapAngle(car.angle), SAFE_TILT, insets ? insets.top : 0, compact)
     if (game.cam.bottom > 0) drawGroundArrow(ctx, W, H, car.y)
   }
-  if (game.zeroSixty !== null) drawBadge(ctx, 12 + panelH + 8, `0–60 MPH  ${game.zeroSixty.toFixed(2)}s`)
+  if (game.zeroSixty !== null) drawBadge(ctx, 12 + panelH + (compact ? 4 : 8), `0–60 MPH  ${game.zeroSixty.toFixed(2)}s`, undefined, compact)
 
   // Easter egg banner, fades out after a few seconds
   drawToast(ctx, W, H, game.toast, game.t)
@@ -560,5 +562,5 @@ export function drawHud(ctx, game, W, H, { touch = false, insets = null } = {}) 
       detail: game.starman ? 'Went to space and back. Starman approves.' : undefined,
     }
   }
-  if (msg) drawCard(ctx, W, H, msg, { again: canRestart(game), touch, minTop: 12 + panelH + 16, insets })
+  if (msg) drawCard(ctx, W, H, msg, { again: canRestart(game), touch, minTop: 12 + panelH + 16 + (compact && game.zeroSixty !== null ? 24 : 0), insets })
 }

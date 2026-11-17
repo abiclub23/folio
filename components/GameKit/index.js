@@ -35,12 +35,15 @@ const DEFAULT_THEME = {
   caption: 'font-barlow-condensed text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[#9aa0a8]',
 }
 
-// Phone held sideways: the thumb buttons over the game's bottom corners, in CSS pixels (see the buttons below)
-const THUMBS = { left: 16 + 56 + 10 + 56 + 12, right: 16 + 76 + 12, bottom: 14 + 76 + 8 }
+// Phone held sideways: the thumb buttons over the game's bottom corners, in CSS pixels (see the buttons below).
+// Small enough to leave the game room when browser bars leave it under 300px tall.
+const PAD = 46, THRUST = 60, EDGE = 12
+const THUMBS = { left: EDGE + PAD + 8 + PAD + 10, right: EDGE + THRUST + 10, bottom: 10 + THRUST + 6 }
 // Phone upright: the back and mute buttons in the top-right corner
 const CHIPS_TOP = 8 + 32 + 8
 
-// The HUD was laid out for a laptop screen; on short screens (a phone held sideways) draw it smaller
+// The HUD was laid out for a laptop screen; in a short desktop window draw it smaller.
+// Phones get the HUD's own compact pieces instead, at full size (see GameKit/hud.js).
 const hudScale = (H) => (H < 440 ? Math.max(0.72, H / 440) : 1)
 
 const KEYS = {
@@ -148,7 +151,7 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       const top = uprightRef.current ? CHIPS_TOP : 0
       engine.render(ctx, game, W, H, inputRef.current, { top })
-      const u = hudScale(H)
+      const u = touchRef.current ? 1 : hudScale(H)
       ctx.setTransform(dpr * u, 0, 0, dpr * u, 0, 0)
       const insets = thumbsRef.current
         ? { left: THUMBS.left / u, right: THUMBS.right / u, bottom: THUMBS.bottom / u, top: 0 }
@@ -278,18 +281,18 @@ export default function GameShell({ name, titleLead, titleAccent, spec, hint, la
         {sideways && (
           <>
             <div
-              className="absolute flex gap-2.5"
-              style={{ left: 'max(16px, env(safe-area-inset-left))', bottom: 'max(14px, env(safe-area-inset-bottom))' }}
+              className="absolute flex gap-2"
+              style={{ left: EDGE, bottom: 10 }}
             >
-              <button {...hold('left')} className={`${padBtn} h-14 w-14`} aria-label={labels.left[1]}>{leftIcon(24)}</button>
-              <button {...hold('right')} className={`${padBtn} h-14 w-14`} aria-label={labels.right[1]}>{rightIcon(24)}</button>
+              <button {...hold('left')} className={padBtn} style={{ width: PAD, height: PAD }} aria-label={labels.left[1]}>{leftIcon(20)}</button>
+              <button {...hold('right')} className={padBtn} style={{ width: PAD, height: PAD }} aria-label={labels.right[1]}>{rightIcon(20)}</button>
             </div>
             <button
               {...hold('thrust')}
-              className={`${thrustBtn} absolute h-[76px] w-[76px] flex-col gap-0 rounded-full text-[0.68rem]`}
-              style={{ right: 'max(16px, env(safe-area-inset-right))', bottom: 'max(14px, env(safe-area-inset-bottom))' }}
+              className={`${thrustBtn} absolute flex-col gap-0 rounded-full text-[0.6rem]`}
+              style={{ right: EDGE, bottom: 10, width: THRUST, height: THRUST }}
             >
-              {icons.flame(22)}
+              {icons.flame(18)}
               Thrust
             </button>
           </>
