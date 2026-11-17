@@ -24,9 +24,6 @@ const THEME = {
   padBtn:
     'flex select-none items-center justify-center rounded-full border border-white/25 bg-[#120a16]/55 text-[#f6ebe3] backdrop-blur-sm transition-transform duration-75 data-[on=1]:scale-[0.94] data-[on=1]:bg-[#ff7a45]/40',
   caption: 'font-saira-condensed text-[0.75rem] font-bold uppercase tracking-[0.14em] text-[#b9a3a8]',
-  rotateBg: 'bg-[#120a16]',
-  rotateTitle: 'font-saira-condensed text-3xl font-bold uppercase tracking-[0.06em]',
-  rotateIcon: '#f6ebe3',
 }
 
 const engine = { ...rules, ...broadcast, updateSound }

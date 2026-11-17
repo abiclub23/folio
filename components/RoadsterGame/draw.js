@@ -4,7 +4,7 @@ import {
   CAR_L, FT, JETS, MPH, RAMP_END, RAMP_R, SAFE_TILT, SAFE_VY, SPACE_ALT, TOWER_H, TOWER_W, WHEEL_R,
   canRestart, crashCardReady, jetDirs, landingGrade, slowMo, wrapAngle,
 } from './physics'
-import { BAD, GOOD, drawAttitude, drawBadge, drawCard, drawGroundArrow, drawInstruments, drawToast } from '../GameKit/hud'
+import { BAD, GOOD, drawAttitude, drawBadge, drawCard, drawGroundArrow, drawInstruments, drawToast, isCompact } from '../GameKit/hud'
 import {
   FONT, drawGroundFill, drawHills, drawLetterbox, drawNightSky, drawParticles, drawStreaks, lerp, rrect,
 } from '../GameKit/scene'
@@ -15,13 +15,16 @@ export function updateCamera(game, W, H, dt) {
   const parked = game.phase === 'ready'
   const span = game.track.towerX + TOWER_W + 10
   const slow = slowMo(game)
+  // On a phone held upright the screen is narrow, so show at least this many meters across
+  // (on wider screens the usual framing already shows more)
+  const minViewW = slow ? 24 : 60
   const targetViewH = parked
     ? Math.max(TOWER_H * 1.35, (span * H) / W)
     : slow
-      ? 20
+      ? Math.max(20, (minViewW * H) / W)
       : game.driver
-        ? Math.max(26, game.driver.y * 1.3 + 16)
-      : Math.min(170, Math.max(40, car.y * 1.3 + 25))
+        ? Math.max(26, game.driver.y * 1.3 + 16, (40 * H) / W)
+      : Math.max(Math.min(170, Math.max(40, car.y * 1.3 + 25)), (minViewW * H) / W)
   const cam = game.cam || { viewH: targetViewH, left: 0, bottom: -6 }
   const k = Math.min(1, dt * 3)
   cam.viewH = lerp(cam.viewH, targetViewH, k)
@@ -525,22 +528,24 @@ function drawCar(ctx, game, input, x, y, S) {
   ctx.restore()
 }
 
-// touch: show button wording instead of keyboard keys
-export function drawHud(ctx, game, W, H, { touch = false } = {}) {
+// touch: show button wording instead of keyboard keys; insets: phone buttons over the game (see GameShell)
+export function drawHud(ctx, game, W, H, { touch = false, insets = null } = {}) {
   const car = game.car
   const onTrack = game.phase === 'runway' || game.phase === 'ramp'
   const flying = game.phase === 'flight'
+  const compact = isCompact(H)
   const panelH = drawInstruments(ctx, {
     speed: onTrack ? Math.abs(game.speed) : Math.hypot(car.vx, car.vy),
     altitude: car.y,
     descent: flying ? -car.vy : null,
     safeDescent: SAFE_VY,
+    compact,
   })
   if (flying) {
-    drawAttitude(ctx, W, wrapAngle(car.angle), SAFE_TILT)
+    drawAttitude(ctx, W, wrapAngle(car.angle), SAFE_TILT, insets ? insets.top : 0, compact)
     if (game.cam.bottom > 0) drawGroundArrow(ctx, W, H, car.y)
   }
-  if (game.zeroSixty !== null) drawBadge(ctx, 12 + panelH + 8, `0–60 MPH  ${game.zeroSixty.toFixed(2)}s`)
+  if (game.zeroSixty !== null) drawBadge(ctx, 12 + panelH + (compact ? 4 : 8), `0–60 MPH  ${game.zeroSixty.toFixed(2)}s`, undefined, compact)
 
   // Easter egg banner, fades out after a few seconds
   drawToast(ctx, W, H, game.toast, game.t)
@@ -557,5 +562,5 @@ export function drawHud(ctx, game, W, H, { touch = false } = {}) {
       detail: game.starman ? 'Went to space and back. Starman approves.' : undefined,
     }
   }
-  if (msg) drawCard(ctx, W, H, msg, { again: canRestart(game), touch, minTop: 12 + panelH + 16 })
+  if (msg) drawCard(ctx, W, H, msg, { again: canRestart(game), touch, minTop: 12 + panelH + 16 + (compact && game.zeroSixty !== null ? 24 : 0), insets })
 }
